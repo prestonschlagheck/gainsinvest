@@ -131,8 +131,8 @@ export default function LandingPage({
         {/* Search input - positioned to overlap the title with frosted glass effect */}
         <motion.div
           className="w-full max-w-4xl mb-8 -mt-12 relative"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           style={{ transform: 'translateY(15px)' }}
         >
