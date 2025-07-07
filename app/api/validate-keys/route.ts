@@ -10,13 +10,14 @@ export async function GET() {
     openai: isRealKey(process.env.OPENAI_API_KEY, 'your_openai_api_key_here'),
     grok: isRealKey(process.env.GROK_API_KEY, 'your_grok_api_key_here'),
     alphaVantage: isRealKey(process.env.ALPHA_VANTAGE_API_KEY, 'your_alpha_vantage_key_here'),
+    twelveData: isRealKey(process.env.TWELVE_DATA_API_KEY, 'your_twelve_data_key_here'),
     finnhub: isRealKey(process.env.FINNHUB_API_KEY, 'your_finnhub_key_here'),
     polygon: isRealKey(process.env.POLYGON_API_KEY, 'your_polygon_key_here'),
     newsApi: isRealKey(process.env.NEWS_API_KEY, 'your_news_api_key_here'),
   }
 
   const hasAIService = apiKeys.openai || apiKeys.grok
-  const hasFinancialData = apiKeys.alphaVantage || apiKeys.finnhub || apiKeys.polygon
+  const hasFinancialData = apiKeys.alphaVantage || apiKeys.twelveData || apiKeys.finnhub || apiKeys.polygon
   
   const summary = {
     hasRequiredKeys: hasAIService && hasFinancialData,
@@ -29,11 +30,16 @@ export async function GET() {
       .filter(([_, value]) => !value)
       .map(([key, _]) => key),
     details: apiKeys,
+    fallbackChains: {
+      ai: ['OpenAI', 'Grok'],
+      financialData: ['Alpha Vantage', 'Twelve Data', 'Finnhub', 'Polygon']
+    },
     recommendations: {
       required: hasAIService ? 
         (hasFinancialData ? 'All required keys configured!' : 'Add a financial data API key (Alpha Vantage recommended)') :
         'Add an AI service API key (OpenAI recommended)',
-      optional: 'Consider adding News API for enhanced market insights'
+      optional: 'Consider adding News API for enhanced market insights',
+      fallbackInfo: 'APIs will automatically fallback in order if primary services fail or exceed limits'
     }
   }
 

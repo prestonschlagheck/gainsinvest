@@ -176,7 +176,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     }`}
                   >
                     <Eye className="w-4 h-4" />
-                    View My Most Recent Recommendations
+                    View My Previous Recommendations
                   </button>
 
                   {/* Divider */}

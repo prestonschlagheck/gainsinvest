@@ -17,6 +17,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [isLoading, setIsLoading] = useState(true)
   const [apiError, setApiError] = useState(false)
   const [apiKeyStatus, setApiKeyStatus] = useState<any>(null)
+  const [errorDetails, setErrorDetails] = useState<any>(null)
   const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
   const [loadingPercentage, setLoadingPercentage] = useState(0)
 
@@ -56,8 +57,25 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
         const analysis = await response.json()
         
-        if (analysis.error) {
-          throw new Error(analysis.error)
+        if (analysis.error || analysis.apiError) {
+          // Set detailed error information
+          setErrorDetails(analysis.errorDetails || {
+            message: analysis.error || analysis.details || 'Unknown error',
+            apiStatus: null,
+            timestamp: new Date().toISOString()
+          })
+          
+          // If we have recommendations despite the error, show them (fallback mode)
+          if (analysis.recommendations && analysis.recommendations.length > 0) {
+            setLoadingPercentage(100)
+            await new Promise(resolve => setTimeout(resolve, 300))
+            setRecommendations(analysis.recommendations)
+            setPortfolioProjections(analysis.portfolioProjections)
+            setIsLoading(false)
+            return
+          }
+          
+          throw new Error(analysis.error || analysis.details || 'API configuration error')
         }
 
         // Complete the loading to 100%
@@ -75,13 +93,15 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         
         clearInterval(progressInterval)
         
-        // Check API key status for better error messaging
-        try {
-          const keyResponse = await fetch('/api/validate-keys')
-          const keyStatus = await keyResponse.json()
-          setApiKeyStatus(keyStatus)
-        } catch (keyError) {
-          console.error('Failed to check API keys:', keyError)
+        // Check API key status for better error messaging if we don't already have it
+        if (!errorDetails) {
+          try {
+            const keyResponse = await fetch('/api/validate-keys')
+            const keyStatus = await keyResponse.json()
+            setApiKeyStatus(keyStatus)
+          } catch (keyError) {
+            console.error('Failed to check API keys:', keyError)
+          }
         }
         
         setIsLoading(false)
@@ -270,6 +290,68 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   }
 
   if (apiError) {
+    const getErrorTitle = () => {
+      if (errorDetails?.message?.includes('rate limit exceeded')) {
+        return 'API Rate Limit Exceeded'
+      } else if (errorDetails?.message?.includes('quota exceeded')) {
+        return 'API Quota Exceeded'
+      } else if (errorDetails?.message?.includes('invalid') || errorDetails?.message?.includes('expired')) {
+        return 'Invalid API Key'
+      } else if (errorDetails?.message?.includes('No AI service')) {
+        return 'AI Service Not Configured'
+      } else {
+        return 'API Configuration Required'
+      }
+    }
+
+    const getErrorMessage = () => {
+      if (errorDetails?.message?.includes('rate limit exceeded')) {
+        return 'One of your API services has exceeded its rate limit. Please wait before trying again.'
+      } else if (errorDetails?.message?.includes('quota exceeded')) {
+        return 'One of your API services has exceeded its quota. Please check your billing or upgrade your plan.'
+      } else if (errorDetails?.message?.includes('invalid') || errorDetails?.message?.includes('expired')) {
+        return 'One of your API keys is invalid or has expired. Please check your configuration.'
+      } else {
+        return 'Your API keys need to be configured to generate personalized investment recommendations.'
+      }
+    }
+
+    const getSpecificErrorDetails = () => {
+      if (!errorDetails?.apiStatus) return null
+      
+      const status = errorDetails.apiStatus
+      const issues = []
+      
+      if (!status.aiServices?.configured) {
+        if (!status.aiServices?.openai && !status.aiServices?.grok) {
+          issues.push('❌ No AI service configured (OpenAI or Grok required)')
+        } else if (!status.aiServices?.openai) {
+          issues.push('⚠️ OpenAI not configured (using Grok fallback)')
+        } else if (!status.aiServices?.grok) {
+          issues.push('⚠️ Grok not configured (using OpenAI)')
+        }
+      }
+      
+      if (!status.financialDataAPIs?.configured) {
+        const missing = []
+        if (!status.financialDataAPIs?.alphaVantage) missing.push('Alpha Vantage')
+        if (!status.financialDataAPIs?.twelveData) missing.push('Twelve Data')
+        if (!status.financialDataAPIs?.finnhub) missing.push('Finnhub')
+        issues.push(`❌ No financial data API configured (${missing.join(', ')} not available)`)
+      } else {
+        // Show which financial APIs are working
+        const working = []
+        if (status.financialDataAPIs?.alphaVantage) working.push('Alpha Vantage')
+        if (status.financialDataAPIs?.twelveData) working.push('Twelve Data')
+        if (status.financialDataAPIs?.finnhub) working.push('Finnhub')
+        if (working.length > 0) {
+          issues.push(`✅ Financial data APIs: ${working.join(', ')}`)
+        }
+      }
+      
+      return issues
+    }
+
     return (
       <div className="w-full max-w-4xl mx-auto text-center py-16">
         <motion.div
@@ -279,20 +361,45 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         >
           <div className="bg-red-900/20 border border-red-700 rounded-lg p-8">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-red-400 mb-3">API Configuration Required</h2>
+            <h2 className="text-2xl font-semibold text-red-400 mb-3">{getErrorTitle()}</h2>
             <div className="text-gray-300 mb-6 max-w-lg mx-auto">
               <p className="mb-4">
-                Your API keys need to be configured to generate personalized investment recommendations.
+                {getErrorMessage()}
               </p>
+              
+              {errorDetails?.message && (
+                <div className="text-sm bg-gray-800 rounded-lg p-4 text-left mb-4">
+                  <div className="font-semibold text-yellow-400 mb-2">Error Details:</div>
+                  <div className="text-gray-300">{errorDetails.message}</div>
+                  {errorDetails.timestamp && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      Time: {new Date(errorDetails.timestamp).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {getSpecificErrorDetails() && (
+                <div className="text-sm bg-gray-800 rounded-lg p-4 text-left mb-4">
+                  <div className="font-semibold text-yellow-400 mb-2">API Status:</div>
+                  {getSpecificErrorDetails()?.map((issue, index) => (
+                    <div key={index} className="text-gray-300 mb-1">{issue}</div>
+                  ))}
+                </div>
+              )}
+
               <div className="text-sm bg-gray-800 rounded-lg p-4 text-left">
                 <div className="mb-2">
-                  <strong className="text-yellow-400">Required:</strong> OpenAI API key
+                  <strong className="text-yellow-400">Required:</strong> AI Service (OpenAI or Grok)
                 </div>
                 <div className="mb-2">
-                  <strong className="text-yellow-400">Required:</strong> Financial data API key (Alpha Vantage or Finnhub)
+                  <strong className="text-yellow-400">Required:</strong> Financial Data API
                 </div>
                 <div className="text-xs text-gray-400 mt-3">
-                  Edit your <code className="bg-gray-700 px-1 rounded">.env.local</code> file and replace placeholder values with real API keys.
+                  <strong>Fallback Order:</strong><br/>
+                  • AI: OpenAI → Grok<br/>
+                  • Financial: Alpha Vantage → Twelve Data → Finnhub<br/>
+                  Edit your <code className="bg-gray-700 px-1 rounded">.env.local</code> file with real API keys.
                 </div>
               </div>
             </div>

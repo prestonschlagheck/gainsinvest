@@ -548,6 +548,7 @@ export interface InvestmentAnalysis {
   riskAssessment: string
   marketOutlook: string
   portfolioProjections?: PortfolioProjection
+  error?: string
 }
 
 export interface PortfolioProjection {
@@ -584,151 +585,321 @@ export async function generateInvestmentRecommendations(
   try {
     console.log('🤖 Generating comprehensive AI investment recommendations...')
     
-    if (!API_KEYS.OPENAI_API_KEY) {
-      console.log('⚠️ OpenAI API key not found, using fallback recommendations')
-      return generateFallbackRecommendations(userProfile)
-    }
-
-    // Step 1: Gather comprehensive market data
-    console.log('📊 Gathering real-time market data...')
-    const marketContext = await gatherComprehensiveMarketData(userProfile)
-    
-    // Step 2: Get current financial news
-    console.log('📰 Fetching current financial news...')
-    const newsContext = await getFinancialNews()
-    
-    // Step 3: Analyze existing portfolio if any
-    let portfolioAnalysis = ''
-    if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
-      portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
-    }
-
-    // Step 4: Create comprehensive prompt for OpenAI
-    const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform with access to real-time market data and comprehensive financial analysis capabilities. You must provide the most sophisticated and current investment recommendations possible.
-
-    USER PROFILE ANALYSIS:
-    - Risk Tolerance: ${userProfile.riskTolerance}/10 (${getRiskDescription(userProfile.riskTolerance)})
-    - Investment Horizon: ${userProfile.timeHorizon} (${getTimeHorizonDescription(userProfile.timeHorizon)})
-    - Growth Strategy: ${userProfile.growthType} (${getGrowthDescription(userProfile.growthType)})
-    - Sector Preferences: ${userProfile.sectors?.join(', ') || 'No specific preferences - open to all sectors'}
-    - ESG Priority: ${userProfile.ethicalInvesting}/10 (${getESGDescription(userProfile.ethicalInvesting)})
-    - Available Capital: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
-    - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'No existing investments'}
-
-    REAL-TIME MARKET CONTEXT:
-    ${marketContext}
-
-    CURRENT FINANCIAL NEWS & SENTIMENT:
-    ${newsContext.slice(0, 5).map(news => `• ${news.title} (${news.source}) - ${news.sentiment || 'neutral'} sentiment`).join('\n')}
-
-    ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
-
-    COMPREHENSIVE ANALYSIS REQUIREMENTS:
-    1. Factor in ALL current market conditions, economic indicators, and sector performance
-    2. Consider geopolitical events, interest rates, inflation, and market volatility
-    3. Analyze the user's complete financial profile and risk capacity
-    4. Provide specific stock recommendations with real current prices and target prices
-    5. Include diversification across sectors based on user preferences
-    6. Factor in ESG criteria if important to the user
-    7. Consider the user's existing portfolio for optimal allocation
-    8. Provide realistic timelines for achieving investment goals
-
-    OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
-    {
-      "recommendations": [
-        {
-          "symbol": "AAPL",
-          "name": "Apple Inc",
-          "type": "buy",
-          "amount": 5000,
-          "confidence": 85,
-          "reasoning": "Detailed analysis including current market position, financials, growth prospects, and why this fits the user's profile",
-          "sector": "Technology",
-          "targetPrice": 200,
-          "stopLoss": 180,
-          "expectedAnnualReturn": 0.12
-        }
-      ],
-      "reasoning": "Comprehensive explanation of the overall investment strategy, how it aligns with user goals, current market conditions, and expected outcomes",
-      "riskAssessment": "Detailed risk analysis including portfolio volatility, potential downside scenarios, risk mitigation strategies, and how this aligns with user's risk tolerance",
-      "marketOutlook": "Current market analysis, economic trends, sector outlook, potential catalysts and risks, and how they impact these recommendations"
-    }
-
-    CRITICAL REQUIREMENTS:
-    - ALL "amount" values MUST be integers (whole numbers), never strings
-    - ALL "expectedAnnualReturn" values MUST be decimal numbers (e.g., 0.12 for 12%, 0.08 for 8%)
-    - Every recommendation MUST include a realistic expectedAnnualReturn based on current market analysis
-    - Total recommended investment should not exceed available capital
-    - Use REAL current stock symbols and realistic prices
-    - Provide specific, actionable recommendations based on comprehensive analysis
-    - Include 5-8 diversified recommendations unless capital is very limited
-    - Each recommendation should include detailed reasoning based on current data`
-
-    const userMessage = `Based on my complete investment profile and current market conditions, please provide comprehensive investment recommendations. Use all available market data, news, and analysis to create the most sophisticated and current investment strategy possible for my specific situation.`
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4-turbo-preview',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage }
-        ],
-        temperature: 0.3, // Lower temperature for more consistent, analytical responses
-        max_tokens: 4000, // Increased for comprehensive analysis
-      }),
-    })
-    
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    const content = data.choices[0]?.message?.content
-
-    if (!content) {
-      throw new Error('No content received from OpenAI')
-    }
-
-    try {
-      const analysis: InvestmentAnalysis = JSON.parse(content)
-      
-      // Validate and clean recommendation data
-      analysis.recommendations = analysis.recommendations.map((rec: any) => {
-        // Ensure amount is a valid number
-        const cleanAmount = typeof rec.amount === 'string' 
-          ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
-          : (typeof rec.amount === 'number' ? rec.amount : 0)
+    // Try OpenAI first
+    if (API_KEYS.OPENAI_API_KEY) {
+      try {
+        return await generateRecommendationsWithOpenAI(userProfile)
+      } catch (error) {
+        console.log('⚠️ OpenAI failed, trying Grok fallback:', error)
         
-        return {
-          ...rec,
-          amount: Math.round(cleanAmount), // Ensure it's an integer
-          confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
-          targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
-          stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
-          expectedAnnualReturn: typeof rec.expectedAnnualReturn === 'number' ? rec.expectedAnnualReturn : 0.07
+        // Try Grok as fallback
+        if (API_KEYS.GROK_API_KEY) {
+          try {
+            return await generateRecommendationsWithGrok(userProfile)
+          } catch (grokError) {
+            console.log('⚠️ Grok also failed:', grokError)
+            throw new Error('Both OpenAI and Grok API services failed. Please check your API keys and quotas.')
+          }
+        } else {
+          throw new Error('OpenAI API failed and no Grok fallback key configured')
         }
-      }).filter((rec: any) => rec.amount > 0) // Remove any recommendations with invalid amounts
-      
-      // Add portfolio projections
-      analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
-      
-      console.log('✅ Comprehensive AI recommendations generated successfully')
-      console.log('Validated recommendations:', analysis.recommendations.map(r => ({ symbol: r.symbol, amount: r.amount, type: typeof r.amount })))
-      return analysis
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError)
-      console.log('Raw AI response:', content)
-      return generateFallbackRecommendations(userProfile)
+      }
+    } else if (API_KEYS.GROK_API_KEY) {
+      try {
+        return await generateRecommendationsWithGrok(userProfile)
+      } catch (error) {
+        console.log('⚠️ Grok failed:', error)
+        throw new Error('Grok API failed. Please check your API key and quota.')
+      }
+    } else {
+      throw new Error('No AI service API keys configured (OpenAI or Grok required)')
     }
 
   } catch (error) {
     console.error('Error generating investment recommendations:', error)
-    return generateFallbackRecommendations(userProfile)
+    console.log('⚠️ Using fallback recommendations due to AI service failure')
+    return {
+      ...generateFallbackRecommendations(userProfile),
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    }
+  }
+}
+
+async function generateRecommendationsWithOpenAI(userProfile: any): Promise<InvestmentAnalysis> {
+  // Step 1: Gather comprehensive market data
+  console.log('📊 Gathering real-time market data...')
+  const marketContext = await gatherComprehensiveMarketData(userProfile)
+  
+  // Step 2: Get current financial news
+  console.log('📰 Fetching current financial news...')
+  const newsContext = await getFinancialNews()
+  
+  // Step 3: Analyze existing portfolio if any
+  let portfolioAnalysis = ''
+  if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
+  }
+
+  // Step 4: Create comprehensive prompt for OpenAI
+  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform with access to real-time market data and comprehensive financial analysis capabilities. You must provide the most sophisticated and current investment recommendations possible.
+
+  USER PROFILE ANALYSIS:
+  - Risk Tolerance: ${userProfile.riskTolerance}/10 (${getRiskDescription(userProfile.riskTolerance)})
+  - Investment Horizon: ${userProfile.timeHorizon} (${getTimeHorizonDescription(userProfile.timeHorizon)})
+  - Growth Strategy: ${userProfile.growthType} (${getGrowthDescription(userProfile.growthType)})
+  - Sector Preferences: ${userProfile.sectors?.join(', ') || 'No specific preferences - open to all sectors'}
+  - ESG Priority: ${userProfile.ethicalInvesting}/10 (${getESGDescription(userProfile.ethicalInvesting)})
+  - Available Capital: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'No existing investments'}
+
+  REAL-TIME MARKET CONTEXT:
+  ${marketContext}
+
+  CURRENT FINANCIAL NEWS & SENTIMENT:
+  ${newsContext.slice(0, 5).map(news => `• ${news.title} (${news.source}) - ${news.sentiment || 'neutral'} sentiment`).join('\n')}
+
+  ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
+
+  COMPREHENSIVE ANALYSIS REQUIREMENTS:
+  1. Factor in ALL current market conditions, economic indicators, and sector performance
+  2. Consider geopolitical events, interest rates, inflation, and market volatility
+  3. Analyze the user's complete financial profile and risk capacity
+  4. Provide specific stock recommendations with real current prices and target prices
+  5. Include diversification across sectors based on user preferences
+  6. Factor in ESG criteria if important to the user
+  7. Consider the user's existing portfolio for optimal allocation
+  8. Provide realistic timelines for achieving investment goals
+
+  OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
+  {
+    "recommendations": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc",
+        "type": "buy",
+        "amount": 5000,
+        "confidence": 85,
+        "reasoning": "Detailed analysis including current market position, financials, growth prospects, and why this fits the user's profile",
+        "sector": "Technology",
+        "targetPrice": 200,
+        "stopLoss": 180,
+        "expectedAnnualReturn": 0.12
+      }
+    ],
+    "reasoning": "Comprehensive explanation of the overall investment strategy, how it aligns with user goals, current market conditions, and expected outcomes",
+    "riskAssessment": "Detailed risk analysis including portfolio volatility, potential downside scenarios, risk mitigation strategies, and how this aligns with user's risk tolerance",
+    "marketOutlook": "Current market analysis, economic trends, sector outlook, potential catalysts and risks, and how they impact these recommendations"
+  }
+
+  CRITICAL REQUIREMENTS:
+  - ALL "amount" values MUST be integers (whole numbers), never strings
+  - ALL "expectedAnnualReturn" values MUST be decimal numbers (e.g., 0.12 for 12%, 0.08 for 8%)
+  - Every recommendation MUST include a realistic expectedAnnualReturn based on current market analysis
+  - Total recommended investment should not exceed available capital
+  - Use REAL current stock symbols and realistic prices
+  - Provide specific, actionable recommendations based on comprehensive analysis
+  - Include 5-8 diversified recommendations unless capital is very limited
+  - Each recommendation should include detailed reasoning based on current data`
+
+  const userMessage = `Based on my complete investment profile and current market conditions, please provide comprehensive investment recommendations. Use all available market data, news, and analysis to create the most sophisticated and current investment strategy possible for my specific situation.`
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+    }),
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    if (response.status === 429) {
+      throw new Error('OpenAI API rate limit exceeded - please try again later')
+    } else if (response.status === 401) {
+      throw new Error('OpenAI API key is invalid or expired')
+    } else if (response.status === 402) {
+      throw new Error('OpenAI API quota exceeded - please check your billing')
+    } else {
+      throw new Error(`OpenAI API error (${response.status}): ${errorText}`)
+    }
+  }
+  
+  const data = await response.json()
+  
+  if (data.error) {
+    throw new Error(`OpenAI API error: ${data.error.message}`)
+  }
+  
+  const content = data.choices[0]?.message?.content
+
+  if (!content) {
+    throw new Error('No content received from OpenAI API')
+  }
+
+  try {
+    const analysis: InvestmentAnalysis = JSON.parse(content)
+    
+    // Validate and clean recommendation data
+    analysis.recommendations = analysis.recommendations.map((rec: any) => {
+      const cleanAmount = typeof rec.amount === 'string' 
+        ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
+        : (typeof rec.amount === 'number' ? rec.amount : 0)
+      
+      return {
+        ...rec,
+        amount: Math.round(cleanAmount),
+        confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
+        targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
+        stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
+        expectedAnnualReturn: typeof rec.expectedAnnualReturn === 'number' ? rec.expectedAnnualReturn : 0.07
+      }
+    }).filter((rec: any) => rec.amount > 0)
+    
+    // Add portfolio projections
+    analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
+    
+    console.log('✅ OpenAI recommendations generated successfully')
+    return analysis
+  } catch (parseError) {
+    console.error('Failed to parse OpenAI response:', parseError)
+    throw new Error('OpenAI returned invalid response format')
+  }
+}
+
+async function generateRecommendationsWithGrok(userProfile: any): Promise<InvestmentAnalysis> {
+  // Step 1: Gather comprehensive market data
+  console.log('📊 Gathering real-time market data...')
+  const marketContext = await gatherComprehensiveMarketData(userProfile)
+  
+  // Step 2: Get current financial news
+  console.log('📰 Fetching current financial news...')
+  const newsContext = await getFinancialNews()
+  
+  // Step 3: Analyze existing portfolio if any
+  let portfolioAnalysis = ''
+  if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
+  }
+
+  // Create comprehensive prompt for Grok
+  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform with access to real-time market data and comprehensive financial analysis capabilities. You must provide the most sophisticated and current investment recommendations possible.
+
+  USER PROFILE ANALYSIS:
+  - Risk Tolerance: ${userProfile.riskTolerance}/10 (${getRiskDescription(userProfile.riskTolerance)})
+  - Investment Horizon: ${userProfile.timeHorizon} (${getTimeHorizonDescription(userProfile.timeHorizon)})
+  - Growth Strategy: ${userProfile.growthType} (${getGrowthDescription(userProfile.growthType)})
+  - Sector Preferences: ${userProfile.sectors?.join(', ') || 'No specific preferences - open to all sectors'}
+  - ESG Priority: ${userProfile.ethicalInvesting}/10 (${getESGDescription(userProfile.ethicalInvesting)})
+  - Available Capital: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'No existing investments'}
+
+  REAL-TIME MARKET CONTEXT:
+  ${marketContext}
+
+  CURRENT FINANCIAL NEWS & SENTIMENT:
+  ${newsContext.slice(0, 5).map(news => `• ${news.title} (${news.source}) - ${news.sentiment || 'neutral'} sentiment`).join('\n')}
+
+  ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
+
+  Please provide investment recommendations in this exact JSON format:
+  {
+    "recommendations": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc",
+        "type": "buy",
+        "amount": 5000,
+        "confidence": 85,
+        "reasoning": "Detailed analysis",
+        "sector": "Technology",
+        "targetPrice": 200,
+        "stopLoss": 180,
+        "expectedAnnualReturn": 0.12
+      }
+    ],
+    "reasoning": "Overall investment strategy explanation",
+    "riskAssessment": "Risk analysis",
+    "marketOutlook": "Market outlook"
+  }`
+
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${API_KEYS.GROK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'grok-beta',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: 'Provide investment recommendations based on the profile above.' }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+    }),
+  })
+  
+  if (!response.ok) {
+    const errorText = await response.text()
+    if (response.status === 429) {
+      throw new Error('Grok API rate limit exceeded - please try again later')
+    } else if (response.status === 401) {
+      throw new Error('Grok API key is invalid or expired')
+    } else if (response.status === 402) {
+      throw new Error('Grok API quota exceeded - please check your billing')
+    } else {
+      throw new Error(`Grok API error (${response.status}): ${errorText}`)
+    }
+  }
+  
+  const data = await response.json()
+  
+  if (data.error) {
+    throw new Error(`Grok API error: ${data.error.message}`)
+  }
+  
+  const content = data.choices[0]?.message?.content
+
+  if (!content) {
+    throw new Error('No content received from Grok API')
+  }
+
+  try {
+    const analysis: InvestmentAnalysis = JSON.parse(content)
+    
+    // Validate and clean recommendation data
+    analysis.recommendations = analysis.recommendations.map((rec: any) => {
+      const cleanAmount = typeof rec.amount === 'string' 
+        ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
+        : (typeof rec.amount === 'number' ? rec.amount : 0)
+      
+      return {
+        ...rec,
+        amount: Math.round(cleanAmount),
+        confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
+        targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
+        stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
+        expectedAnnualReturn: typeof rec.expectedAnnualReturn === 'number' ? rec.expectedAnnualReturn : 0.07
+      }
+    }).filter((rec: any) => rec.amount > 0)
+    
+    // Add portfolio projections
+    analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
+    
+    console.log('✅ Grok recommendations generated successfully')
+    return analysis
+  } catch (parseError) {
+    console.error('Failed to parse Grok response:', parseError)
+    throw new Error('Grok returned invalid response format')
   }
 }
 
