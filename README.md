@@ -21,14 +21,16 @@ A sophisticated AI-powered investment chatbot that helps inexperienced investors
    ```
 
 2. **Set up API Keys**
-   - Copy the information from `api-keys.txt`
    - Create a `.env.local` file in the root directory
-   - Add your API keys:
+   - Add your API keys (refer to `env.example` for all required variables):
    ```env
    OPENAI_API_KEY=your_openai_api_key_here
    GROK_API_KEY=your_grok_api_key_here
    ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
    NEXTAUTH_SECRET=your-secret-key-here
+   NEXTAUTH_URL=http://localhost:3000
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
    ```
 
 3. **Run Development Server**
@@ -44,13 +46,21 @@ A sophisticated AI-powered investment chatbot that helps inexperienced investors
 ```
 G.AI.NS/
 ├── app/
+│   ├── api/               # API routes
+│   │   ├── auth/          # NextAuth.js authentication
+│   │   ├── recommendations/ # AI investment recommendations
+│   │   └── validate-keys/ # API key validation
 │   ├── layout.tsx          # Root layout with metadata
 │   ├── page.tsx           # Main landing page
+│   ├── providers.tsx      # Authentication providers
 │   └── globals.css        # Global styles and Tailwind
 ├── components/
 │   ├── ChatInterface.tsx   # Main chat component
 │   ├── AuthModal.tsx      # Authentication modal
+│   ├── GoogleAuthModal.tsx # Google OAuth modal
+│   ├── ReturningUserModal.tsx # Returning user modal
 │   ├── RecommendationsPage.tsx # Results display
+│   ├── PortfolioChart.tsx  # Portfolio visualization
 │   └── steps/             # Individual questionnaire steps
 │       ├── WelcomeStep.tsx
 │       ├── RiskToleranceStep.tsx
@@ -60,9 +70,13 @@ G.AI.NS/
 │       ├── EthicalStep.tsx
 │       ├── CapitalStep.tsx
 │       └── PortfolioStep.tsx
+├── lib/
+│   ├── api.ts             # API utilities
+│   └── userStorage.ts     # User data management
 ├── types/
 │   └── index.ts           # TypeScript type definitions
-├── api-keys.txt           # API configuration guide
+├── env.example            # Environment variables template
+├── vercel.json           # Vercel deployment configuration
 └── README.md
 ```
 
@@ -125,16 +139,31 @@ The application is designed to integrate with:
 
 ### Vercel (Recommended)
 
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+1. **Connect Repository**
+   - Import your GitHub repository to Vercel
+   - Vercel will automatically detect it's a Next.js project
 
-### Manual Deployment
+2. **Environment Variables**
+   - Add all required environment variables from `env.example`
+   - Set `NEXTAUTH_URL` to your production domain
+   - Add Google OAuth credentials for production
+
+3. **Deploy**
+   - Vercel will automatically build and deploy
+   - Your app will be available at `https://your-project.vercel.app`
+
+### Local Production Build
 
 ```bash
 npm run build
 npm start
 ```
+
+### Environment Variables for Production
+
+- `NEXTAUTH_URL` should be your production domain
+- Google OAuth redirect URIs must include your production domain
+- All API keys should be production-ready values
 
 ## 📈 Future Enhancements
 
