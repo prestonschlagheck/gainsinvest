@@ -452,7 +452,15 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               <div className="text-sm text-gray-400 mb-1">Expected Annual Return</div>
               <div className="text-lg font-semibold text-green-400">
                 {(() => {
-                  // Calculate weighted average return based on actual recommendations
+                  // Calculate average annual return over 5 years from portfolio projections
+                  if (portfolioProjections?.projectedValues?.fiveYear && userProfile.capitalAvailable > 0) {
+                    const initialValue = userProfile.capitalAvailable
+                    const finalValue = portfolioProjections.projectedValues.fiveYear
+                    const annualReturn = Math.pow(finalValue / initialValue, 1/5) - 1
+                    return `${(annualReturn * 100).toFixed(1)}%`
+                  }
+                  
+                  // Fallback: Calculate weighted average return based on actual recommendations
                   const buyRecommendations = recommendations.filter(r => r.type === 'buy')
                   if (buyRecommendations.length > 0) {
                     const totalAmount = buyRecommendations.reduce((sum, r) => sum + r.amount, 0)
@@ -463,10 +471,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                     }, 0)
                     return `${(weightedReturn * 100).toFixed(1)}%`
                   }
-                  // Fallback to portfolio projections
-                  return portfolioProjections.expectedAnnualReturn 
-                    ? `${(portfolioProjections.expectedAnnualReturn * 100).toFixed(1)}%`
-                    : `${(((portfolioProjections.projectedValues?.threeYear / userProfile.capitalAvailable) ** (1/3) - 1) * 100).toFixed(1)}%`
+                  
+                  // Final fallback
+                  return portfolioProjections?.expectedAnnualReturn 
+                    ? `${portfolioProjections.expectedAnnualReturn.toFixed(1)}%`
+                    : '7.0%'
                 })()}
               </div>
             </div>

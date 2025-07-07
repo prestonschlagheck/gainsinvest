@@ -315,7 +315,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
                 <div className="font-medium">{rec.symbol}</div>
                 <div>{formatCurrency(rec.amount)}</div>
                 <div className="text-xs opacity-75">
-                  {((rec.expectedAnnualReturn || 0.08) * 100).toFixed(1)}% expected return
+                  {(rec.expectedAnnualReturn * 100).toFixed(1)}% expected return
                 </div>
               </div>
             ))}

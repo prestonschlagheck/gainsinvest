@@ -42,7 +42,7 @@ export interface InvestmentRecommendation {
   confidence: number
   reasoning: string
   sector: string
-  expectedAnnualReturn?: number
+  expectedAnnualReturn: number
   volatility?: number
   targetPrice?: number
 }

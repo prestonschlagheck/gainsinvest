@@ -574,6 +574,7 @@ export interface InvestmentRecommendation {
   sector: string
   targetPrice?: number
   stopLoss?: number
+  expectedAnnualReturn: number
 }
 
 export async function generateInvestmentRecommendations(
@@ -644,7 +645,8 @@ export async function generateInvestmentRecommendations(
           "reasoning": "Detailed analysis including current market position, financials, growth prospects, and why this fits the user's profile",
           "sector": "Technology",
           "targetPrice": 200,
-          "stopLoss": 180
+          "stopLoss": 180,
+          "expectedAnnualReturn": 0.12
         }
       ],
       "reasoning": "Comprehensive explanation of the overall investment strategy, how it aligns with user goals, current market conditions, and expected outcomes",
@@ -654,6 +656,8 @@ export async function generateInvestmentRecommendations(
 
     CRITICAL REQUIREMENTS:
     - ALL "amount" values MUST be integers (whole numbers), never strings
+    - ALL "expectedAnnualReturn" values MUST be decimal numbers (e.g., 0.12 for 12%, 0.08 for 8%)
+    - Every recommendation MUST include a realistic expectedAnnualReturn based on current market analysis
     - Total recommended investment should not exceed available capital
     - Use REAL current stock symbols and realistic prices
     - Provide specific, actionable recommendations based on comprehensive analysis
@@ -705,7 +709,8 @@ export async function generateInvestmentRecommendations(
           amount: Math.round(cleanAmount), // Ensure it's an integer
           confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
           targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
-          stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined
+          stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
+          expectedAnnualReturn: typeof rec.expectedAnnualReturn === 'number' ? rec.expectedAnnualReturn : 0.07
         }
       }).filter((rec: any) => rec.amount > 0) // Remove any recommendations with invalid amounts
       
@@ -814,21 +819,21 @@ function generateFallbackRecommendations(userProfile: any): InvestmentAnalysis {
   // Conservative recommendations based on user profile
   if (userProfile.riskTolerance <= 3) {
     recommendations.push(
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 90, reasoning: 'Broad market exposure with low risk', sector: 'Diversified' },
-      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'Stable bond exposure', sector: 'Fixed Income' },
-      { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Dividend income focus', sector: 'Dividend' }
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 90, reasoning: 'Broad market exposure with low risk', sector: 'Diversified', expectedAnnualReturn: 0.05 },
+      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'Stable bond exposure', sector: 'Fixed Income', expectedAnnualReturn: 0.03 },
+      { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Dividend income focus', sector: 'Dividend', expectedAnnualReturn: 0.04 }
     )
   } else if (userProfile.riskTolerance <= 7) {
     recommendations.push(
-      { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'buy', amount: totalAmount * 0.5, confidence: 90, reasoning: 'Strong large-cap exposure', sector: 'Large Cap' },
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 85, reasoning: 'Broad market diversification', sector: 'Diversified' },
-      { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'International diversification', sector: 'International' }
+      { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'buy', amount: totalAmount * 0.5, confidence: 90, reasoning: 'Strong large-cap exposure', sector: 'Large Cap', expectedAnnualReturn: 0.07 },
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 85, reasoning: 'Broad market diversification', sector: 'Diversified', expectedAnnualReturn: 0.05 },
+      { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'International diversification', sector: 'International', expectedAnnualReturn: 0.03 }
     )
   } else {
     recommendations.push(
-      { symbol: 'QQQ', name: 'Invesco QQQ Trust', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'High-growth tech exposure', sector: 'Technology' },
-      { symbol: 'VUG', name: 'Vanguard Growth ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 80, reasoning: 'Growth-focused investing', sector: 'Growth' },
-      { symbol: 'VB', name: 'Vanguard Small-Cap ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 75, reasoning: 'Small-cap growth potential', sector: 'Small Cap' }
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'High-growth tech exposure', sector: 'Technology', expectedAnnualReturn: 0.12 },
+      { symbol: 'VUG', name: 'Vanguard Growth ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 80, reasoning: 'Growth-focused investing', sector: 'Growth', expectedAnnualReturn: 0.07 },
+      { symbol: 'VB', name: 'Vanguard Small-Cap ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 75, reasoning: 'Small-cap growth potential', sector: 'Small Cap', expectedAnnualReturn: 0.08 }
     )
   }
   
