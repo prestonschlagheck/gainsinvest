@@ -65,7 +65,7 @@ export default function ReturningUserModal({
             )}
 
             <p className="text-gray-300 mb-6 leading-relaxed">
-              Would you like to use your previous answers, edit specific responses, or start fresh with a new questionnaire?
+              What would you like to do with your investment profile?
             </p>
 
             {/* Action Buttons */}
@@ -76,7 +76,7 @@ export default function ReturningUserModal({
                 onClick={onUsePrevious}
                 className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
               >
-                Skip to My Previous Recommendations
+                View My Recommendations
               </motion.button>
               
               <motion.button
@@ -91,7 +91,7 @@ export default function ReturningUserModal({
                 }}
                 className="w-full border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
               >
-                Edit My Previous Responses
+                Edit Responses
               </motion.button>
               
               <motion.button
