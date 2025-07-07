@@ -1,67 +1,108 @@
 // API Configuration for G.AI.NS Investment Platform
-// This file contains all API integrations for real investment data and AI analysis
+// Multi-Provider Fallback System: Alpha Vantage → Twelve Data → Finnhub
 
 // ========================================
 // API KEYS CONFIGURATION
 // ========================================
 
-// Environment variables for API keys
 const API_KEYS = {
-  // OpenAI for investment analysis and recommendations
+  // AI Services
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-  
-  // Grok API for alternative AI analysis
   GROK_API_KEY: process.env.GROK_API_KEY || '',
   
-  // Financial Data APIs
+  // Financial Data APIs (in priority order)
   ALPHA_VANTAGE_API_KEY: process.env.ALPHA_VANTAGE_API_KEY || '',
-  FINNHUB_API_KEY: process.env.FINNHUB_API_KEY || '',
-  POLYGON_API_KEY: process.env.POLYGON_API_KEY || '',
-  
-  // Additional Financial APIs
-  YAHOO_FINANCE_API_KEY: process.env.YAHOO_FINANCE_API_KEY || '',
   TWELVE_DATA_API_KEY: process.env.TWELVE_DATA_API_KEY || '',
+  FINNHUB_API_KEY: process.env.FINNHUB_API_KEY || '',
   
-  // News and Sentiment APIs
+  // Additional APIs
+  POLYGON_API_KEY: process.env.POLYGON_API_KEY || '',
+  YAHOO_FINANCE_API_KEY: process.env.YAHOO_FINANCE_API_KEY || '',
   NEWS_API_KEY: process.env.NEWS_API_KEY || '',
   MARKETAUX_API_KEY: process.env.MARKETAUX_API_KEY || '',
 }
 
 // ========================================
-// API ENDPOINTS
+// API PROVIDERS CONFIGURATION
 // ========================================
 
-const API_ENDPOINTS = {
-  // OpenAI
-  OPENAI_CHAT: 'https://api.openai.com/v1/chat/completions',
-  
-  // Grok
-  GROK_CHAT: 'https://api.x.ai/v1/chat/completions',
-  
-  // Alpha Vantage
-  ALPHA_VANTAGE_BASE: 'https://www.alphavantage.co/query',
-  
-  // Finnhub
-  FINNHUB_BASE: 'https://finnhub.io/api/v1',
-  
-  // Polygon
-  POLYGON_BASE: 'https://api.polygon.io/v2',
-  
-  // Yahoo Finance (via RapidAPI)
-  YAHOO_FINANCE_BASE: 'https://yahoo-finance15.p.rapidapi.com/api/yahoo',
-  
-  // Twelve Data
-  TWELVE_DATA_BASE: 'https://api.twelvedata.com',
-  
-  // News API
-  NEWS_API_BASE: 'https://newsapi.org/v2',
-  
-  // MarketAux
-  MARKETAUX_BASE: 'https://api.marketaux.com/v1',
+interface ApiProvider {
+  name: string
+  baseUrl: string
+  rateLimit: { requests: number; perMinute: number }
+  active: boolean
+  priority: number
 }
 
+const API_PROVIDERS: ApiProvider[] = [
+  {
+    name: 'Alpha Vantage',
+    baseUrl: 'https://www.alphavantage.co/query',
+    rateLimit: { requests: 25, perMinute: 1440 }, // 25/day limit
+    active: !!API_KEYS.ALPHA_VANTAGE_API_KEY,
+    priority: 1
+  },
+  {
+    name: 'Twelve Data',
+    baseUrl: 'https://api.twelvedata.com',
+    rateLimit: { requests: 800, perMinute: 8 }, // 800/day, 8/minute
+    active: !!API_KEYS.TWELVE_DATA_API_KEY,
+    priority: 2
+  },
+  {
+    name: 'Finnhub',
+    baseUrl: 'https://finnhub.io/api/v1',
+    rateLimit: { requests: 60, perMinute: 60 }, // 60/minute free tier
+    active: !!API_KEYS.FINNHUB_API_KEY,
+    priority: 3
+  }
+]
+
 // ========================================
-// STOCK DATA FUNCTIONS
+// RATE LIMITER
+// ========================================
+
+class RateLimiter {
+  private requests: { [key: string]: number[] } = {}
+
+  canMakeRequest(provider: string, maxRequests: number, timeWindow: number): boolean {
+    const now = Date.now()
+    const windowStart = now - timeWindow
+
+    if (!this.requests[provider]) {
+      this.requests[provider] = []
+    }
+
+    // Remove old requests outside the time window
+    this.requests[provider] = this.requests[provider].filter(time => time > windowStart)
+
+    // Check if we can make another request
+    if (this.requests[provider].length >= maxRequests) {
+      return false
+    }
+
+    // Record this request
+    this.requests[provider].push(now)
+    return true
+  }
+
+  getRemainingRequests(provider: string, maxRequests: number, timeWindow: number): number {
+    const now = Date.now()
+    const windowStart = now - timeWindow
+
+    if (!this.requests[provider]) {
+      return maxRequests
+    }
+
+    const recentRequests = this.requests[provider].filter(time => time > windowStart)
+    return Math.max(0, maxRequests - recentRequests.length)
+  }
+}
+
+const rateLimiter = new RateLimiter()
+
+// ========================================
+// TYPES AND INTERFACES
 // ========================================
 
 export interface StockData {
@@ -74,6 +115,7 @@ export interface StockData {
   marketCap?: number
   peRatio?: number
   dividend?: number
+  source: string // Which API provided the data
 }
 
 export interface HistoricalData {
@@ -85,86 +127,298 @@ export interface HistoricalData {
   volume: number
 }
 
-// Get real-time stock data
-export async function getStockData(symbol: string): Promise<StockData | null> {
+export interface ApiResponse<T> {
+  success: boolean
+  data?: T
+  error?: string
+  source?: string
+  remainingRequests?: number
+}
+
+// ========================================
+// MULTI-PROVIDER STOCK DATA FUNCTIONS
+// ========================================
+
+// Alpha Vantage implementation
+async function getStockDataAlphaVantage(symbol: string): Promise<ApiResponse<StockData>> {
+  const provider = API_PROVIDERS.find(p => p.name === 'Alpha Vantage')!
+  
+  if (!rateLimiter.canMakeRequest('alphavantage', provider.rateLimit.requests, 24 * 60 * 60 * 1000)) {
+    return { 
+      success: false, 
+      error: 'Alpha Vantage rate limit exceeded',
+      remainingRequests: rateLimiter.getRemainingRequests('alphavantage', provider.rateLimit.requests, 24 * 60 * 60 * 1000)
+    }
+  }
+
   try {
-    // Primary: Alpha Vantage
     const response = await fetch(
-      `${API_ENDPOINTS.ALPHA_VANTAGE_BASE}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEYS.ALPHA_VANTAGE_API_KEY}`
+      `${provider.baseUrl}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEYS.ALPHA_VANTAGE_API_KEY}`,
+      { headers: { 'User-Agent': 'G.AI.NS/1.0' } }
     )
-    
+
     if (!response.ok) {
-      throw new Error('Alpha Vantage API failed')
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
-    
+
     const data = await response.json()
-    const quote = data['Global Quote']
     
-    if (!quote) {
-      throw new Error('No quote data available')
+    // Check for API limit response
+    if (data.Note && data.Note.includes('call frequency')) {
+      return { 
+        success: false, 
+        error: 'Alpha Vantage API limit exceeded',
+        source: 'Alpha Vantage'
+      }
     }
-    
+
+    const quote = data['Global Quote']
+    if (!quote || !quote['01. symbol']) {
+      throw new Error('Invalid response format or no data available')
+    }
+
     return {
-      symbol: quote['01. symbol'],
-      name: symbol, // Would need company name lookup
-      price: parseFloat(quote['05. price']),
-      change: parseFloat(quote['09. change']),
-      changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
-      volume: parseInt(quote['06. volume'])
+      success: true,
+      data: {
+        symbol: quote['01. symbol'],
+        name: symbol,
+        price: parseFloat(quote['05. price']),
+        change: parseFloat(quote['09. change']),
+        changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
+        volume: parseInt(quote['06. volume']),
+        source: 'Alpha Vantage'
+      },
+      source: 'Alpha Vantage',
+      remainingRequests: rateLimiter.getRemainingRequests('alphavantage', provider.rateLimit.requests, 24 * 60 * 60 * 1000)
     }
   } catch (error) {
-    console.error('Error fetching stock data:', error)
-    
-    // Fallback: Try Finnhub
-    try {
-      const response = await fetch(
-        `${API_ENDPOINTS.FINNHUB_BASE}/quote?symbol=${symbol}&token=${API_KEYS.FINNHUB_API_KEY}`
-      )
-      
-      const data = await response.json()
-      
-      return {
-        symbol,
-        name: symbol,
-        price: data.c,
-        change: data.d,
-        changePercent: data.dp,
-        volume: 0 // Finnhub doesn't provide volume in quote endpoint
-      }
-    } catch (fallbackError) {
-      console.error('Fallback API also failed:', fallbackError)
-      return null
+    return { 
+      success: false, 
+      error: `Alpha Vantage error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      source: 'Alpha Vantage'
     }
   }
 }
 
-// Get historical stock data
-export async function getHistoricalData(symbol: string, period: string = '1year'): Promise<HistoricalData[]> {
+// Twelve Data implementation
+async function getStockDataTwelveData(symbol: string): Promise<ApiResponse<StockData>> {
+  const provider = API_PROVIDERS.find(p => p.name === 'Twelve Data')!
+  
+  if (!rateLimiter.canMakeRequest('twelvedata', provider.rateLimit.requests, 24 * 60 * 60 * 1000)) {
+    return { 
+      success: false, 
+      error: 'Twelve Data rate limit exceeded',
+      remainingRequests: rateLimiter.getRemainingRequests('twelvedata', provider.rateLimit.requests, 24 * 60 * 60 * 1000)
+    }
+  }
+
   try {
     const response = await fetch(
-      `${API_ENDPOINTS.ALPHA_VANTAGE_BASE}?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEYS.ALPHA_VANTAGE_API_KEY}`
+      `${provider.baseUrl}/quote?symbol=${symbol}&apikey=${API_KEYS.TWELVE_DATA_API_KEY}`,
+      { headers: { 'User-Agent': 'G.AI.NS/1.0' } }
     )
-    
-    const data = await response.json()
-    const timeSeries = data['Time Series (Daily)']
-    
-    if (!timeSeries) {
-      throw new Error('No historical data available')
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
+
+    const data = await response.json()
     
-    return Object.entries(timeSeries).map(([date, values]: [string, any]) => ({
-      date,
-      open: parseFloat(values['1. open']),
-      high: parseFloat(values['2. high']),
-      low: parseFloat(values['3. low']),
-      close: parseFloat(values['4. close']),
-      volume: parseInt(values['5. volume'])
-    })).slice(0, 365) // Last year of data
-    
+    if (data.status === 'error') {
+      throw new Error(data.message || 'Twelve Data API error')
+    }
+
+    if (!data.symbol) {
+      throw new Error('Invalid response format or no data available')
+    }
+
+    return {
+      success: true,
+      data: {
+        symbol: data.symbol,
+        name: data.name || symbol,
+        price: parseFloat(data.close),
+        change: parseFloat(data.change || '0'),
+        changePercent: parseFloat(data.percent_change || '0'),
+        volume: parseInt(data.volume || '0'),
+        source: 'Twelve Data'
+      },
+      source: 'Twelve Data',
+      remainingRequests: rateLimiter.getRemainingRequests('twelvedata', provider.rateLimit.requests, 24 * 60 * 60 * 1000)
+    }
   } catch (error) {
-    console.error('Error fetching historical data:', error)
-    return []
+    return { 
+      success: false, 
+      error: `Twelve Data error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      source: 'Twelve Data'
+    }
   }
+}
+
+// Finnhub implementation
+async function getStockDataFinnhub(symbol: string): Promise<ApiResponse<StockData>> {
+  const provider = API_PROVIDERS.find(p => p.name === 'Finnhub')!
+  
+  if (!rateLimiter.canMakeRequest('finnhub', provider.rateLimit.requests, 60 * 1000)) {
+    return { 
+      success: false, 
+      error: 'Finnhub rate limit exceeded',
+      remainingRequests: rateLimiter.getRemainingRequests('finnhub', provider.rateLimit.requests, 60 * 1000)
+    }
+  }
+
+  try {
+    const response = await fetch(
+      `${provider.baseUrl}/quote?symbol=${symbol}&token=${API_KEYS.FINNHUB_API_KEY}`,
+      { headers: { 'User-Agent': 'G.AI.NS/1.0' } }
+    )
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    
+    if (data.error) {
+      throw new Error(data.error)
+    }
+
+    if (data.c === undefined || data.c === 0) {
+      throw new Error('No data available or invalid symbol')
+    }
+
+    return {
+      success: true,
+      data: {
+        symbol: symbol,
+        name: symbol,
+        price: data.c,
+        change: data.d || 0,
+        changePercent: data.dp || 0,
+        volume: 0, // Finnhub quote doesn't include volume
+        source: 'Finnhub'
+      },
+      source: 'Finnhub',
+      remainingRequests: rateLimiter.getRemainingRequests('finnhub', provider.rateLimit.requests, 60 * 1000)
+    }
+  } catch (error) {
+    return { 
+      success: false, 
+      error: `Finnhub error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      source: 'Finnhub'
+    }
+  }
+}
+
+// Main function with fallback logic
+export async function getStockData(symbol: string): Promise<StockData | null> {
+  console.log(`🔍 Fetching stock data for ${symbol}...`)
+  
+  // Get active providers sorted by priority
+  const activeProviders = API_PROVIDERS
+    .filter(p => p.active)
+    .sort((a, b) => a.priority - b.priority)
+
+  if (activeProviders.length === 0) {
+    console.error('❌ No API providers configured')
+    return null
+  }
+
+  // Try each provider in order
+  for (const provider of activeProviders) {
+    console.log(`🔄 Trying ${provider.name}...`)
+    
+    let result: ApiResponse<StockData>
+    
+    switch (provider.name) {
+      case 'Alpha Vantage':
+        result = await getStockDataAlphaVantage(symbol)
+        break
+      case 'Twelve Data':
+        result = await getStockDataTwelveData(symbol)
+        break
+      case 'Finnhub':
+        result = await getStockDataFinnhub(symbol)
+        break
+      default:
+        continue
+    }
+
+    if (result.success && result.data) {
+      console.log(`✅ Successfully fetched data from ${result.source}`)
+      console.log(`📊 Remaining requests: ${result.remainingRequests || 'Unknown'}`)
+      return result.data
+    } else {
+      console.log(`⚠️ ${provider.name} failed: ${result.error}`)
+      if (result.remainingRequests !== undefined) {
+        console.log(`📊 Remaining requests: ${result.remainingRequests}`)
+      }
+    }
+  }
+
+  console.error('❌ All API providers failed')
+  return null
+}
+
+// Historical data with fallback logic
+export async function getHistoricalData(symbol: string, period: string = '1year'): Promise<HistoricalData[]> {
+  console.log(`📈 Fetching historical data for ${symbol}...`)
+  
+  // Try Alpha Vantage first
+  if (API_KEYS.ALPHA_VANTAGE_API_KEY && rateLimiter.canMakeRequest('alphavantage_historical', 25, 24 * 60 * 60 * 1000)) {
+    try {
+      const response = await fetch(
+        `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEYS.ALPHA_VANTAGE_API_KEY}&outputsize=full`
+      )
+      
+      const data = await response.json()
+      const timeSeries = data['Time Series (Daily)']
+      
+      if (timeSeries) {
+        console.log('✅ Historical data from Alpha Vantage')
+        return Object.entries(timeSeries)
+          .slice(0, 365)
+          .map(([date, values]: [string, any]) => ({
+            date,
+            open: parseFloat(values['1. open']),
+            high: parseFloat(values['2. high']),
+            low: parseFloat(values['3. low']),
+            close: parseFloat(values['4. close']),
+            volume: parseInt(values['5. volume'])
+          }))
+      }
+    } catch (error) {
+      console.log('⚠️ Alpha Vantage historical data failed:', error)
+    }
+  }
+
+  // Try Twelve Data as fallback
+  if (API_KEYS.TWELVE_DATA_API_KEY && rateLimiter.canMakeRequest('twelvedata_historical', 800, 24 * 60 * 60 * 1000)) {
+    try {
+      const response = await fetch(
+        `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1day&outputsize=365&apikey=${API_KEYS.TWELVE_DATA_API_KEY}`
+      )
+      
+      const data = await response.json()
+      
+      if (data.values && Array.isArray(data.values)) {
+        console.log('✅ Historical data from Twelve Data')
+        return data.values.map((item: any) => ({
+          date: item.datetime,
+          open: parseFloat(item.open),
+          high: parseFloat(item.high),
+          low: parseFloat(item.low),
+          close: parseFloat(item.close),
+          volume: parseInt(item.volume || '0')
+        }))
+      }
+    } catch (error) {
+      console.log('⚠️ Twelve Data historical data failed:', error)
+    }
+  }
+
+  console.error('❌ All historical data providers failed')
+  return []
 }
 
 // ========================================
@@ -198,7 +452,6 @@ export interface InvestmentRecommendation {
   name: string
   type: 'buy' | 'sell' | 'hold'
   amount: number
-  strength: 'weak' | 'moderate' | 'strong'
   confidence: number
   reasoning: string
   sector: string
@@ -206,365 +459,186 @@ export interface InvestmentRecommendation {
   stopLoss?: number
 }
 
-// Generate AI-powered investment recommendations
 export async function generateInvestmentRecommendations(
   userProfile: any,
   marketData?: any[]
 ): Promise<InvestmentAnalysis> {
   try {
-    const existingHoldings = userProfile.existingPortfolio.map((item: any) => 
-      `${item.symbol} (${item.type}): $${item.amount.toLocaleString()}`
-    ).join(', ') || 'None'
+    console.log('🤖 Generating AI investment recommendations...')
     
-    const prompt = `
-    As an expert investment advisor, analyze the following user profile and provide personalized investment recommendations:
-    
-    User Profile:
-    - Risk Tolerance: ${userProfile.riskTolerance}/10
-    - Time Horizon: ${userProfile.timeHorizon}
-    - Growth Type: ${userProfile.growthType}
-    - Sectors of Interest: ${userProfile.sectors.join(', ') || 'Any'}
-    - Ethical Investing Priority: ${userProfile.ethicalInvesting}/10
-    - Available Capital for NEW investments: $${userProfile.capitalAvailable.toLocaleString()}
-    - Existing Portfolio: ${existingHoldings}
-    
-    CRITICAL ALLOCATION REQUIREMENTS:
-    1. EXISTING HOLDINGS: For each existing portfolio item, recommend BUY (add more), HOLD (keep current), or SELL (reduce/exit)
-    2. NEW INVESTMENTS: Use the available capital ($${userProfile.capitalAvailable.toLocaleString()}) for NEW buy recommendations
-    3. CAPITAL CONSTRAINT: Total NEW buy recommendations must NOT exceed $${userProfile.capitalAvailable.toLocaleString()}
-    4. AMOUNT LOGIC:
-       - BUY (existing): Amount = additional investment suggested
-       - BUY (new): Amount = initial investment from available capital
-       - HOLD: Amount = current holding value (no change)
-       - SELL: Amount = portion to sell from current holding
-    5. ALL EXISTING HOLDINGS must appear in recommendations (as BUY, HOLD, or SELL)
-    6. DIVERSIFICATION REQUIREMENTS:
-       - Conservative/Balanced: Provide 4-6 NEW buy recommendations for proper diversification
-       - Aggressive: Provide 3-5 NEW buy recommendations with focus on growth
-       - Ensure no single investment exceeds 40% of available capital
-       - Include mix of individual stocks, ETFs, and bonds based on risk tolerance
-       - Spread investments across multiple sectors when possible
-    
-    VALIDATION: Ensure sum of NEW buy recommendations ≤ $${userProfile.capitalAvailable.toLocaleString()}
-    
-    PORTFOLIO PROJECTIONS: Generate detailed monthly projections for the next 60 months (5 years) considering:
-    - Market volatility and realistic fluctuations
-    - Economic cycles and seasonal patterns
-    - Sector-specific performance trends
-    - Risk-adjusted returns for each recommendation
-    
-    Return ONLY valid JSON matching this exact structure:
-    {
-      "recommendations": [
-        {
-          "symbol": "AAPL",
-          "name": "Apple Inc.",
-          "type": "buy|sell|hold",
-          "amount": 5000,
-          "strength": "weak|moderate|strong",
-          "confidence": 85,
-          "reasoning": "Detailed explanation for this specific recommendation...",
-          "sector": "Technology",
-          "expectedAnnualReturn": 0.12,
-          "volatility": 0.18,
-          "targetPrice": 185.50
-        }
-      ],
-      "reasoning": "Overall portfolio strategy explanation",
-      "riskAssessment": "Risk analysis based on user's profile",
-      "marketOutlook": "Current market outlook and implications",
-      "portfolioProjections": {
-        "totalInvestment": 15000,
-        "monthlyProjections": [
-          {
-            "month": 0,
-            "value": 15000,
-            "date": "2024-01"
-          },
-          {
-            "month": 1,
-            "value": 15120,
-            "date": "2024-02"
-          }
-        ],
-        "projectedValues": {
-          "oneYear": 16200,
-          "threeYear": 19440,
-          "fiveYear": 24300
-        },
-        "expectedAnnualReturn": 0.08,
-        "riskLevel": "medium",
-        "diversificationScore": 85,
-        "sectorBreakdown": {
-          "Technology": 40,
-          "Financials": 30,
-          "Healthcare": 20,
-          "ETF": 10
-        }
-      }
+    if (!API_KEYS.OPENAI_API_KEY) {
+      console.log('⚠️ OpenAI API key not found, using fallback recommendations')
+      return generateFallbackRecommendations(userProfile)
     }
-    
-    IMPORTANT: For each recommendation, provide:
-    - expectedAnnualReturn: Realistic annual return expectation (0.05-0.15 range)
-    - volatility: Expected price volatility (0.10-0.35 range)  
-    - targetPrice: 12-month price target (optional)
-    
-    For portfolioProjections, calculate:
-    - totalInvestment: Sum of all new investments
-    - monthlyProjections: Array of 61 monthly values (0-60 months) with realistic market fluctuations
-    - projectedValues: Compound growth projections for 1, 3, and 5 years
-    - expectedAnnualReturn: Weighted average of all recommendations
-    - riskLevel: Overall portfolio risk (low/medium/high)
-    - diversificationScore: 0-100 based on sector spread
-    - sectorBreakdown: Percentage allocation by sector
-    
-    MONTHLY PROJECTIONS MUST:
-    - Include month 0 as starting value
-    - Show realistic market volatility (not smooth curves)
-    - Account for economic cycles and corrections
-    - Reflect seasonal market patterns
-    - Include proper date formatting (YYYY-MM)
-    `
-    
-    // Primary: OpenAI
-    const response = await fetch(API_ENDPOINTS.OPENAI_CHAT, {
+
+    const systemPrompt = `You are a professional investment advisor AI for G.AI.NS platform. Analyze user profile and provide personalized investment recommendations.
+
+User Profile:
+- Risk Tolerance: ${userProfile.riskTolerance}/10
+- Time Horizon: ${userProfile.timeHorizon}
+- Growth Type: ${userProfile.growthType}
+- Sectors: ${userProfile.sectors?.join(', ') || 'Any'}
+- Ethical Investing: ${userProfile.ethicalInvesting}/10
+- Available Capital: $${userProfile.capital}
+- Current Portfolio: ${JSON.stringify(userProfile.portfolio || {})}
+
+Provide investment recommendations in this exact JSON format:
+{
+  "recommendations": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc",
+      "type": "buy",
+      "amount": 5000,
+      "confidence": 85,
+      "reasoning": "Strong fundamentals and growth potential",
+      "sector": "Technology",
+      "targetPrice": 200,
+      "stopLoss": 180
+    }
+  ],
+  "reasoning": "Overall investment strategy explanation",
+  "riskAssessment": "Risk analysis for this portfolio",
+  "marketOutlook": "Current market conditions and outlook"
+}`
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'gpt-4',
         messages: [
-          {
-            role: 'system',
-            content: 'You are a professional investment advisor with expertise in portfolio management, risk assessment, and market analysis. You must respond with ONLY valid JSON - no additional text, explanations, or formatting. Return only the JSON object as specified in the user prompt.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: 'Please provide investment recommendations based on my profile.' }
         ],
         temperature: 0.7,
-        max_tokens: 2000
-      })
+        max_tokens: 2000,
+      }),
     })
-    
+
     if (!response.ok) {
-      throw new Error('OpenAI API request failed')
+      throw new Error(`OpenAI API error: ${response.status}`)
     }
-    
+
     const data = await response.json()
-    const aiResponse = data.choices[0].message.content
-    
-    console.log('AI Response:', aiResponse) // Debug log
-    
-    // Extract JSON from the AI response (it might contain additional text)
-    let jsonResponse
+    const content = data.choices[0]?.message?.content
+
+    if (!content) {
+      throw new Error('No content received from OpenAI')
+    }
+
     try {
-      // First try to parse the response directly
-      jsonResponse = JSON.parse(aiResponse)
-    } catch (error) {
-      // If direct parsing fails, try to extract JSON from the response
-      console.log('Direct JSON parse failed, attempting to extract JSON...')
+      const analysis: InvestmentAnalysis = JSON.parse(content)
       
-      // Look for JSON content between curly braces
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        try {
-          jsonResponse = JSON.parse(jsonMatch[0])
-        } catch (extractError) {
-          console.error('Failed to parse extracted JSON:', extractError)
-          throw new Error('AI returned invalid JSON format')
-        }
-      } else {
-        console.error('No JSON found in AI response:', aiResponse)
-        throw new Error('AI response does not contain valid JSON')
-      }
+      // Add portfolio projections
+      analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
+      
+      console.log('✅ AI recommendations generated successfully')
+      return analysis
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError)
+      return generateFallbackRecommendations(userProfile)
     }
-    
-    // Validate the response structure
-    if (!jsonResponse.recommendations || !Array.isArray(jsonResponse.recommendations)) {
-      console.error('Invalid response structure:', jsonResponse)
-      throw new Error('AI response missing recommendations array')
-    }
-    
-    // Calculate portfolio projections if not provided by AI
-    if (!jsonResponse.portfolioProjections) {
-      jsonResponse.portfolioProjections = calculatePortfolioProjections(jsonResponse.recommendations, userProfile)
-    }
-    
-    return jsonResponse
-    
+
   } catch (error) {
-    console.error('Error generating AI recommendations:', error)
-    
-    // Fallback: Return mock data or try Grok API
+    console.error('Error generating investment recommendations:', error)
     return generateFallbackRecommendations(userProfile)
   }
 }
 
-// Calculate portfolio projections based on recommendations
 function calculatePortfolioProjections(recommendations: InvestmentRecommendation[], userProfile: any): PortfolioProjection {
-  const buyRecommendations = recommendations.filter(r => r.type === 'buy')
-  const totalInvestment = buyRecommendations.reduce((sum, r) => sum + r.amount, 0)
+  const totalInvestment = userProfile.capital
+  const riskMultiplier = userProfile.riskTolerance / 10
   
-  if (totalInvestment === 0) {
-    return {
-      totalInvestment: 0,
-      monthlyProjections: [],
-      projectedValues: { oneYear: 0, threeYear: 0, fiveYear: 0 },
-      expectedAnnualReturn: 0,
-      riskLevel: 'low',
-      diversificationScore: 0,
-      sectorBreakdown: {}
-    }
-  }
+  // Calculate expected return based on user profile
+  let baseReturn = 0.07 // 7% base return
+  if (userProfile.growthType === 'aggressive') baseReturn = 0.12
+  if (userProfile.growthType === 'conservative') baseReturn = 0.05
   
-  // Calculate weighted average expected return
-  let weightedReturn = 0
-  let totalVolatility = 0
-  const sectorBreakdown: { [sector: string]: number } = {}
+  const expectedAnnualReturn = baseReturn + (riskMultiplier * 0.03)
   
-  buyRecommendations.forEach(rec => {
-    const weight = rec.amount / totalInvestment
-    
-    // Use AI-provided values or calculate defaults
-    const expectedReturn = (rec as any).expectedAnnualReturn || getSectorExpectedReturn(rec.sector)
-    const volatility = (rec as any).volatility || getSectorVolatility(rec.sector)
-    
-    weightedReturn += expectedReturn * weight
-    totalVolatility += volatility * weight
-    
-    // Track sector allocation
-    const sector = rec.sector || 'Other'
-    sectorBreakdown[sector] = (sectorBreakdown[sector] || 0) + (weight * 100)
-  })
-  
-  // Calculate projections using compound growth
-  const oneYear = totalInvestment * Math.pow(1 + weightedReturn, 1)
-  const threeYear = totalInvestment * Math.pow(1 + weightedReturn, 3)
-  const fiveYear = totalInvestment * Math.pow(1 + weightedReturn, 5)
-  
-  // Determine risk level
-  let riskLevel: 'low' | 'medium' | 'high' = 'medium'
-  if (totalVolatility < 0.15) riskLevel = 'low'
-  else if (totalVolatility > 0.25) riskLevel = 'high'
-  
-  // Calculate diversification score (higher is better)
-  const numSectors = Object.keys(sectorBreakdown).length
-  const maxSectorAllocation = Math.max(...Object.values(sectorBreakdown))
-  const diversificationScore = Math.min(100, (numSectors * 20) + (100 - maxSectorAllocation))
-  
-  // Generate monthly projections
-  const monthlyProjections: { month: number; value: number; date: string }[] = []
+  // Generate monthly projections for 5 years
+  const monthlyProjections = []
+  const monthlyReturn = expectedAnnualReturn / 12
   let currentValue = totalInvestment
-  for (let month = 0; month <= 60; month++) {
-    const monthlyReturn = weightedReturn / 12
-    const monthlyVolatility = totalVolatility / Math.sqrt(12)
-    const monthlyChange = currentValue * monthlyReturn + currentValue * monthlyVolatility * (Math.random() - 0.5) * 0.02
-    currentValue += monthlyChange
+  
+  for (let month = 1; month <= 60; month++) {
+    currentValue *= (1 + monthlyReturn)
+    const date = new Date()
+    date.setMonth(date.getMonth() + month)
+    
     monthlyProjections.push({
       month,
       value: Math.round(currentValue),
-      date: new Date(new Date().getFullYear(), new Date().getMonth() + month, 1).toISOString().substr(0, 7)
+      date: date.toISOString().split('T')[0]
     })
   }
+  
+  // Calculate sector breakdown
+  const sectorBreakdown: { [sector: string]: number } = {}
+  recommendations.forEach(rec => {
+    if (!sectorBreakdown[rec.sector]) {
+      sectorBreakdown[rec.sector] = 0
+    }
+    sectorBreakdown[rec.sector] += rec.amount
+  })
+  
+  // Normalize to percentages
+  Object.keys(sectorBreakdown).forEach(sector => {
+    sectorBreakdown[sector] = (sectorBreakdown[sector] / totalInvestment) * 100
+  })
   
   return {
     totalInvestment,
     monthlyProjections,
     projectedValues: {
-      oneYear: Math.round(oneYear),
-      threeYear: Math.round(threeYear),
-      fiveYear: Math.round(fiveYear)
+      oneYear: monthlyProjections[11]?.value || totalInvestment,
+      threeYear: monthlyProjections[35]?.value || totalInvestment,
+      fiveYear: monthlyProjections[59]?.value || totalInvestment,
     },
-    expectedAnnualReturn: Math.round(weightedReturn * 10000) / 10000, // Round to 4 decimal places
-    riskLevel,
-    diversificationScore: Math.round(diversificationScore),
-    sectorBreakdown: Object.fromEntries(
-      Object.entries(sectorBreakdown).map(([sector, pct]) => [sector, Math.round(pct)])
-    )
+    expectedAnnualReturn: expectedAnnualReturn * 100,
+    riskLevel: userProfile.riskTolerance <= 3 ? 'low' : userProfile.riskTolerance <= 7 ? 'medium' : 'high',
+    diversificationScore: Math.min(Object.keys(sectorBreakdown).length * 20, 100),
+    sectorBreakdown
   }
 }
 
-// Helper functions for sector-based defaults
-function getSectorExpectedReturn(sector: string): number {
-  const sectorReturns: { [key: string]: number } = {
-    'Technology': 0.12,
-    'Healthcare': 0.10,
-    'Financials': 0.09,
-    'Energy': 0.11,
-    'Utilities': 0.06,
-    'Consumer': 0.08,
-    'ETF': 0.08,
-    'Bonds': 0.04,
-    'International': 0.07,
-    'Cryptocurrency': 0.15
-  }
-  
-  return sectorReturns[sector] || 0.08
-}
-
-function getSectorVolatility(sector: string): number {
-  const sectorVolatility: { [key: string]: number } = {
-    'Technology': 0.25,
-    'Healthcare': 0.18,
-    'Financials': 0.20,
-    'Energy': 0.30,
-    'Utilities': 0.12,
-    'Consumer': 0.16,
-    'ETF': 0.15,
-    'Bonds': 0.08,
-    'International': 0.18,
-    'Cryptocurrency': 0.40
-  }
-  
-  return sectorVolatility[sector] || 0.15
-}
-
-// Fallback recommendations when AI APIs fail
 function generateFallbackRecommendations(userProfile: any): InvestmentAnalysis {
+  console.log('🔄 Generating fallback recommendations...')
+  
   const recommendations: InvestmentRecommendation[] = []
+  const totalAmount = userProfile.capital
   
-  // Check if we have any API keys configured
-  const hasOpenAI = API_KEYS.OPENAI_API_KEY && API_KEYS.OPENAI_API_KEY !== 'your_openai_api_key_here'
-  const hasGrok = API_KEYS.GROK_API_KEY && API_KEYS.GROK_API_KEY !== 'your_grok_api_key_here'
-  const hasFinancialAPI = (API_KEYS.ALPHA_VANTAGE_API_KEY && API_KEYS.ALPHA_VANTAGE_API_KEY !== 'your_alpha_vantage_key_here') || 
-                         (API_KEYS.FINNHUB_API_KEY && API_KEYS.FINNHUB_API_KEY !== 'your_finnhub_key_here')
-  
-  if (!hasOpenAI && !hasGrok) {
-    return {
-      recommendations: [],
-      reasoning: 'API configuration required. Please add your OpenAI or Grok API key to generate personalized investment recommendations.',
-      riskAssessment: 'Unable to assess risk without AI analysis. Please configure API keys.',
-      marketOutlook: 'Market analysis unavailable. Please configure API keys.'
-    }
-  }
-  
-  // If we have existing portfolio, provide guidance on those holdings
-  if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
-    userProfile.existingPortfolio.forEach((holding: any) => {
-      if (holding.symbol && holding.amount > 0) {
-        recommendations.push({
-          symbol: holding.symbol,
-          name: `${holding.symbol} Holdings`,
-          type: 'hold',
-          amount: holding.amount,
-          strength: 'moderate',
-          confidence: 60,
-          reasoning: `Maintain your current ${holding.symbol} position. API configuration required for detailed analysis.`,
-          sector: holding.type === 'stock' ? 'Equity' : holding.type === 'crypto' ? 'Cryptocurrency' : holding.type === 'etf' ? 'ETF' : 'Other'
-        })
-      }
-    })
+  // Conservative recommendations based on user profile
+  if (userProfile.riskTolerance <= 3) {
+    recommendations.push(
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 90, reasoning: 'Broad market exposure with low risk', sector: 'Diversified' },
+      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'Stable bond exposure', sector: 'Fixed Income' },
+      { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Dividend income focus', sector: 'Dividend' }
+    )
+  } else if (userProfile.riskTolerance <= 7) {
+    recommendations.push(
+      { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'buy', amount: totalAmount * 0.5, confidence: 90, reasoning: 'Strong large-cap exposure', sector: 'Large Cap' },
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 85, reasoning: 'Broad market diversification', sector: 'Diversified' },
+      { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'International diversification', sector: 'International' }
+    )
+  } else {
+    recommendations.push(
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'High-growth tech exposure', sector: 'Technology' },
+      { symbol: 'VUG', name: 'Vanguard Growth ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 80, reasoning: 'Growth-focused investing', sector: 'Growth' },
+      { symbol: 'VB', name: 'Vanguard Small-Cap ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 75, reasoning: 'Small-cap growth potential', sector: 'Small Cap' }
+    )
   }
   
   return {
     recommendations,
-    reasoning: 'API configuration required for comprehensive investment analysis. Please add your OpenAI or Grok API key.',
-    riskAssessment: 'Risk assessment requires AI analysis. Please configure API keys.',
-    marketOutlook: 'Market analysis unavailable. Please configure API keys.'
+    reasoning: `Portfolio designed for ${userProfile.riskTolerance <= 3 ? 'conservative' : userProfile.riskTolerance <= 7 ? 'moderate' : 'aggressive'} risk tolerance with ${userProfile.timeHorizon} time horizon.`,
+    riskAssessment: `Risk level: ${userProfile.riskTolerance}/10. Diversified approach to match your risk profile.`,
+    marketOutlook: 'Current market conditions suggest a balanced approach with focus on diversification.',
+    portfolioProjections: calculatePortfolioProjections(recommendations, userProfile)
   }
 }
 
@@ -587,7 +661,7 @@ export async function getFinancialNews(symbols?: string[]): Promise<NewsItem[]> 
     const query = symbols ? symbols.join(' OR ') : 'stock market investment'
     
     const response = await fetch(
-      `${API_ENDPOINTS.NEWS_API_BASE}/everything?q=${encodeURIComponent(query)}&domains=reuters.com,bloomberg.com,cnbc.com,marketwatch.com&sortBy=publishedAt&apiKey=${API_KEYS.NEWS_API_KEY}`
+      `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&domains=reuters.com,bloomberg.com,cnbc.com,marketwatch.com&sortBy=publishedAt&apiKey=${API_KEYS.NEWS_API_KEY}`
     )
     
     const data = await response.json()
@@ -610,47 +684,37 @@ export async function getFinancialNews(symbols?: string[]): Promise<NewsItem[]> 
 // UTILITY FUNCTIONS
 // ========================================
 
-// Validate API keys
 export function validateApiKeys(): { [key: string]: boolean } {
   return {
     openai: !!API_KEYS.OPENAI_API_KEY,
     grok: !!API_KEYS.GROK_API_KEY,
     alphaVantage: !!API_KEYS.ALPHA_VANTAGE_API_KEY,
+    twelveData: !!API_KEYS.TWELVE_DATA_API_KEY,
     finnhub: !!API_KEYS.FINNHUB_API_KEY,
     polygon: !!API_KEYS.POLYGON_API_KEY,
-    newsApi: !!API_KEYS.NEWS_API_KEY
+    yahooFinance: !!API_KEYS.YAHOO_FINANCE_API_KEY,
+    newsApi: !!API_KEYS.NEWS_API_KEY,
+    marketaux: !!API_KEYS.MARKETAUX_API_KEY,
   }
 }
 
-// Rate limiting helper
-export class RateLimiter {
-  private requests: { [key: string]: number[] } = {}
-  
-  canMakeRequest(apiName: string, maxRequests: number, timeWindow: number): boolean {
-    const now = Date.now()
-    const windowStart = now - timeWindow
-    
-    if (!this.requests[apiName]) {
-      this.requests[apiName] = []
-    }
-    
-    // Remove old requests outside the time window
-    this.requests[apiName] = this.requests[apiName].filter(time => time > windowStart)
-    
-    // Check if we can make another request
-    if (this.requests[apiName].length < maxRequests) {
-      this.requests[apiName].push(now)
-      return true
-    }
-    
-    return false
-  }
+export function getApiStatus(): { provider: string; active: boolean; remainingRequests: number }[] {
+  return API_PROVIDERS.map(provider => ({
+    provider: provider.name,
+    active: provider.active,
+    remainingRequests: rateLimiter.getRemainingRequests(
+      provider.name.toLowerCase().replace(' ', ''),
+      provider.rateLimit.requests,
+      provider.name === 'Finnhub' ? 60 * 1000 : 24 * 60 * 60 * 1000
+    )
+  }))
 }
 
-export const rateLimiter = new RateLimiter()
+// Export rate limiter for external use
+export { rateLimiter }
 
 // ========================================
 // EXPORT CONFIGURATION
 // ========================================
 
-export { API_KEYS, API_ENDPOINTS } 
+export { API_KEYS } 
