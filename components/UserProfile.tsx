@@ -3,17 +3,30 @@
 import { useState } from 'react'
 import { useSession, signOut, signIn } from 'next-auth/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LogOut, User, UserPlus } from 'lucide-react'
+import { LogOut, User, UserPlus, RefreshCw, Edit, Eye } from 'lucide-react'
 import Image from 'next/image'
+import { loadUserProfile } from '@/lib/userStorage'
 
 interface UserProfileProps {
   userType?: 'guest' | 'user' | null
+  onStartFresh?: () => void
+  onEditResponses?: () => void
+  onViewRecommendations?: () => void
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
+const UserProfile: React.FC<UserProfileProps> = ({ 
+  userType, 
+  onStartFresh, 
+  onEditResponses, 
+  onViewRecommendations 
+}) => {
   const { data: session } = useSession()
   const [showDropdown, setShowDropdown] = useState(false)
   const [isUpgrading, setIsUpgrading] = useState(false)
+
+  // Check if user has completed questionnaire
+  const storedProfile = loadUserProfile()
+  const hasCompletedQuestionnaire = storedProfile?.hasCompletedQuestionnaire || false
 
   // Show nothing if no user type is set
   if (!userType && !session?.user) {
@@ -34,6 +47,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
       console.error('Upgrade sign-in error:', error)
       setIsUpgrading(false)
     }
+  }
+
+  const handleMenuAction = (action: () => void) => {
+    setShowDropdown(false)
+    action()
   }
 
   return (
@@ -118,33 +136,81 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
                 </div>
 
                 {/* Actions */}
-                {isGuest ? (
+                <div className="py-2">
+                  {/* Start Fresh - Always available */}
                   <button
-                    onClick={handleUpgradeAccount}
-                    disabled={isUpgrading}
-                    className="w-full p-3 text-left text-gray-300 hover:text-white hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    onClick={() => onStartFresh && handleMenuAction(onStartFresh)}
+                    disabled={!onStartFresh}
+                    className={`w-full p-3 text-left transition-colors flex items-center gap-2 ${
+                      onStartFresh 
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                        : 'text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    {isUpgrading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4" />
-                        Create Account to Save Progress
-                      </>
-                    )}
+                    <RefreshCw className="w-4 h-4" />
+                    Start Fresh
                   </button>
-                ) : (
+
+                  {/* Edit My Responses - Only available if questionnaire completed */}
                   <button
-                    onClick={handleSignOut}
-                    className="w-full p-3 text-left text-gray-300 hover:text-white hover:bg-gray-700 transition-colors flex items-center gap-2"
+                    onClick={() => onEditResponses && hasCompletedQuestionnaire && handleMenuAction(onEditResponses)}
+                    disabled={!onEditResponses || !hasCompletedQuestionnaire}
+                    className={`w-full p-3 text-left transition-colors flex items-center gap-2 ${
+                      onEditResponses && hasCompletedQuestionnaire
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                        : 'text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
+                    <Edit className="w-4 h-4" />
+                    Edit My Responses
                   </button>
-                )}
+
+                  {/* View My Most Recent Recommendations - Only available if questionnaire completed */}
+                  <button
+                    onClick={() => onViewRecommendations && hasCompletedQuestionnaire && handleMenuAction(onViewRecommendations)}
+                    disabled={!onViewRecommendations || !hasCompletedQuestionnaire}
+                    className={`w-full p-3 text-left transition-colors flex items-center gap-2 ${
+                      onViewRecommendations && hasCompletedQuestionnaire
+                        ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                        : 'text-gray-500 cursor-not-allowed'
+                    }`}
+                  >
+                    <Eye className="w-4 h-4" />
+                    View My Most Recent Recommendations
+                  </button>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-600 my-2"></div>
+
+                  {/* Account Actions */}
+                  {isGuest ? (
+                    <button
+                      onClick={handleUpgradeAccount}
+                      disabled={isUpgrading}
+                      className="w-full p-3 text-left text-gray-300 hover:text-white hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isUpgrading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                          Creating Account...
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" />
+                          Create Account to Save Progress
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full p-3 text-left text-gray-300 hover:text-white hover:bg-gray-700 transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  )}
+                </div>
               </motion.div>
             </>
           )}

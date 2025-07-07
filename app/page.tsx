@@ -240,7 +240,12 @@ export default function Home() {
     <main className={`chat-container min-h-screen bg-gray-950 ${isPortfolioStep ? 'portfolio-layout' : ''}`}>
       
       {/* User Profile - Top Right Corner */}
-      <UserProfile userType={userType} />
+      <UserProfile 
+        userType={userType} 
+        onStartFresh={handleStartFresh}
+        onEditResponses={handleEditResponses}
+        onViewRecommendations={handleUsePreviousAnswers}
+      />
 
       {/* Top Left Logo - Only shown after account selection */}
       <AnimatePresence>
