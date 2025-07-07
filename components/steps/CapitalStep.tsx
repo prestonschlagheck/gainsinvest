@@ -1,0 +1,124 @@
+'use client'
+
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { DollarSign } from 'lucide-react'
+
+interface CapitalStepProps {
+  onComplete: (data: { capitalAvailable: number }) => void
+  userProfile?: any
+}
+
+const CapitalStep: React.FC<CapitalStepProps> = ({ onComplete, userProfile }) => {
+  const [capital, setCapital] = useState(userProfile?.capitalAvailable || 0)
+  const [inputValue, setInputValue] = useState(userProfile?.capitalAvailable?.toString() || '')
+
+  const quickAmounts = [1000, 5000, 10000, 25000, 50000, 100000]
+
+  const handleInputChange = (value: string) => {
+    // Remove non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, '')
+    setInputValue(cleanValue)
+    
+    const numericValue = parseFloat(cleanValue) || 0
+    setCapital(numericValue)
+  }
+
+  const selectQuickAmount = (amount: number) => {
+    setCapital(amount)
+    setInputValue(amount.toString())
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  return (
+    <div className="step-content">
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold text-white mb-8">Available Capital</h2>
+      </div>
+
+      <div className="space-y-6">
+        {/* Input Field */}
+        <div className="max-w-sm mx-auto">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <span className="text-2xl text-gray-400">$</span>
+            </div>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => handleInputChange(e.target.value)}
+              placeholder="0"
+              className="input-field pl-12 pr-4 py-4 text-2xl text-center w-full"
+            />
+          </div>
+        </div>
+
+        {/* Quick Amount Buttons */}
+        <div>
+          <p className="text-sm text-gray-400 text-center mb-4">Or select a quick amount:</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {quickAmounts.map((amount) => (
+              <motion.button
+                key={amount}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => selectQuickAmount(amount)}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+                  capital === amount
+                    ? 'bg-primary-600 border-primary-500 text-white'
+                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                }`}
+              >
+                <div className="text-sm font-medium">
+                  {formatCurrency(amount)}
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* Investment Ranges */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div className={`p-4 rounded-lg border ${
+            capital < 10000 ? 'bg-blue-900/20 border-blue-700' : 'bg-gray-800 border-gray-700'
+          }`}>
+            <h4 className="font-semibold text-blue-400 mb-2">Starting Out</h4>
+            <p className="text-gray-400">Under $10,000 - Focus on low-cost ETFs and diversification</p>
+          </div>
+          <div className={`p-4 rounded-lg border ${
+            capital >= 10000 && capital < 100000 ? 'bg-green-900/20 border-green-700' : 'bg-gray-800 border-gray-700'
+          }`}>
+            <h4 className="font-semibold text-green-400 mb-2">Building Wealth</h4>
+            <p className="text-gray-400">$10,000 - $100,000 - Mix of ETFs and individual stocks</p>
+          </div>
+          <div className={`p-4 rounded-lg border ${
+            capital >= 100000 ? 'bg-purple-900/20 border-purple-700' : 'bg-gray-800 border-gray-700'
+          }`}>
+            <h4 className="font-semibold text-purple-400 mb-2">Advanced Portfolio</h4>
+            <p className="text-gray-400">$100,000+ - Advanced strategies and alternative investments</p>
+          </div>
+        </div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => onComplete({ capitalAvailable: capital })}
+        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
+        disabled={capital <= 0}
+      >
+        Continue
+      </motion.button>
+    </div>
+  )
+}
+
+export default CapitalStep 
