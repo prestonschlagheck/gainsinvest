@@ -45,12 +45,16 @@ export default function Home() {
 
   // Handle authentication state changes
   useEffect(() => {
+    console.log('Auth state changed:', { status, hasUser: !!session?.user, currentView })
+    
     if (status === 'authenticated' && session?.user) {
       // User is authenticated with Google
       const existingProfile = loadUserProfile()
+      console.log('User authenticated, checking profile:', { hasProfile: !!existingProfile, hasCompleted: existingProfile?.hasCompletedQuestionnaire })
       
       if (existingProfile && existingProfile.hasCompletedQuestionnaire) {
-        // User has a previous profile - show returning user modal
+        // User has a previous profile - show returning user modal on chat view
+        console.log('Returning user detected, showing modal')
         const updatedProfile = {
           ...existingProfile,
           googleUser: {
@@ -60,8 +64,13 @@ export default function Home() {
         }
         setStoredProfile(updatedProfile)
         setShowReturningUserModal(true)
+        setCurrentView('chat') // Always go to chat view for authenticated users
+        setUserType('user')
+        setHasStarted(true) // Enable the chat interface
+        setShowAuthModal(false) // Close auth modal if open
       } else {
         // New user or no previous profile - go directly to questionnaire
+        console.log('New user detected, starting questionnaire')
         setUserType('user')
         setHasStarted(true)
         setShowContinueBox(true)
