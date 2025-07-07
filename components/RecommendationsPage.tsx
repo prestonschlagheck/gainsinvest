@@ -18,11 +18,25 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [apiError, setApiError] = useState(false)
   const [apiKeyStatus, setApiKeyStatus] = useState<any>(null)
   const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
+  const [loadingPercentage, setLoadingPercentage] = useState(0)
+
+
 
   // Generate recommendations using real APIs when available
   useEffect(() => {
     const generateRecommendations = async () => {
       setIsLoading(true)
+      setLoadingPercentage(0)
+      
+      // Steady loading progress during API call
+      const progressInterval = setInterval(() => {
+        setLoadingPercentage(prev => {
+          if (prev < 95) {
+            return Math.min(prev + 1, 95) // Steady 1% increment, max 95%
+          }
+          return prev
+        })
+      }, 150) // Slower, steady pace
       
       try {
         // Call the API route
@@ -34,6 +48,8 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           body: JSON.stringify(userProfile)
         })
         
+        clearInterval(progressInterval)
+        
         if (!response.ok) {
           throw new Error(`API request failed: ${response.status}`)
         }
@@ -44,12 +60,20 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           throw new Error(analysis.error)
         }
 
+        // Complete the loading to 100%
+        setLoadingPercentage(100)
+        
+        // Brief pause to show 100% completion
+        await new Promise(resolve => setTimeout(resolve, 300))
+
         setRecommendations(analysis.recommendations)
         setPortfolioProjections(analysis.portfolioProjections)
         setIsLoading(false)
         return
       } catch (error) {
         console.error('API Error:', error)
+        
+        clearInterval(progressInterval)
         
         // Check API key status for better error messaging
         try {
@@ -168,136 +192,75 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               viewBox="0 0 400 80" 
               className="overflow-hidden"
             >
-              {/* Grid lines that scroll */}
+              {/* Simple grid background */}
               <defs>
-                <pattern id="scrollingGrid" width="40" height="20" patternUnits="userSpaceOnUse">
+                <pattern id="grid" width="40" height="20" patternUnits="userSpaceOnUse">
                   <path d="M 40 0 L 0 0 0 20" fill="none" stroke="rgb(75 85 99)" strokeWidth="0.5" opacity="0.3"/>
                 </pattern>
               </defs>
-              <motion.rect 
-                width="800" 
-                height="100%" 
-                fill="url(#scrollingGrid)"
-                animate={{ x: [-400, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              <rect width="100%" height="100%" fill="url(#grid)" />
+              
+              {/* Realistic zigzag growth line */}
+              <motion.path
+                d="M 0 65 L 30 58 L 50 62 L 80 55 L 100 48 L 120 52 L 150 45 L 180 38 L 200 42 L 230 35 L 260 28 L 290 32 L 320 25 L 350 18 L 380 22 L 400 15"
+                fill="none"
+                stroke="url(#growthGradient)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: loadingPercentage / 100 }}
+                transition={{ 
+                  duration: 0.3, 
+                  ease: "easeOut"
+                }}
               />
               
-              {/* Continuous flowing data line */}
-              <motion.g
-                animate={{ x: [-100, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              >
-                <path
-                  d="M -100 60 Q -80 45 -60 52 Q -40 38 -20 42 Q 0 30 20 35 Q 40 22 60 28 Q 80 18 100 25 Q 120 15 140 20 Q 160 12 180 18 Q 200 8 220 15 Q 240 5 260 12 Q 280 8 300 14 Q 320 6 340 10 Q 360 4 380 8 Q 400 2 420 6 Q 440 5 460 9 Q 480 3 500 7"
-                  fill="none"
-                  stroke="url(#flowingGradient)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </motion.g>
-              
-              {/* Second flowing line for depth */}
-              <motion.g
-                animate={{ x: [-120, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-              >
-                <path
-                  d="M -120 65 Q -100 58 -80 62 Q -60 48 -40 55 Q -20 42 0 48 Q 20 38 40 45 Q 60 32 80 38 Q 100 28 120 35 Q 140 25 160 30 Q 180 22 200 28 Q 220 18 240 25 Q 260 15 280 22 Q 300 12 320 18 Q 340 10 360 15 Q 380 8 400 12 Q 420 6 440 10 Q 460 4 480 8"
-                  fill="none"
-                  stroke="url(#secondaryGradient)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  opacity="0.6"
-                />
-              </motion.g>
-              
-              {/* Flowing data points */}
-              <motion.g
-                animate={{ x: [-40, 0] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
-              >
-                {[
-                  { x: -20, y: 42 }, { x: 20, y: 35 }, { x: 60, y: 28 }, 
-                  { x: 100, y: 25 }, { x: 140, y: 20 }, { x: 180, y: 18 },
-                  { x: 220, y: 15 }, { x: 260, y: 12 }, { x: 300, y: 14 },
-                  { x: 340, y: 10 }, { x: 380, y: 8 }, { x: 420, y: 6 }
-                ].map((point, index) => (
+              {/* Data points that align with key zigzag points */}
+              {[
+                { x: 80, y: 55 }, { x: 150, y: 45 }, { x: 230, y: 35 }, 
+                { x: 290, y: 32 }, { x: 350, y: 18 }, { x: 400, y: 15 }
+              ].map((point, index) => {
+                const shouldShow = loadingPercentage > (index + 1) * 16
+                return (
                   <motion.circle
                     key={index}
                     cx={point.x}
                     cy={point.y}
-                    r="2.5"
+                    r="3"
                     fill="#10b981"
+                    initial={{ scale: 0, opacity: 0 }}
                     animate={{ 
-                      scale: [1, 1.3, 1],
-                      opacity: [0.8, 1, 0.8]
+                      scale: shouldShow ? 1 : 0,
+                      opacity: shouldShow ? 1 : 0
                     }}
                     transition={{ 
-                      duration: 1.5, 
-                      repeat: Infinity, 
-                      ease: "easeInOut",
-                      delay: index * 0.1
+                      duration: 0.3,
+                      ease: "easeOut"
                     }}
                   />
-                ))}
-              </motion.g>
+                )
+              })}
               
-              {/* Gradient definitions for flowing lines */}
+              {/* Gradient definition */}
               <defs>
-                <linearGradient id="flowingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="growthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="30%" stopColor="#3b82f6" />
-                  <stop offset="60%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#10b981" />
-                </linearGradient>
-                <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#3b82f6" />
+                  <stop offset="50%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#8b5cf6" />
                 </linearGradient>
               </defs>
-              
-              {/* Real-time value indicators */}
-              <motion.g>
-                <motion.text
-                  x="20"
-                  y="20"
-                  className="text-xs fill-green-400 font-mono"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  LIVE
-                </motion.text>
-                <motion.circle
-                  cx="10"
-                  cy="15"
-                  r="3"
-                  fill="#10b981"
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                />
-              </motion.g>
-              
-              {/* Flowing price ticker at bottom */}
-              <motion.g
-                animate={{ x: [-200, 400] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-              >
-                <text x="0" y="72" className="text-xs fill-gray-400 font-mono">
-                  Analyzing market data...
-                </text>
-              </motion.g>
             </svg>
             
-            {/* Dynamic status text */}
-            <div className="absolute top-2 right-2 text-sm text-gray-300 font-mono">
+            {/* Animated percentage counter in top right */}
+            <div className="absolute top-2 right-2">
               <motion.div
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 2, repeat: Infinity }}
+                className="text-lg font-bold text-green-400 font-mono bg-gray-900/80 px-2 py-1 rounded"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
               >
-                Processing...
+                {Math.floor(loadingPercentage)}%
               </motion.div>
             </div>
           </div>
@@ -488,10 +451,23 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">Expected Annual Return</div>
               <div className="text-lg font-semibold text-green-400">
-                {portfolioProjections.expectedAnnualReturn 
-                  ? `${(portfolioProjections.expectedAnnualReturn * 100).toFixed(1)}%`
-                  : `${(((portfolioProjections.projectedValues?.threeYear / userProfile.capitalAvailable) ** (1/3) - 1) * 100).toFixed(1)}%`
-                }
+                {(() => {
+                  // Calculate weighted average return based on actual recommendations
+                  const buyRecommendations = recommendations.filter(r => r.type === 'buy')
+                  if (buyRecommendations.length > 0) {
+                    const totalAmount = buyRecommendations.reduce((sum, r) => sum + r.amount, 0)
+                    const weightedReturn = buyRecommendations.reduce((sum, r) => {
+                      const expectedReturn = r.expectedAnnualReturn || 0.08 // fallback to 8%
+                      const weight = r.amount / totalAmount
+                      return sum + (expectedReturn * weight)
+                    }, 0)
+                    return `${(weightedReturn * 100).toFixed(1)}%`
+                  }
+                  // Fallback to portfolio projections
+                  return portfolioProjections.expectedAnnualReturn 
+                    ? `${(portfolioProjections.expectedAnnualReturn * 100).toFixed(1)}%`
+                    : `${(((portfolioProjections.projectedValues?.threeYear / userProfile.capitalAvailable) ** (1/3) - 1) * 100).toFixed(1)}%`
+                })()}
               </div>
             </div>
             <div className="text-center">
