@@ -121,10 +121,9 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
-              Back
             </motion.button>
           )}
           <motion.button
