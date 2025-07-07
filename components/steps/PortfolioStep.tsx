@@ -2,21 +2,28 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, X, TrendingUp } from 'lucide-react'
+import { Plus, X, ArrowLeft } from 'lucide-react'
 import { PortfolioItem } from '@/types'
 
 interface PortfolioStepProps {
-  onComplete: (data: { existingPortfolio: PortfolioItem[] }) => void
+  onComplete: (data: { portfolio: any[] }) => void
   userProfile?: any
+  onBack?: () => void
 }
 
-const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }) => {
+const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, onBack }) => {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(
-    userProfile?.existingPortfolio || [{ symbol: '', amount: 0, type: 'stock' }]
+    userProfile?.portfolio || [{ type: 'stock', symbol: '', amount: 0 }]
   )
 
+  const updatePortfolioItem = (index: number, field: keyof PortfolioItem, value: any) => {
+    const newPortfolio = [...portfolio]
+    newPortfolio[index] = { ...newPortfolio[index], [field]: value }
+    setPortfolio(newPortfolio)
+  }
+
   const addPortfolioItem = () => {
-    setPortfolio([...portfolio, { symbol: '', amount: 0, type: 'stock' }])
+    setPortfolio([...portfolio, { type: 'stock', symbol: '', amount: 0 }])
   }
 
   const removePortfolioItem = (index: number) => {
@@ -25,116 +32,75 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }
     }
   }
 
-  const updatePortfolioItem = (index: number, field: keyof PortfolioItem, value: any) => {
-    const updated = portfolio.map((item, i) => 
-      i === index ? { ...item, [field]: value } : item
-    )
-    setPortfolio(updated)
-  }
-
-  const getAssetTypeColor = (type: string) => {
-    switch (type) {
-      case 'stock': return 'text-blue-400'
-      case 'crypto': return 'text-orange-400'
-      case 'etf': return 'text-green-400'
-      case 'other': return 'text-purple-400'
-      default: return 'text-gray-400'
-    }
-  }
-
-  const getTotalValue = () => {
-    return portfolio.reduce((sum, item) => sum + (item.amount || 0), 0)
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
   const handleComplete = () => {
-    // Filter out empty entries
-    const validPortfolio = portfolio.filter(item => 
-      item.symbol.trim() !== '' && item.amount > 0
-    )
-    onComplete({ existingPortfolio: validPortfolio })
+    // Filter out empty items
+    const validPortfolio = portfolio.filter(item => item.symbol.trim() !== '' && item.amount > 0)
+    onComplete({ portfolio: validPortfolio })
   }
 
   const handleSkip = () => {
-    onComplete({ existingPortfolio: [] })
+    onComplete({ portfolio: [] })
   }
+
+  const assetTypes = [
+    { value: 'stock', label: 'Stock' },
+    { value: 'etf', label: 'ETF' },
+    { value: 'bond', label: 'Bond' },
+    { value: 'crypto', label: 'Crypto' },
+    { value: 'other', label: 'Other' }
+  ]
 
   return (
     <div className="step-layout">
       <div className="step-header">
         <h2 className="text-2xl font-semibold text-white">Existing Portfolio</h2>
+        <p className="text-gray-400 mt-2">Help us understand your current investments</p>
       </div>
 
       <div className="step-body">
-        <div className="space-y-6 w-full">
-        {/* Total Portfolio Value */}
-        {getTotalValue() > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center rounded-lg p-4 border border-gray-700"
-          >
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <h3 className="text-lg font-semibold text-white">Total Portfolio Value</h3>
-            </div>
-            <div className="text-3xl font-bold text-green-400">
-              {formatCurrency(getTotalValue())}
-            </div>
-          </motion.div>
-        )}
-
+        <div className="space-y-4">
         {/* Portfolio Items */}
-        <div className="space-y-4 w-full">
+        <div className="space-y-4">
           {portfolio.map((item, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="rounded-lg p-4 border border-gray-700 w-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-gray-800/30 rounded-lg border border-gray-700"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end w-full">
-                {/* Asset Symbol */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Symbol/Ticker
-                  </label>
-                  <input
-                    type="text"
-                    value={item.symbol}
-                    onChange={(e) => updatePortfolioItem(index, 'symbol', e.target.value.toUpperCase())}
-                    placeholder="e.g., AAPL, BTC"
-                    className="input-field w-full"
-                  />
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 {/* Asset Type */}
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Asset Type
+                    Type
                   </label>
                   <select
                     value={item.type}
                     onChange={(e) => updatePortfolioItem(index, 'type', e.target.value)}
-                    className={`input-field w-full ${getAssetTypeColor(item.type)}`}
+                    className="input-field w-full"
                   >
-                    <option value="stock">Stock</option>
-                    <option value="etf">ETF</option>
-                    <option value="crypto">Crypto</option>
-                    <option value="other">Other</option>
+                    {assetTypes.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                {/* Amount */}
+                {/* Symbol */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Symbol/Name
+                  </label>
+                  <input
+                    type="text"
+                    value={item.symbol}
+                    onChange={(e) => updatePortfolioItem(index, 'symbol', e.target.value)}
+                    placeholder="AAPL, SPY, etc."
+                    className="input-field w-full"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Value ($)
@@ -180,8 +146,8 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }
         </motion.button>
         </div>
 
-        {/* Buttons - Skip button first, then Get Recommendations */}
-        <div className="space-y-3 w-full">
+        {/* Skip option */}
+        <div className="pt-4">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -190,12 +156,27 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }
           >
             I do not have any existing investments
           </motion.button>
+        </div>
+      </div>
 
+      <div className="step-footer">
+        <div className="flex gap-4">
+          {onBack && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onBack}
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </motion.button>
+          )}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleComplete}
-            className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
           >
             Get My Recommendations
           </motion.button>

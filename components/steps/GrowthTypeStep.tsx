@@ -2,14 +2,15 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, BarChart3, Activity } from 'lucide-react'
+import { Activity, BarChart3, TrendingUp, ArrowLeft } from 'lucide-react'
 
 interface GrowthTypeStepProps {
   onComplete: (data: { growthType: 'aggressive' | 'balanced' | 'conservative' }) => void
   userProfile?: any
+  onBack?: () => void
 }
 
-const GrowthTypeStep: React.FC<GrowthTypeStepProps> = ({ onComplete, userProfile }) => {
+const GrowthTypeStep: React.FC<GrowthTypeStepProps> = ({ onComplete, userProfile, onBack }) => {
   const [selectedType, setSelectedType] = useState<'aggressive' | 'balanced' | 'conservative'>(
     userProfile?.growthType || 'balanced'
   )
@@ -84,14 +85,27 @@ const GrowthTypeStep: React.FC<GrowthTypeStepProps> = ({ onComplete, userProfile
       </div>
 
       <div className="step-footer">
-        <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onComplete({ growthType: selectedType })}
-        className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
-      >
-        Continue
-      </motion.button>
+        <div className="flex gap-4">
+          {onBack && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onBack}
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onComplete({ growthType: selectedType })}
+            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+          >
+            Continue
+          </motion.button>
+        </div>
       </div>
     </div>
   )

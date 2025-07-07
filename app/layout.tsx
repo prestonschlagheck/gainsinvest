@@ -8,8 +8,11 @@ export const metadata: Metadata = {
   keywords: 'investment, AI, portfolio, stocks, crypto, ETF, financial advisor',
   authors: [{ name: 'G.AI.NS Team' }],
   icons: {
-    icon: '/favicon.png',
-    shortcut: '/favicon.png',
+    icon: [
+      { url: '/favicon.ico', sizes: '16x16 32x32 48x48', type: 'image/x-icon' },
+      { url: '/favicon.png', sizes: '256x256', type: 'image/png' }
+    ],
+    shortcut: '/favicon.ico',
     apple: '/favicon.png',
   },
 }

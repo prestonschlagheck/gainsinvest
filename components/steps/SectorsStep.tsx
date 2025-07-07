@@ -2,15 +2,30 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
-import { SECTORS } from '@/types'
+import { ArrowLeft } from 'lucide-react'
 
 interface SectorsStepProps {
   onComplete: (data: { sectors: string[] }) => void
   userProfile?: any
+  onBack?: () => void
 }
 
-const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile }) => {
+const SECTORS = [
+  { id: 'technology', name: 'Technology', examples: 'Apple, Microsoft, Google, Meta' },
+  { id: 'healthcare', name: 'Healthcare', examples: 'Johnson & Johnson, Pfizer, UnitedHealth' },
+  { id: 'finance', name: 'Financial Services', examples: 'JPMorgan Chase, Bank of America, Visa' },
+  { id: 'consumer', name: 'Consumer Goods', examples: 'Coca-Cola, Procter & Gamble, Nike' },
+  { id: 'energy', name: 'Energy', examples: 'ExxonMobil, Chevron, NextEra Energy' },
+  { id: 'industrials', name: 'Industrials', examples: 'Boeing, Caterpillar, General Electric' },
+  { id: 'materials', name: 'Materials', examples: 'Dow, DuPont, Freeport-McMoRan' },
+  { id: 'utilities', name: 'Utilities', examples: 'NextEra Energy, Duke Energy, Southern Company' },
+  { id: 'realestate', name: 'Real Estate', examples: 'American Tower, Prologis, Crown Castle' },
+  { id: 'telecommunications', name: 'Telecommunications', examples: 'Verizon, AT&T, T-Mobile' },
+  { id: 'retail', name: 'Retail', examples: 'Amazon, Walmart, Home Depot, Target' },
+  { id: 'transportation', name: 'Transportation', examples: 'UPS, FedEx, Union Pacific, Delta' }
+]
+
+const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBack }) => {
   const [selectedSectors, setSelectedSectors] = useState<string[]>(
     userProfile?.sectors || []
   )
@@ -34,7 +49,7 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile }) =>
       </div>
 
       <div className="step-body">
-        <div className="sectors-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-3">
         {SECTORS.map((sector) => {
           const isSelected = selectedSectors.includes(sector.id)
           
@@ -44,81 +59,53 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile }) =>
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => toggleSector(sector.id)}
-              className={`group relative p-4 rounded-xl text-left transition-all duration-300 border-2 min-h-[120px] w-full ${
+              className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 h-[90px] w-full ${
                 isSelected 
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
-              <div className="flex flex-col h-full">
-                <div className="flex-1">
-                  <h3 className={`text-lg font-semibold mb-2 leading-tight ${
-                    isSelected ? 'text-white' : 'text-gray-200'
-                  }`}>
-                    {sector.name}
-                  </h3>
-                  <p className={`text-sm leading-relaxed ${
-                    isSelected ? 'text-gray-300' : 'text-gray-400'
-                  }`}>
-                    {sector.examples}
-                  </p>
-                </div>
+              <div className="flex flex-col h-full justify-center">
+                <h3 className={`text-base font-semibold mb-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-2 ${
+                  isSelected ? 'text-white' : 'text-gray-200'
+                }`}>
+                  {sector.name}
+                </h3>
+                <p className={`text-xs leading-relaxed line-clamp-2 px-1 ${
+                  isSelected ? 'text-gray-300' : 'text-gray-400'
+                }`}>
+                  {sector.examples}
+                </p>
               </div>
             </motion.button>
           )
         })}
-      </div>
-
-      {selectedSectors.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg p-4 border border-gray-700"
-        >
-          {selectedSectors.length > 0 && (
-            <div className="space-y-3">
-              {selectedSectors.filter(id => id !== 'any').length > 0 && (
-                <div>
-                  <h4 className="text-white font-medium mb-2">Focus:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedSectors.filter(id => id !== 'any').map(sectorId => {
-                      const sector = SECTORS.find(s => s.id === sectorId)
-                      return (
-                        <span
-                          key={sectorId}
-                          className="px-3 py-1 bg-gray-600/60 text-white text-sm rounded-full border border-gray-600"
-                        >
-                          {sector?.name}
-                        </span>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-              {selectedSectors.includes('any') && (
-                <div>
-                  <h4 className="text-white font-medium mb-2">Open to:</h4>
-                  <span className="px-3 py-1 bg-gray-600/60 text-white text-sm rounded-full border border-gray-600">
-                    All Sectors
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </motion.div>
-      )}
+        </div>
       </div>
 
       <div className="step-footer">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onComplete({ sectors: selectedSectors })}
-          className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
-          disabled={selectedSectors.length === 0}
-        >
-          Continue
-        </motion.button>
+        <div className="flex gap-4">
+          {onBack && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onBack}
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onComplete({ sectors: selectedSectors })}
+            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            disabled={selectedSectors.length === 0}
+          >
+            Continue
+          </motion.button>
+        </div>
       </div>
     </div>
   )

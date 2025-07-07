@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 
 interface RiskToleranceStepProps {
   onComplete: (data: { riskTolerance: number }) => void
@@ -72,8 +73,9 @@ const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userP
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200"
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
             >
+              <ArrowLeft className="w-5 h-5" />
               Back
             </motion.button>
           )}
