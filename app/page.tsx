@@ -177,15 +177,7 @@ export default function Home() {
   const handleEditResponses = () => {
     setShowReturningUserModal(false)
     setCurrentView('edit-responses')
-  }
-
-  const handleSaveEditedResponses = (updatedProfile: StoredUserProfile) => {
-    setStoredProfile(updatedProfile)
-    saveUserProfile(updatedProfile)
-  }
-
-  const handleBackFromEdit = () => {
-    setShowReturningUserModal(true)
+    // The stored profile will be passed to EditResponsesPage
   }
 
   const isAccountSelected = userType !== null || status === 'authenticated'
@@ -208,27 +200,31 @@ export default function Home() {
     return <ContactPage onBack={handleBackToLanding} />
   }
 
-  if (currentView === 'edit-responses' && storedProfile) {
+  if (currentView === 'edit-responses') {
     return (
       <EditResponsesPage 
-        userProfile={storedProfile}
-        onSave={handleSaveEditedResponses}
-        onBack={handleBackFromEdit}
+        userProfile={storedProfile!}
+        onBack={() => setShowReturningUserModal(true)}
+        onComplete={() => {
+          setCurrentView('chat')
+          setUserType('user')
+          setHasStarted(true)
+        }}
       />
     )
   }
 
-  if (currentView === 'landing') {
-    return (
-      <LandingPage 
-        onStartChat={handleStartChat}
-        onNavigateToHowToUse={() => setCurrentView('how-to-use')}
-        onNavigateToHowItWorks={() => setCurrentView('how-it-works')}
-        onNavigateToApis={() => setCurrentView('apis')}
-        onNavigateToContact={() => setCurrentView('contact')}
-      />
-    )
-  }
+     if (currentView === 'landing') {
+     return (
+       <LandingPage 
+         onStartChat={handleStartChat}
+         onNavigateToHowToUse={() => setCurrentView('how-to-use')}
+         onNavigateToHowItWorks={() => setCurrentView('how-it-works')}
+         onNavigateToApis={() => setCurrentView('apis')}
+         onNavigateToContact={() => setCurrentView('contact')}
+       />
+     )
+   }
 
   // Chat interface view (existing functionality)
   return (
