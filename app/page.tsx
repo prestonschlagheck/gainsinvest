@@ -51,41 +51,66 @@ export default function Home() {
         setStoredProfile(updatedProfile)
         setShowReturningUserModal(true)
       } else {
-        // New user or no previous profile
+        // New user or no previous profile - go directly to questionnaire
         setUserType('user')
-        // Save Google user info
-        if (existingProfile) {
-          const updatedProfile = {
-            ...existingProfile,
-            googleUser: {
-              name: session.user.name || '',
-              image: session.user.image || ''
-            }
+        setHasStarted(true)
+        setShowContinueBox(true)
+        setShowAuthModal(false) // Close auth modal if open
+        
+        // Create or update profile with Google user info
+        const profileToSave: StoredUserProfile = existingProfile ? {
+          ...existingProfile,
+          googleUser: {
+            name: session.user.name || '',
+            image: session.user.image || ''
           }
-          saveUserProfile(updatedProfile)
+        } : {
+          isGuest: false,
+          googleUser: {
+            name: session.user.name || '',
+            image: session.user.image || ''
+          },
+          riskTolerance: 5,
+          timeHorizon: 'medium',
+          growthType: 'balanced',
+          sectors: [],
+          ethicalInvesting: 5,
+          capitalAvailable: 0,
+          existingPortfolio: [],
+          hasCompletedQuestionnaire: false
         }
+        
+        saveUserProfile(profileToSave)
       }
     }
   }, [session, status])
 
   // Smooth animation sequence on page load
   useEffect(() => {
-    const timer1 = setTimeout(() => {
-      // First fade out the logo
-      setShowWelcomeTitle(false)
-    }, 2000) // Show logo for 2 seconds, then fade out
-
-    const timer2 = setTimeout(() => {
-      // Then show the continue box
+    // Only show the initial animation if user is not already authenticated
+    if (status === 'authenticated') {
+      // User is authenticated, show content immediately
       setShowContinueBox(true)
       setHasStarted(true)
-    }, 2800) // Show continue box after logo fades out
+    } else if (status === 'unauthenticated') {
+      const timer1 = setTimeout(() => {
+        // First fade out the logo
+        setShowWelcomeTitle(false)
+      }, 2000) // Show logo for 2 seconds, then fade out
 
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
+      const timer2 = setTimeout(() => {
+        // Then show the continue box
+        setShowContinueBox(true)
+        setHasStarted(true)
+      }, 2800) // Show continue box after logo fades out
+
+      return () => {
+        clearTimeout(timer1)
+        clearTimeout(timer2)
+      }
     }
-  }, [])
+    // For 'loading' status, do nothing and wait
+  }, [status])
 
   const handleAccountChoice = (type: 'guest' | 'recurring') => {
     if (type === 'recurring') {
@@ -124,7 +149,7 @@ export default function Home() {
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false)
-    setUserType('user')
+    // Don't set userType here - let the useEffect handle it based on session
   }
 
   const handleUsePreviousAnswers = () => {
@@ -156,7 +181,7 @@ export default function Home() {
     }
   }
 
-  const isAccountSelected = userType !== null
+  const isAccountSelected = userType !== null || status === 'authenticated'
   const isPortfolioStep = currentStep === 7
 
   return (
@@ -198,8 +223,8 @@ export default function Home() {
       </AnimatePresence>
 
       <div className={`main-content ${isAccountSelected ? 'with-top-logo' : ''}`}>
-        {/* Main Logo - Only shown before account selection */}
-        {!isAccountSelected && !showContinueBox && (
+        {/* Main Logo - Only shown before account selection and when not authenticated */}
+        {!isAccountSelected && !showContinueBox && status === 'unauthenticated' && (
           <div className="text-center mb-8">
             <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}

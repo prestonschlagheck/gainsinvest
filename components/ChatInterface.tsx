@@ -24,7 +24,7 @@ interface ChatInterfaceProps {
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice, onCompleteRestart, hasStarted = false, onStepChange }) => {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [currentStep, setCurrentStep] = useState(0)
   const [userProfile, setUserProfile] = useState<UserProfile>({
     isGuest: userType === 'guest',
@@ -49,9 +49,37 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     { id: 'portfolio', component: PortfolioStep }
   ]
 
-  // Load stored profile when user type changes
+  // Load stored profile when user type changes or session changes
   useEffect(() => {
-    if (userType === 'user') {
+    // If user is authenticated with Google, handle accordingly
+    if (status === 'authenticated' && session?.user) {
+      const storedProfile = loadUserProfile()
+      if (storedProfile && storedProfile.hasCompletedQuestionnaire) {
+        // User has completed questionnaire before, show recommendations directly
+        setUserProfile(storedProfile)
+        setShowRecommendations(true)
+      } else if (storedProfile) {
+        // User has partial data, use it but continue questionnaire
+        setUserProfile(storedProfile)
+        // Skip welcome step and start from risk tolerance
+        setCurrentStep(1)
+      } else {
+        // New Google user, create profile and start from risk tolerance
+        const newProfile: UserProfile = {
+          isGuest: false,
+          riskTolerance: 5,
+          timeHorizon: 'medium',
+          growthType: 'balanced',
+          sectors: [],
+          ethicalInvesting: 5,
+          capitalAvailable: 0,
+          existingPortfolio: []
+        }
+        setUserProfile(newProfile)
+        // Skip welcome step for authenticated users
+        setCurrentStep(1)
+      }
+    } else if (userType === 'user') {
       const storedProfile = loadUserProfile()
       if (storedProfile && storedProfile.hasCompletedQuestionnaire) {
         // User has completed questionnaire before, show recommendations directly
@@ -61,7 +89,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
         // User has partial data, use it but continue questionnaire
         setUserProfile(storedProfile)
       } else {
-        // New user, create profile with Google info if available
+        // New user, create profile
         const newProfile: UserProfile = {
           isGuest: false,
           riskTolerance: 5,
@@ -77,7 +105,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     } else if (userType === 'guest') {
       setUserProfile(prev => ({ ...prev, isGuest: true }))
     }
-  }, [userType, session])
+  }, [userType, session, status])
 
   // Notify parent of step changes
   useEffect(() => {
@@ -91,8 +119,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     const updatedProfile = { ...userProfile, ...data }
     setUserProfile(updatedProfile)
 
-    // Save to localStorage if user is logged in
-    if (userType === 'user') {
+    // Save to localStorage if user is logged in or authenticated
+    if (userType === 'user' || (status === 'authenticated' && session?.user)) {
       const profileToSave: StoredUserProfile = {
         ...updatedProfile,
         googleUser: session?.user ? {
@@ -143,6 +171,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     return <RecommendationsPage userProfile={userProfile} onRestart={handleRestart} />
   }
 
+  // If user is authenticated with Google, skip the welcome step
+  const shouldShowWelcome = !session?.user && (!userType || currentStep === 0)
+
   return (
     <div className="w-full">
       {/* Current Step Component */}
@@ -154,7 +185,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
           transition={{ duration: 0.3 }}
           className={`step-container ${currentStep === 7 ? 'portfolio-container' : ''}`}
         >
-          {currentStep === 0 || !userType ? (
+          {shouldShowWelcome ? (
             <WelcomeStep 
               onComplete={(data) => {
                 onAccountChoice(data.choice)
@@ -165,7 +196,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
             />
           ) : (
             (() => {
-              const StepComponent = steps[currentStep].component
+              // For authenticated users, map step numbers correctly (skip welcome)
+              const stepIndex = session?.user ? Math.max(currentStep, 1) : currentStep
+              const StepComponent = steps[stepIndex].component
               return <StepComponent onComplete={handleStepComplete} userProfile={userProfile} />
             })()
           )}
