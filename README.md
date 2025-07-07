@@ -22,16 +22,28 @@ A sophisticated AI-powered investment chatbot that helps inexperienced investors
 
 2. **Set up API Keys**
    - Create a `.env.local` file in the root directory
-   - Add your API keys (refer to `env.example` for all required variables):
+   - Configure the multi-provider system (add at least one financial API for basic functionality):
    ```env
+   # AI Services (Required for recommendations)
    OPENAI_API_KEY=your_openai_api_key_here
-   GROK_API_KEY=your_grok_api_key_here
-   ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
+   
+   # Financial Data APIs (Configure at least one, preferably all three)
+   ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here     # 25/day free
+   TWELVE_DATA_API_KEY=your_twelve_data_key_here         # 800/day free
+   FINNHUB_API_KEY=your_finnhub_key_here                 # 60/minute free
+   
+   # Authentication (Required for user accounts)
    NEXTAUTH_SECRET=your-secret-key-here
    NEXTAUTH_URL=http://localhost:3000
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
    ```
+   
+   **🔑 Quick API Setup:**
+   - [Alpha Vantage](https://www.alphavantage.co/support/#api-key) - Free, instant
+   - [Twelve Data](https://twelvedata.com/) - Free account, 800 calls/day  
+   - [Finnhub](https://finnhub.io/register) - Free account, 60 calls/minute
+   - [OpenAI](https://platform.openai.com/api-keys) - Pay-as-you-go, ~$0.01 per recommendation
 
 3. **Run Development Server**
    ```bash
@@ -112,14 +124,21 @@ G.AI.NS/
 - **Authentication**: localStorage (demo) + NextAuth ready
 - **Deployment**: Optimized for Vercel
 
-## 🌐 API Integration
+## 🌐 Multi-Provider API System
 
-The application is designed to integrate with:
+The application uses a **smart fallback system** that ensures your app never runs out of API requests:
 
+### 🔄 **Automatic Fallback Hierarchy:**
+1. **Alpha Vantage** (Primary) - 25 requests/day free
+2. **Twelve Data** (Secondary) - 800 requests/day free  
+3. **Finnhub** (Tertiary) - 60 requests/minute free
+
+### 🤖 **AI Integration:**
 - **OpenAI API** - For intelligent investment advice generation
 - **Grok API** - Alternative AI model for recommendations
-- **Alpha Vantage** - Real-time market data (free tier: 500 calls/day)
-- **Finnhub** - Alternative market data source (free tier: 60 calls/minute)
+
+### 📊 **Total API Capacity:**
+With all three providers configured, you get **1000+ requests per day** completely free! The system automatically switches providers when one hits its limit, ensuring uninterrupted service.
 
 ## 📱 Mobile Optimization
 
