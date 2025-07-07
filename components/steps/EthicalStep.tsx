@@ -19,29 +19,30 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile }) =>
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-white mb-8">Ethical Investing Preference</h2>
+    <div className="step-layout">
+      <div className="step-header">
+        <h2 className="text-2xl font-semibold text-white">Ethical Investing Preference</h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="step-body">
+        <div className="space-y-6">
         {/* ESG Information */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="p-4 rounded-lg bg-gray-800 border border-gray-700">
+          <div className="p-4 rounded-lg border border-gray-700">
             <h4 className="font-medium text-green-400 mb-2 flex items-center gap-2">
               <Globe className="w-4 h-4" />
               Environmental
             </h4>
             <p className="text-gray-400">Clean energy, sustainability, carbon footprint</p>
           </div>
-          <div className="p-4 rounded-lg bg-gray-800 border border-gray-700">
+          <div className="p-4 rounded-lg border border-gray-700">
             <h4 className="font-medium text-blue-400 mb-2 flex items-center gap-2">
               <Heart className="w-4 h-4" />
               Social
             </h4>
             <p className="text-gray-400">Employee welfare, community impact, diversity</p>
           </div>
-          <div className="p-4 rounded-lg bg-gray-800 border border-gray-700">
+          <div className="p-4 rounded-lg border border-gray-700">
             <h4 className="font-medium text-purple-400 mb-2 flex items-center gap-2">
               <Leaf className="w-4 h-4" />
               Governance
@@ -60,8 +61,8 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile }) =>
               onClick={() => setEthicalLevel(2)}
               className={`p-4 rounded-lg text-left transition-all duration-300 border-2 ${
                 getSelectedOption() === 'low'
-                  ? 'bg-gray-700 border-gray-500 shadow-lg'
-                  : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                  ? 'bg-gray-800/40 border-gray-500 shadow-lg'
+                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <h3 className={`text-lg font-medium ${getSelectedOption() === 'low' ? 'text-white' : 'text-gray-200'}`}>
@@ -78,8 +79,8 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile }) =>
               onClick={() => setEthicalLevel(5)}
               className={`p-4 rounded-lg text-left transition-all duration-300 border-2 ${
                 getSelectedOption() === 'moderate'
-                  ? 'bg-gray-700 border-gray-500 shadow-lg'
-                  : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                  ? 'bg-gray-800/40 border-gray-500 shadow-lg'
+                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <h3 className={`text-lg font-medium ${getSelectedOption() === 'moderate' ? 'text-white' : 'text-gray-200'}`}>
@@ -96,8 +97,8 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile }) =>
               onClick={() => setEthicalLevel(9)}
               className={`p-4 rounded-lg text-left transition-all duration-300 border-2 ${
                 getSelectedOption() === 'high'
-                  ? 'bg-gray-700 border-gray-500 shadow-lg'
-                  : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                  ? 'bg-gray-800/40 border-gray-500 shadow-lg'
+                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <h3 className={`text-lg font-medium ${getSelectedOption() === 'high' ? 'text-white' : 'text-gray-200'}`}>
@@ -109,16 +110,19 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile }) =>
             </motion.button>
           </div>
         </div>
+        </div>
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onComplete({ ethicalInvesting: ethicalLevel })}
-        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
-      >
-        Continue
-      </motion.button>
+      <div className="step-footer">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onComplete({ ethicalInvesting: ethicalLevel })}
+          className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+        >
+          Continue
+        </motion.button>
+      </div>
     </div>
   )
 }

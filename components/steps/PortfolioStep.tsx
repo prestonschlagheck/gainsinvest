@@ -68,18 +68,19 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }
   }
 
   return (
-    <div className="step-content portfolio-step w-full">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-white mb-8">Existing Portfolio</h2>
+    <div className="step-layout">
+      <div className="step-header">
+        <h2 className="text-2xl font-semibold text-white">Existing Portfolio</h2>
       </div>
 
-      <div className="space-y-6 w-full">
+      <div className="step-body">
+        <div className="space-y-6 w-full">
         {/* Total Portfolio Value */}
         {getTotalValue() > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center bg-gray-800 rounded-lg p-4 border border-gray-700"
+            className="text-center rounded-lg p-4 border border-gray-700"
           >
             <div className="flex items-center justify-center gap-2 mb-2">
               <TrendingUp className="w-5 h-5 text-green-400" />
@@ -99,7 +100,7 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-gray-800 rounded-lg p-4 border border-gray-700 w-full"
+              className="rounded-lg p-4 border border-gray-700 w-full"
             >
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end w-full">
                 {/* Asset Symbol */}
@@ -177,27 +178,28 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile }
           <Plus className="w-5 h-5" />
           Add Another Asset
         </motion.button>
-      </div>
+        </div>
 
-      {/* Buttons - Skip button first, then Get Recommendations */}
-      <div className="space-y-3 w-full">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSkip}
-          className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 py-3 rounded-lg text-lg font-medium transition-colors border border-gray-600"
-        >
-          I do not have any existing investments
-        </motion.button>
+        {/* Buttons - Skip button first, then Get Recommendations */}
+        <div className="space-y-3 w-full">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleSkip}
+            className="w-full hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 border border-gray-600 hover:border-gray-500"
+          >
+            I do not have any existing investments
+          </motion.button>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleComplete}
-          className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
-        >
-          Get My Recommendations
-        </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleComplete}
+            className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+          >
+            Get My Recommendations
+          </motion.button>
+        </div>
       </div>
     </div>
   )

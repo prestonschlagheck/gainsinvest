@@ -49,9 +49,6 @@
     display: grid;
     place-items: center;
     padding: 2rem;
-    @apply bg-gray-900;
-    border: 1px solid rgb(55 65 81);
-    border-radius: 0.75rem;
   }
 
   /* Portfolio step container needs to be wider */
@@ -65,6 +62,51 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    min-height: 400px;
+  }
+
+  /* Consistent CSS Grid layout for all steps */
+  .step-layout {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 500px;
+    width: 100%;
+    gap: 2rem;
+  }
+
+  .step-header {
+    grid-row: 1;
+    text-align: center;
+    height: 60px; /* Fixed header height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-body {
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+    min-height: 300px;
+    padding: 1rem 0;
+  }
+
+  .step-footer {
+    grid-row: 3;
+    height: 60px; /* Fixed footer height */
+    display: flex;
+    align-items: center;
+  }
+
+  /* Welcome page specific layout */
+  .welcome-layout {
+    display: grid;
+    place-items: center;
+    min-height: 400px;
+    width: 100%;
+    text-align: center;
   }
 
   /* Portfolio step needs more width for the form grid */
@@ -124,6 +166,36 @@
     
     .step-content {
       gap: 1rem;
+    }
+    
+    /* Make sure sectors grid is responsive */
+    .sectors-grid {
+      grid-template-columns: repeat(1, 1fr) !important;
+    }
+    
+    /* Ensure button text doesn't overflow */
+    .step-footer button {
+      font-size: 0.875rem;
+      padding: 0.75rem 1rem;
+    }
+    
+    /* Welcome modal responsive */
+    .welcome-layout {
+      padding: 1rem;
+    }
+    
+    /* Fixed grid layouts */
+    .step-layout {
+      min-height: 400px;
+      gap: 1.5rem;
+    }
+    
+    .step-header {
+      height: 50px;
+    }
+    
+    .step-footer {
+      height: 50px;
     }
   }
   

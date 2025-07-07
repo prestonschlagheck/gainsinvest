@@ -102,6 +102,16 @@ export const SECTORS = [
     examples: 'Zillow, Simon Property Group, Realty Income' 
   },
   { 
+    id: 'materials', 
+    name: 'Materials', 
+    examples: 'Dow Chemical, DuPont, Linde' 
+  },
+  { 
+    id: 'telecommunications', 
+    name: 'Telecommunications', 
+    examples: 'Verizon, AT&T, T-Mobile' 
+  },
+  { 
     id: 'any', 
     name: 'Any / No Preference', 
     examples: 'Open to all sectors' 

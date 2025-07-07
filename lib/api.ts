@@ -136,6 +136,123 @@ export interface ApiResponse<T> {
 }
 
 // ========================================
+// HELPER FUNCTIONS FOR AI ANALYSIS
+// ========================================
+
+function getRiskDescription(riskLevel: number): string {
+  if (riskLevel <= 2) return 'Very Conservative - Capital preservation focused'
+  if (riskLevel <= 4) return 'Conservative - Minimal risk tolerance'
+  if (riskLevel <= 6) return 'Moderate - Balanced risk/reward approach'
+  if (riskLevel <= 8) return 'Aggressive - High growth potential tolerance'
+  return 'Very Aggressive - Maximum growth seeking'
+}
+
+function getTimeHorizonDescription(timeHorizon: string): string {
+  switch (timeHorizon) {
+    case 'short': return 'Less than 3 years - Focus on liquidity and stability'
+    case 'medium': return '3-10 years - Balanced growth and income strategy'
+    case 'long': return '10+ years - Long-term wealth building focus'
+    default: return 'Flexible timeline'
+  }
+}
+
+function getGrowthDescription(growthType: string): string {
+  switch (growthType) {
+    case 'conservative': return 'Stability and income focused - Lower volatility preference'
+    case 'moderate': return 'Balanced growth and income - Moderate risk acceptance'
+    case 'aggressive': return 'Maximum capital appreciation - High growth potential focus'
+    default: return 'Balanced approach'
+  }
+}
+
+function getESGDescription(esgLevel: number): string {
+  if (esgLevel <= 3) return 'Low ESG priority - Returns focused'
+  if (esgLevel <= 6) return 'Moderate ESG consideration - Some sustainability focus'
+  return 'High ESG priority - Strong ethical investing focus'
+}
+
+async function gatherComprehensiveMarketData(userProfile: any): Promise<string> {
+  const marketData = []
+  
+  try {
+    // Key market indicators to analyze
+    const keySymbols = ['SPY', 'QQQ', 'VTI', 'GLD', 'TLT', 'VIX']
+    const stockDataPromises = keySymbols.map(symbol => getStockData(symbol))
+    const stockResults = await Promise.allSettled(stockDataPromises)
+    
+    let marketSummary = 'CURRENT MARKET INDICATORS:\n'
+    stockResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        const stock = result.value
+        marketSummary += `• ${keySymbols[index]}: $${stock.price} (${stock.changePercent > 0 ? '+' : ''}${stock.changePercent.toFixed(2)}%) - ${stock.source}\n`
+      }
+    })
+    
+    // Add sector-specific data if user has preferences
+    if (userProfile.sectors && userProfile.sectors.length > 0) {
+      marketSummary += '\nSECTOR-SPECIFIC ANALYSIS:\n'
+      const sectorETFs: { [key: string]: string } = {
+        'Technology': 'XLK',
+        'Healthcare': 'XLV', 
+        'Financial Services': 'XLF',
+        'Consumer Discretionary': 'XLY',
+        'Energy': 'XLE',
+        'Real Estate': 'XLRE',
+        'Utilities': 'XLU',
+        'Materials': 'XLB',
+        'Industrials': 'XLI',
+        'Consumer Staples': 'XLP',
+        'Telecommunications': 'XLC'
+      }
+      
+      for (const sector of userProfile.sectors.slice(0, 3)) { // Limit to 3 sectors to avoid API limits
+        const etfSymbol = sectorETFs[sector]
+        if (etfSymbol) {
+          const sectorData = await getStockData(etfSymbol)
+          if (sectorData) {
+            marketSummary += `• ${sector} (${etfSymbol}): $${sectorData.price} (${sectorData.changePercent > 0 ? '+' : ''}${sectorData.changePercent.toFixed(2)}%)\n`
+          }
+        }
+      }
+    }
+    
+    return marketSummary
+  } catch (error) {
+    console.error('Error gathering market data:', error)
+    return 'Market data temporarily unavailable - using fundamental analysis approach'
+  }
+}
+
+async function analyzeExistingPortfolio(existingPortfolio: any[]): Promise<string> {
+  if (!existingPortfolio || existingPortfolio.length === 0) {
+    return ''
+  }
+  
+  try {
+    let analysis = 'EXISTING PORTFOLIO ANALYSIS:\n'
+    const totalValue = existingPortfolio.reduce((sum, holding) => sum + (holding.amount || 0), 0)
+    
+    analysis += `Total Portfolio Value: $${totalValue.toLocaleString()}\n`
+    analysis += 'Current Holdings:\n'
+    
+    for (const holding of existingPortfolio.slice(0, 5)) { // Limit to avoid API limits
+      if (holding.symbol) {
+        const currentData = await getStockData(holding.symbol)
+        if (currentData) {
+          const allocation = ((holding.amount || 0) / totalValue * 100).toFixed(1)
+          analysis += `• ${holding.symbol}: $${holding.amount?.toLocaleString()} (${allocation}%) - Current: $${currentData.price} (${currentData.changePercent > 0 ? '+' : ''}${currentData.changePercent.toFixed(2)}%)\n`
+        }
+      }
+    }
+    
+    return analysis
+  } catch (error) {
+    console.error('Error analyzing existing portfolio:', error)
+    return 'Existing portfolio data available - manual analysis recommended'
+  }
+}
+
+// ========================================
 // MULTI-PROVIDER STOCK DATA FUNCTIONS
 // ========================================
 
@@ -156,11 +273,11 @@ async function getStockDataAlphaVantage(symbol: string): Promise<ApiResponse<Sto
       `${provider.baseUrl}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEYS.ALPHA_VANTAGE_API_KEY}`,
       { headers: { 'User-Agent': 'G.AI.NS/1.0' } }
     )
-
+    
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
-
+    
     const data = await response.json()
     
     // Check for API limit response
@@ -176,15 +293,15 @@ async function getStockDataAlphaVantage(symbol: string): Promise<ApiResponse<Sto
     if (!quote || !quote['01. symbol']) {
       throw new Error('Invalid response format or no data available')
     }
-
+    
     return {
       success: true,
       data: {
-        symbol: quote['01. symbol'],
+      symbol: quote['01. symbol'],
         name: symbol,
-        price: parseFloat(quote['05. price']),
-        change: parseFloat(quote['09. change']),
-        changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
+      price: parseFloat(quote['05. price']),
+      change: parseFloat(quote['09. change']),
+      changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
         volume: parseInt(quote['06. volume']),
         source: 'Alpha Vantage'
       },
@@ -267,17 +384,17 @@ async function getStockDataFinnhub(symbol: string): Promise<ApiResponse<StockDat
     }
   }
 
-  try {
-    const response = await fetch(
+    try {
+      const response = await fetch(
       `${provider.baseUrl}/quote?symbol=${symbol}&token=${API_KEYS.FINNHUB_API_KEY}`,
       { headers: { 'User-Agent': 'G.AI.NS/1.0' } }
-    )
+      )
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
-
-    const data = await response.json()
+      
+      const data = await response.json()
     
     if (data.error) {
       throw new Error(data.error)
@@ -286,8 +403,8 @@ async function getStockDataFinnhub(symbol: string): Promise<ApiResponse<StockDat
     if (data.c === undefined || data.c === 0) {
       throw new Error('No data available or invalid symbol')
     }
-
-    return {
+      
+      return {
       success: true,
       data: {
         symbol: symbol,
@@ -366,25 +483,25 @@ export async function getHistoricalData(symbol: string, period: string = '1year'
   
   // Try Alpha Vantage first
   if (API_KEYS.ALPHA_VANTAGE_API_KEY && rateLimiter.canMakeRequest('alphavantage_historical', 25, 24 * 60 * 60 * 1000)) {
-    try {
-      const response = await fetch(
+  try {
+    const response = await fetch(
         `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEYS.ALPHA_VANTAGE_API_KEY}&outputsize=full`
-      )
-      
-      const data = await response.json()
-      const timeSeries = data['Time Series (Daily)']
-      
+    )
+    
+    const data = await response.json()
+    const timeSeries = data['Time Series (Daily)']
+    
       if (timeSeries) {
         console.log('✅ Historical data from Alpha Vantage')
         return Object.entries(timeSeries)
           .slice(0, 365)
           .map(([date, values]: [string, any]) => ({
-            date,
-            open: parseFloat(values['1. open']),
-            high: parseFloat(values['2. high']),
-            low: parseFloat(values['3. low']),
-            close: parseFloat(values['4. close']),
-            volume: parseInt(values['5. volume'])
+      date,
+      open: parseFloat(values['1. open']),
+      high: parseFloat(values['2. high']),
+      low: parseFloat(values['3. low']),
+      close: parseFloat(values['4. close']),
+      volume: parseInt(values['5. volume'])
           }))
       }
     } catch (error) {
@@ -412,7 +529,7 @@ export async function getHistoricalData(symbol: string, period: string = '1year'
           volume: parseInt(item.volume || '0')
         }))
       }
-    } catch (error) {
+  } catch (error) {
       console.log('⚠️ Twelve Data historical data failed:', error)
     }
   }
@@ -464,43 +581,86 @@ export async function generateInvestmentRecommendations(
   marketData?: any[]
 ): Promise<InvestmentAnalysis> {
   try {
-    console.log('🤖 Generating AI investment recommendations...')
+    console.log('🤖 Generating comprehensive AI investment recommendations...')
     
     if (!API_KEYS.OPENAI_API_KEY) {
       console.log('⚠️ OpenAI API key not found, using fallback recommendations')
       return generateFallbackRecommendations(userProfile)
     }
 
-    const systemPrompt = `You are a professional investment advisor AI for G.AI.NS platform. Analyze user profile and provide personalized investment recommendations.
-
-User Profile:
-- Risk Tolerance: ${userProfile.riskTolerance}/10
-- Time Horizon: ${userProfile.timeHorizon}
-- Growth Type: ${userProfile.growthType}
-- Sectors: ${userProfile.sectors?.join(', ') || 'Any'}
-- Ethical Investing: ${userProfile.ethicalInvesting}/10
-- Available Capital: $${userProfile.capital}
-- Current Portfolio: ${JSON.stringify(userProfile.portfolio || {})}
-
-Provide investment recommendations in this exact JSON format:
-{
-  "recommendations": [
-    {
-      "symbol": "AAPL",
-      "name": "Apple Inc",
-      "type": "buy",
-      "amount": 5000,
-      "confidence": 85,
-      "reasoning": "Strong fundamentals and growth potential",
-      "sector": "Technology",
-      "targetPrice": 200,
-      "stopLoss": 180
+    // Step 1: Gather comprehensive market data
+    console.log('📊 Gathering real-time market data...')
+    const marketContext = await gatherComprehensiveMarketData(userProfile)
+    
+    // Step 2: Get current financial news
+    console.log('📰 Fetching current financial news...')
+    const newsContext = await getFinancialNews()
+    
+    // Step 3: Analyze existing portfolio if any
+    let portfolioAnalysis = ''
+    if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+      portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
     }
-  ],
-  "reasoning": "Overall investment strategy explanation",
-  "riskAssessment": "Risk analysis for this portfolio",
-  "marketOutlook": "Current market conditions and outlook"
-}`
+
+    // Step 4: Create comprehensive prompt for OpenAI
+    const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform with access to real-time market data and comprehensive financial analysis capabilities. You must provide the most sophisticated and current investment recommendations possible.
+
+    USER PROFILE ANALYSIS:
+    - Risk Tolerance: ${userProfile.riskTolerance}/10 (${getRiskDescription(userProfile.riskTolerance)})
+    - Investment Horizon: ${userProfile.timeHorizon} (${getTimeHorizonDescription(userProfile.timeHorizon)})
+    - Growth Strategy: ${userProfile.growthType} (${getGrowthDescription(userProfile.growthType)})
+    - Sector Preferences: ${userProfile.sectors?.join(', ') || 'No specific preferences - open to all sectors'}
+    - ESG Priority: ${userProfile.ethicalInvesting}/10 (${getESGDescription(userProfile.ethicalInvesting)})
+    - Available Capital: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+    - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'No existing investments'}
+
+    REAL-TIME MARKET CONTEXT:
+    ${marketContext}
+
+    CURRENT FINANCIAL NEWS & SENTIMENT:
+    ${newsContext.slice(0, 5).map(news => `• ${news.title} (${news.source}) - ${news.sentiment || 'neutral'} sentiment`).join('\n')}
+
+    ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
+
+    COMPREHENSIVE ANALYSIS REQUIREMENTS:
+    1. Factor in ALL current market conditions, economic indicators, and sector performance
+    2. Consider geopolitical events, interest rates, inflation, and market volatility
+    3. Analyze the user's complete financial profile and risk capacity
+    4. Provide specific stock recommendations with real current prices and target prices
+    5. Include diversification across sectors based on user preferences
+    6. Factor in ESG criteria if important to the user
+    7. Consider the user's existing portfolio for optimal allocation
+    8. Provide realistic timelines for achieving investment goals
+
+    OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
+    {
+      "recommendations": [
+        {
+          "symbol": "AAPL",
+          "name": "Apple Inc",
+          "type": "buy",
+          "amount": 5000,
+          "confidence": 85,
+          "reasoning": "Detailed analysis including current market position, financials, growth prospects, and why this fits the user's profile",
+          "sector": "Technology",
+          "targetPrice": 200,
+          "stopLoss": 180
+        }
+      ],
+      "reasoning": "Comprehensive explanation of the overall investment strategy, how it aligns with user goals, current market conditions, and expected outcomes",
+      "riskAssessment": "Detailed risk analysis including portfolio volatility, potential downside scenarios, risk mitigation strategies, and how this aligns with user's risk tolerance",
+      "marketOutlook": "Current market analysis, economic trends, sector outlook, potential catalysts and risks, and how they impact these recommendations"
+    }
+
+    CRITICAL REQUIREMENTS:
+    - ALL "amount" values MUST be integers (whole numbers), never strings
+    - Total recommended investment should not exceed available capital
+    - Use REAL current stock symbols and realistic prices
+    - Provide specific, actionable recommendations based on comprehensive analysis
+    - Include 5-8 diversified recommendations unless capital is very limited
+    - Each recommendation should include detailed reasoning based on current data`
+
+    const userMessage = `Based on my complete investment profile and current market conditions, please provide comprehensive investment recommendations. Use all available market data, news, and analysis to create the most sophisticated and current investment strategy possible for my specific situation.`
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -509,20 +669,20 @@ Provide investment recommendations in this exact JSON format:
         'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo-preview',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: 'Please provide investment recommendations based on my profile.' }
+          { role: 'user', content: userMessage }
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: 0.3, // Lower temperature for more consistent, analytical responses
+        max_tokens: 4000, // Increased for comprehensive analysis
       }),
     })
-
+    
     if (!response.ok) {
       throw new Error(`OpenAI API error: ${response.status}`)
     }
-
+    
     const data = await response.json()
     const content = data.choices[0]?.message?.content
 
@@ -533,13 +693,31 @@ Provide investment recommendations in this exact JSON format:
     try {
       const analysis: InvestmentAnalysis = JSON.parse(content)
       
+      // Validate and clean recommendation data
+      analysis.recommendations = analysis.recommendations.map((rec: any) => {
+        // Ensure amount is a valid number
+        const cleanAmount = typeof rec.amount === 'string' 
+          ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
+          : (typeof rec.amount === 'number' ? rec.amount : 0)
+        
+        return {
+          ...rec,
+          amount: Math.round(cleanAmount), // Ensure it's an integer
+          confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
+          targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
+          stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined
+        }
+      }).filter((rec: any) => rec.amount > 0) // Remove any recommendations with invalid amounts
+      
       // Add portfolio projections
       analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
       
-      console.log('✅ AI recommendations generated successfully')
+      console.log('✅ Comprehensive AI recommendations generated successfully')
+      console.log('Validated recommendations:', analysis.recommendations.map(r => ({ symbol: r.symbol, amount: r.amount, type: typeof r.amount })))
       return analysis
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError)
+      console.log('Raw AI response:', content)
       return generateFallbackRecommendations(userProfile)
     }
 
@@ -550,8 +728,22 @@ Provide investment recommendations in this exact JSON format:
 }
 
 function calculatePortfolioProjections(recommendations: InvestmentRecommendation[], userProfile: any): PortfolioProjection {
-  const totalInvestment = userProfile.capital
-  const riskMultiplier = userProfile.riskTolerance / 10
+  const totalInvestment = userProfile.capitalAvailable || userProfile.capital || 0
+  const riskMultiplier = (userProfile.riskTolerance || 5) / 10
+  
+  // Validate inputs
+  if (totalInvestment <= 0) {
+    console.warn('Invalid total investment amount:', totalInvestment)
+    return {
+      totalInvestment: 0,
+      monthlyProjections: [],
+      projectedValues: { oneYear: 0, threeYear: 0, fiveYear: 0 },
+      expectedAnnualReturn: 0,
+      riskLevel: 'medium',
+      diversificationScore: 0,
+      sectorBreakdown: {}
+    }
+  }
   
   // Calculate expected return based on user profile
   let baseReturn = 0.07 // 7% base return
@@ -570,10 +762,15 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
     const date = new Date()
     date.setMonth(date.getMonth() + month)
     
+    // Format date properly as YYYY-MM
+    const year = date.getFullYear()
+    const monthNum = (date.getMonth() + 1).toString().padStart(2, '0')
+    const formattedDate = `${year}-${monthNum}`
+    
     monthlyProjections.push({
       month,
       value: Math.round(currentValue),
-      date: date.toISOString().split('T')[0]
+      date: formattedDate
     })
   }
   
@@ -586,10 +783,12 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
     sectorBreakdown[rec.sector] += rec.amount
   })
   
-  // Normalize to percentages
-  Object.keys(sectorBreakdown).forEach(sector => {
-    sectorBreakdown[sector] = (sectorBreakdown[sector] / totalInvestment) * 100
-  })
+  // Normalize to percentages only if totalInvestment > 0
+  if (totalInvestment > 0) {
+    Object.keys(sectorBreakdown).forEach(sector => {
+      sectorBreakdown[sector] = Math.round((sectorBreakdown[sector] / totalInvestment) * 100)
+    })
+  }
   
   return {
     totalInvestment,
@@ -599,8 +798,8 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
       threeYear: monthlyProjections[35]?.value || totalInvestment,
       fiveYear: monthlyProjections[59]?.value || totalInvestment,
     },
-    expectedAnnualReturn: expectedAnnualReturn * 100,
-    riskLevel: userProfile.riskTolerance <= 3 ? 'low' : userProfile.riskTolerance <= 7 ? 'medium' : 'high',
+    expectedAnnualReturn: Math.round(expectedAnnualReturn * 100 * 10) / 10, // Round to 1 decimal
+    riskLevel: (userProfile.riskTolerance || 5) <= 3 ? 'low' : (userProfile.riskTolerance || 5) <= 7 ? 'medium' : 'high',
     diversificationScore: Math.min(Object.keys(sectorBreakdown).length * 20, 100),
     sectorBreakdown
   }
@@ -610,7 +809,7 @@ function generateFallbackRecommendations(userProfile: any): InvestmentAnalysis {
   console.log('🔄 Generating fallback recommendations...')
   
   const recommendations: InvestmentRecommendation[] = []
-  const totalAmount = userProfile.capital
+  const totalAmount = userProfile.capitalAvailable || userProfile.capital || 10000
   
   // Conservative recommendations based on user profile
   if (userProfile.riskTolerance <= 3) {

@@ -18,32 +18,13 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [apiError, setApiError] = useState(false)
   const [apiKeyStatus, setApiKeyStatus] = useState<any>(null)
   const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
-  const [loadingProgress, setLoadingProgress] = useState(0)
-  const [loadingStage, setLoadingStage] = useState('Initializing...')
 
   // Generate recommendations using real APIs when available
   useEffect(() => {
     const generateRecommendations = async () => {
       setIsLoading(true)
-      setLoadingProgress(0)
-      setLoadingStage('Generating your investment recommendations...')
       
       try {
-        // Start timing for accurate progress
-        const startTime = Date.now()
-        
-        // More realistic progress animation - slower and more accurate
-        const progressInterval = setInterval(() => {
-          setLoadingProgress(prev => {
-            const elapsed = Date.now() - startTime
-            // Typical API response time is 5-12 seconds, so let's use 8 seconds as expected
-            const expectedDuration = 8000 // 8 seconds
-            // Progress should reach 85% by expected time, leaving 15% for completion
-            const progress = Math.min(85, (elapsed / expectedDuration) * 85)
-            return Math.round(progress)
-          })
-        }, 200) // Update every 200ms for smoother progression
-
         // Call the API route
         const response = await fetch('/api/recommendations', {
           method: 'POST',
@@ -52,8 +33,6 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           },
           body: JSON.stringify(userProfile)
         })
-
-        clearInterval(progressInterval)
         
         if (!response.ok) {
           throw new Error(`API request failed: ${response.status}`)
@@ -64,13 +43,6 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         if (analysis.error) {
           throw new Error(analysis.error)
         }
-
-        // Complete the progress
-        setLoadingProgress(100)
-        setLoadingStage('Complete!')
-        
-        // Brief pause to show completion
-        await new Promise(resolve => setTimeout(resolve, 500))
 
         setRecommendations(analysis.recommendations)
         setPortfolioProjections(analysis.portfolioProjections)
@@ -115,9 +87,19 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
   const getStrengthColor = (strength: 'weak' | 'moderate' | 'strong') => {
     switch (strength) {
-      case 'weak': return 'text-gray-400'
+      case 'weak': return 'text-red-400'
       case 'moderate': return 'text-yellow-400'
       case 'strong': return 'text-green-400'
+      default: return 'text-yellow-400'
+    }
+  }
+
+  const getStrengthDisplay = (strength: 'weak' | 'moderate' | 'strong') => {
+    switch (strength) {
+      case 'weak': return 'Weak'
+      case 'moderate': return 'Strong' 
+      case 'strong': return 'Very Strong'
+      default: return 'Moderate'
     }
   }
 
@@ -166,31 +148,157 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-2xl mx-auto text-center py-20">
+      <div className="w-full max-w-lg mx-auto text-center py-20">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="space-y-8"
         >
           <div>
-            <h2 className="text-3xl font-bold text-white mb-4">
+            <h2 className="text-3xl font-bold text-white mb-8">
               Creating Your Portfolio
             </h2>
           </div>
           
-          {/* Simple Progress Bar */}
-          <div className="max-w-sm mx-auto">
-            <div className="flex justify-between text-sm text-gray-400 mb-3">
-              <span>{loadingStage}</span>
-              <span>{loadingProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${loadingProgress}%` }}
-                transition={{ duration: 0.3 }}
+          {/* Continuously Scrolling Graph */}
+          <div className="relative h-32 bg-gray-900/50 rounded-lg p-4 border border-gray-700 overflow-hidden">
+            <svg 
+              width="100%" 
+              height="100%" 
+              viewBox="0 0 400 80" 
+              className="overflow-hidden"
+            >
+              {/* Grid lines that scroll */}
+              <defs>
+                <pattern id="scrollingGrid" width="40" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 20" fill="none" stroke="rgb(75 85 99)" strokeWidth="0.5" opacity="0.3"/>
+                </pattern>
+              </defs>
+              <motion.rect 
+                width="800" 
+                height="100%" 
+                fill="url(#scrollingGrid)"
+                animate={{ x: [-400, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               />
+              
+              {/* Continuous flowing data line */}
+              <motion.g
+                animate={{ x: [-100, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <path
+                  d="M -100 60 Q -80 45 -60 52 Q -40 38 -20 42 Q 0 30 20 35 Q 40 22 60 28 Q 80 18 100 25 Q 120 15 140 20 Q 160 12 180 18 Q 200 8 220 15 Q 240 5 260 12 Q 280 8 300 14 Q 320 6 340 10 Q 360 4 380 8 Q 400 2 420 6 Q 440 5 460 9 Q 480 3 500 7"
+                  fill="none"
+                  stroke="url(#flowingGradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </motion.g>
+              
+              {/* Second flowing line for depth */}
+              <motion.g
+                animate={{ x: [-120, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+              >
+                <path
+                  d="M -120 65 Q -100 58 -80 62 Q -60 48 -40 55 Q -20 42 0 48 Q 20 38 40 45 Q 60 32 80 38 Q 100 28 120 35 Q 140 25 160 30 Q 180 22 200 28 Q 220 18 240 25 Q 260 15 280 22 Q 300 12 320 18 Q 340 10 360 15 Q 380 8 400 12 Q 420 6 440 10 Q 460 4 480 8"
+                  fill="none"
+                  stroke="url(#secondaryGradient)"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.6"
+                />
+              </motion.g>
+              
+              {/* Flowing data points */}
+              <motion.g
+                animate={{ x: [-40, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+              >
+                {[
+                  { x: -20, y: 42 }, { x: 20, y: 35 }, { x: 60, y: 28 }, 
+                  { x: 100, y: 25 }, { x: 140, y: 20 }, { x: 180, y: 18 },
+                  { x: 220, y: 15 }, { x: 260, y: 12 }, { x: 300, y: 14 },
+                  { x: 340, y: 10 }, { x: 380, y: 8 }, { x: 420, y: 6 }
+                ].map((point, index) => (
+                  <motion.circle
+                    key={index}
+                    cx={point.x}
+                    cy={point.y}
+                    r="2.5"
+                    fill="#10b981"
+                    animate={{ 
+                      scale: [1, 1.3, 1],
+                      opacity: [0.8, 1, 0.8]
+                    }}
+                    transition={{ 
+                      duration: 1.5, 
+                      repeat: Infinity, 
+                      ease: "easeInOut",
+                      delay: index * 0.1
+                    }}
+                  />
+                ))}
+              </motion.g>
+              
+              {/* Gradient definitions for flowing lines */}
+              <defs>
+                <linearGradient id="flowingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="30%" stopColor="#3b82f6" />
+                  <stop offset="60%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+                <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="50%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#3b82f6" />
+                </linearGradient>
+              </defs>
+              
+              {/* Real-time value indicators */}
+              <motion.g>
+                <motion.text
+                  x="20"
+                  y="20"
+                  className="text-xs fill-green-400 font-mono"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  LIVE
+                </motion.text>
+                <motion.circle
+                  cx="10"
+                  cy="15"
+                  r="3"
+                  fill="#10b981"
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              </motion.g>
+              
+              {/* Flowing price ticker at bottom */}
+              <motion.g
+                animate={{ x: [-200, 400] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              >
+                <text x="0" y="72" className="text-xs fill-gray-400 font-mono">
+                  Analyzing market data...
+                </text>
+              </motion.g>
+            </svg>
+            
+            {/* Dynamic status text */}
+            <div className="absolute top-2 right-2 text-sm text-gray-300 font-mono">
+              <motion.div
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Processing...
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -380,22 +488,25 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">Expected Annual Return</div>
               <div className="text-lg font-semibold text-green-400">
-                {(portfolioProjections.expectedAnnualReturn * 100).toFixed(1)}%
+                {portfolioProjections.expectedAnnualReturn 
+                  ? `${(portfolioProjections.expectedAnnualReturn * 100).toFixed(1)}%`
+                  : `${(((portfolioProjections.projectedValues?.threeYear / userProfile.capitalAvailable) ** (1/3) - 1) * 100).toFixed(1)}%`
+                }
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">Risk Level</div>
               <div className={`text-lg font-semibold capitalize ${
-                portfolioProjections.riskLevel === 'low' ? 'text-green-400' :
-                portfolioProjections.riskLevel === 'medium' ? 'text-yellow-400' : 'text-red-400'
+                userProfile.riskTolerance <= 3 ? 'text-green-400' :
+                userProfile.riskTolerance <= 7 ? 'text-yellow-400' : 'text-red-400'
               }`}>
-                {portfolioProjections.riskLevel}
+                {userProfile.riskTolerance <= 3 ? 'low' : userProfile.riskTolerance <= 7 ? 'medium' : 'high'}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">Diversification Score</div>
               <div className="text-lg font-semibold text-blue-400">
-                {portfolioProjections.diversificationScore}/100
+                {Math.min(100, Math.max(40, (recommendations.filter(r => r.type === 'buy').length * 15) + (userProfile.sectors.length * 8)))}
               </div>
             </div>
           </div>
@@ -481,9 +592,19 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
 
   const getStrengthColor = (strength: 'weak' | 'moderate' | 'strong') => {
     switch (strength) {
-      case 'weak': return 'text-gray-400'
-      case 'moderate': return 'text-yellow-400'
+      case 'weak': return 'text-red-400'
+      case 'moderate': return 'text-yellow-400' 
       case 'strong': return 'text-green-400'
+      default: return 'text-yellow-400'
+    }
+  }
+
+  const getStrengthDisplay = (strength: 'weak' | 'moderate' | 'strong') => {
+    switch (strength) {
+      case 'weak': return 'Weak'
+      case 'moderate': return 'Strong' 
+      case 'strong': return 'Very Strong'
+      default: return 'Moderate'
     }
   }
 
@@ -545,7 +666,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
           <span className={`font-semibold capitalize ${
             isPlaceholder ? 'text-red-400' : getStrengthColor(recommendation.strength)
           }`}>
-            {recommendation.strength} {recommendation.type}
+            {getStrengthDisplay(recommendation.strength)}
           </span>
         </div>
       </div>

@@ -4,13 +4,13 @@ import { Providers } from './providers'
 
 export const metadata: Metadata = {
   title: 'G.AI.NS Investment Advisor',
-  description: 'Smart investment advice powered by AI to help you allocate your capital wisely',
+  description: 'Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence.',
   keywords: 'investment, AI, portfolio, stocks, crypto, ETF, financial advisor',
   authors: [{ name: 'G.AI.NS Team' }],
   icons: {
-    icon: '/2.png',
-    shortcut: '/2.png',
-    apple: '/2.png',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
 }
 

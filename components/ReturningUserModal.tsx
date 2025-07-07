@@ -10,6 +10,7 @@ interface ReturningUserModalProps {
   userProfile: StoredUserProfile
   onUsePrevious: () => void
   onStartFresh: () => void
+  onEditResponses?: () => void
 }
 
 export default function ReturningUserModal({ 
@@ -17,7 +18,8 @@ export default function ReturningUserModal({
   onClose, 
   userProfile, 
   onUsePrevious, 
-  onStartFresh 
+  onStartFresh,
+  onEditResponses
 }: ReturningUserModalProps) {
   return (
     <AnimatePresence>
@@ -63,7 +65,7 @@ export default function ReturningUserModal({
             )}
 
             <p className="text-gray-300 mb-6">
-              Would you like to use your previous answers or start fresh with a new questionnaire?
+              Would you like to use your previous answers, edit specific responses, or start fresh with a new questionnaire?
             </p>
 
             {/* Action Buttons */}
@@ -74,7 +76,23 @@ export default function ReturningUserModal({
                 onClick={onUsePrevious}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
               >
-                Use Previous Answers
+                Skip to My Previous Recommendations
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  if (onEditResponses) {
+                    onEditResponses()
+                  } else {
+                    onClose()
+                    // Default behavior: start from beginning but keep existing answers
+                  }
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+              >
+                Edit My Previous Responses
               </motion.button>
               
               <motion.button

@@ -13,7 +13,7 @@ const CapitalStep: React.FC<CapitalStepProps> = ({ onComplete, userProfile }) =>
   const [capital, setCapital] = useState(userProfile?.capitalAvailable || 0)
   const [inputValue, setInputValue] = useState(userProfile?.capitalAvailable?.toString() || '')
 
-  const quickAmounts = [1000, 5000, 10000, 25000, 50000, 100000]
+  const quickAmounts = [5000, 25000, 100000]
 
   const handleInputChange = (value: string) => {
     // Remove non-numeric characters except decimal point
@@ -39,14 +39,14 @@ const CapitalStep: React.FC<CapitalStepProps> = ({ onComplete, userProfile }) =>
   }
 
   return (
-    <div className="step-content">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-white mb-8">Available Capital</h2>
+    <div className="step-layout">
+      <div className="step-header">
+        <h2 className="text-2xl font-semibold text-white">Available Capital</h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="step-body">
         {/* Input Field */}
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-sm mx-auto text-center">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <span className="text-2xl text-gray-400">$</span>
@@ -74,7 +74,7 @@ const CapitalStep: React.FC<CapitalStepProps> = ({ onComplete, userProfile }) =>
                 className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   capital === amount
                     ? 'bg-primary-600 border-primary-500 text-white'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
+                    : 'border-gray-700 text-gray-300 hover:border-gray-600 hover:bg-gray-800/20'
                 }`}
               >
                 <div className="text-sm font-medium">
@@ -88,19 +88,19 @@ const CapitalStep: React.FC<CapitalStepProps> = ({ onComplete, userProfile }) =>
         {/* Investment Ranges */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className={`p-4 rounded-lg border ${
-            capital < 10000 ? 'bg-blue-900/20 border-blue-700' : 'bg-gray-800 border-gray-700'
+            capital < 10000 ? 'bg-blue-900/20 border-blue-700' : 'border-gray-700'
           }`}>
             <h4 className="font-semibold text-blue-400 mb-2">Starting Out</h4>
             <p className="text-gray-400">Under $10,000 - Focus on low-cost ETFs and diversification</p>
           </div>
           <div className={`p-4 rounded-lg border ${
-            capital >= 10000 && capital < 100000 ? 'bg-green-900/20 border-green-700' : 'bg-gray-800 border-gray-700'
+            capital >= 10000 && capital < 100000 ? 'bg-green-900/20 border-green-700' : 'border-gray-700'
           }`}>
             <h4 className="font-semibold text-green-400 mb-2">Building Wealth</h4>
             <p className="text-gray-400">$10,000 - $100,000 - Mix of ETFs and individual stocks</p>
           </div>
           <div className={`p-4 rounded-lg border ${
-            capital >= 100000 ? 'bg-purple-900/20 border-purple-700' : 'bg-gray-800 border-gray-700'
+            capital >= 100000 ? 'bg-purple-900/20 border-purple-700' : 'border-gray-700'
           }`}>
             <h4 className="font-semibold text-purple-400 mb-2">Advanced Portfolio</h4>
             <p className="text-gray-400">$100,000+ - Advanced strategies and alternative investments</p>
@@ -108,15 +108,17 @@ const CapitalStep: React.FC<CapitalStepProps> = ({ onComplete, userProfile }) =>
         </div>
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onComplete({ capitalAvailable: capital })}
-        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
-        disabled={capital <= 0}
-      >
-        Continue
-      </motion.button>
+      <div className="step-footer">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onComplete({ capitalAvailable: capital })}
+          className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+          disabled={capital <= 0}
+        >
+          Continue
+        </motion.button>
+      </div>
     </div>
   )
 }

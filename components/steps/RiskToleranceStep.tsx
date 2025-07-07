@@ -6,18 +6,19 @@ import { motion } from 'framer-motion'
 interface RiskToleranceStepProps {
   onComplete: (data: { riskTolerance: number }) => void
   userProfile?: any
+  onBack?: () => void
 }
 
-const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userProfile }) => {
+const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userProfile, onBack }) => {
   const [riskLevel, setRiskLevel] = useState(userProfile?.riskTolerance || 5)
 
   return (
-    <div className="step-content">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-white mb-8">Risk Tolerance</h2>
+    <div className="step-layout">
+      <div className="step-header">
+        <h2 className="text-2xl font-semibold text-white">Risk Tolerance</h2>
       </div>
 
-      <div className="space-y-6">
+      <div className="step-body">
         {/* Risk Level Display */}
         <div className="text-center">
           <div className="text-4xl font-bold text-white mb-6">{riskLevel}/10</div>
@@ -49,29 +50,43 @@ const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userP
 
         {/* Risk Level Examples */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className={`p-4 rounded-lg border ${riskLevel <= 3 ? 'bg-green-900/20 border-green-700' : 'bg-gray-800 border-gray-700'}`}>
+          <div className={`p-4 rounded-lg border ${riskLevel <= 3 ? 'bg-green-900/20 border-green-700' : 'border-gray-700'}`}>
             <h4 className="font-medium text-green-400 mb-2">Conservative (1-3)</h4>
             <p className="text-gray-400">Bonds, CDs, dividend stocks</p>
           </div>
-          <div className={`p-4 rounded-lg border ${riskLevel >= 4 && riskLevel <= 7 ? 'bg-yellow-900/20 border-yellow-700' : 'bg-gray-800 border-gray-700'}`}>
+          <div className={`p-4 rounded-lg border ${riskLevel >= 4 && riskLevel <= 7 ? 'bg-yellow-900/20 border-yellow-700' : 'border-gray-700'}`}>
             <h4 className="font-medium text-yellow-400 mb-2">Moderate (4-7)</h4>
             <p className="text-gray-400">Mixed portfolio, ETFs, blue chips</p>
           </div>
-          <div className={`p-4 rounded-lg border ${riskLevel >= 8 ? 'bg-red-900/20 border-red-700' : 'bg-gray-800 border-gray-700'}`}>
+          <div className={`p-4 rounded-lg border ${riskLevel >= 8 ? 'bg-red-900/20 border-red-700' : 'border-gray-700'}`}>
             <h4 className="font-medium text-red-400 mb-2">Aggressive (8-10)</h4>
             <p className="text-gray-400">Growth stocks, crypto, options</p>
           </div>
         </div>
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onComplete({ riskTolerance: riskLevel })}
-        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
-      >
-        Continue
-      </motion.button>
+      <div className="step-footer">
+        <div className="flex gap-4">
+          {onBack && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onBack}
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            >
+              Back
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onComplete({ riskTolerance: riskLevel })}
+            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+          >
+            Continue
+          </motion.button>
+        </div>
+      </div>
     </div>
   )
 }

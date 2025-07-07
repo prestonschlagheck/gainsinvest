@@ -8,9 +8,16 @@ import { signIn } from 'next-auth/react'
 interface AuthModalProps {
   onClose: () => void
   onSuccess: () => void
+  onGuestContinue?: () => void
+  showGuestOption?: boolean
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ 
+  onClose, 
+  onSuccess, 
+  onGuestContinue,
+  showGuestOption = false 
+}) => {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleGoogleSignIn = async () => {
@@ -20,6 +27,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
     } catch (error) {
       console.error('Google sign-in error:', error)
       setIsLoading(false)
+    }
+  }
+
+  const handleGuestClick = () => {
+    if (onGuestContinue) {
+      onGuestContinue()
     }
   }
 
@@ -35,7 +48,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">
-              Sign in to G.AI.NS
+              {showGuestOption ? 'Get Started with G.AI.NS' : 'Sign in to G.AI.NS'}
             </h2>
             <button
               onClick={onClose}
@@ -47,7 +60,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
 
           {/* Description */}
           <p className="text-gray-300 mb-8 text-center">
-            Sign in with your Google account to save your investment preferences and get personalized recommendations.
+            {showGuestOption 
+              ? 'Choose how you\'d like to continue with your investment journey.'
+              : 'Sign in with your Google account to save your investment preferences and get personalized recommendations.'
+            }
           </p>
 
           {/* Google Sign In Button */}
@@ -56,7 +72,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
             whileTap={{ scale: isLoading ? 1 : 0.98 }}
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-300 text-gray-900 font-semibold py-4 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-3"
+            className="w-full bg-white hover:bg-gray-100 disabled:bg-gray-300 text-gray-900 font-semibold py-4 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center gap-3 mb-4"
           >
             {isLoading ? (
               <>
@@ -76,9 +92,23 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onSuccess }) => {
             )}
           </motion.button>
 
+          {/* Guest Option */}
+          {showGuestOption && onGuestContinue && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleGuestClick}
+              className="w-full border border-gray-600 hover:border-gray-500 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200"
+            >
+              Continue as Guest
+            </motion.button>
+          )}
+
           {/* Benefits */}
           <div className="mt-8 space-y-3">
-            <h3 className="text-lg font-semibold text-white mb-4">Why create an account?</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              {showGuestOption ? 'Benefits of creating an account:' : 'Why create an account?'}
+            </h3>
             <div className="space-y-2 text-sm text-gray-300">
               <div className="flex items-start gap-2">
                 <span className="text-green-400 mt-1">✓</span>

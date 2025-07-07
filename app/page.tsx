@@ -9,6 +9,11 @@ import AuthModal from '@/components/AuthModal'
 import ApiStatus from '@/components/ApiStatus'
 import ReturningUserModal from '@/components/ReturningUserModal'
 import UserProfile from '@/components/UserProfile'
+import LandingPage from '@/components/LandingPage'
+import HowToUsePage from '@/components/HowToUsePage'
+import HowItWorksPage from '@/components/HowItWorksPage'
+import ApiPage from '@/components/ApiPage'
+import ContactPage from '@/components/ContactPage'
 import { 
   loadUserProfile, 
   saveUserProfile, 
@@ -16,15 +21,18 @@ import {
   StoredUserProfile 
 } from '@/lib/userStorage'
 
+type AppView = 'landing' | 'how-to-use' | 'how-it-works' | 'apis' | 'contact' | 'chat'
+
 export default function Home() {
   const { data: session, status } = useSession()
+  const [currentView, setCurrentView] = useState<AppView>('landing')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showReturningUserModal, setShowReturningUserModal] = useState(false)
   const [userType, setUserType] = useState<'guest' | 'user' | null>(null)
   const [hasStarted, setHasStarted] = useState(false)
   const [showWelcomeTitle, setShowWelcomeTitle] = useState(false)
   const [showContinueBox, setShowContinueBox] = useState(false)
-  const [imageError, setImageError] = useState(false)
+
   const [currentStep, setCurrentStep] = useState(0)
   const [storedProfile, setStoredProfile] = useState<StoredUserProfile | null>(null)
   
@@ -57,6 +65,7 @@ export default function Home() {
         setHasStarted(true)
         setShowContinueBox(true)
         setShowAuthModal(false) // Close auth modal if open
+        setCurrentView('chat') // Switch to chat view
         
         // Create or update profile with Google user info
         const profileToSave: StoredUserProfile = existingProfile ? {
@@ -86,32 +95,14 @@ export default function Home() {
     }
   }, [session, status])
 
-  // Smooth animation sequence on page load
-  useEffect(() => {
-    // Only show the initial animation if user is not already authenticated
-    if (status === 'authenticated') {
-      // User is authenticated, show content immediately
-      setShowContinueBox(true)
-      setHasStarted(true)
-    } else if (status === 'unauthenticated') {
-      const timer1 = setTimeout(() => {
-        // First fade out the logo
-        setShowWelcomeTitle(false)
-      }, 2000) // Show logo for 2 seconds, then fade out
+  const handleStartChat = () => {
+    setCurrentView('chat')
+    setShowWelcomeTitle(true)
+  }
 
-      const timer2 = setTimeout(() => {
-        // Then show the continue box
-        setShowContinueBox(true)
-        setHasStarted(true)
-      }, 2800) // Show continue box after logo fades out
-
-      return () => {
-        clearTimeout(timer1)
-        clearTimeout(timer2)
-      }
-    }
-    // For 'loading' status, do nothing and wait
-  }, [status])
+  const handleBackToLanding = () => {
+    setCurrentView('landing')
+  }
 
   const handleAccountChoice = (type: 'guest' | 'recurring') => {
     if (type === 'recurring') {
@@ -126,7 +117,7 @@ export default function Home() {
   }
 
   const handleCompleteRestart = () => {
-    // Complete reset - go back to initial state
+    // Complete reset - go back to landing
     setUserType(null)
     setHasStarted(false)
     setShowContinueBox(false)
@@ -134,29 +125,28 @@ export default function Home() {
     setCurrentStep(0)
     setShowReturningUserModal(false)
     setStoredProfile(null)
-    
-    // Restart the animation sequence
-    setTimeout(() => {
-      const timer1 = setTimeout(() => {
-        setShowWelcomeTitle(false)
-      }, 2000)
-
-      const timer2 = setTimeout(() => {
-        setShowContinueBox(true)
-        setHasStarted(true)
-      }, 2800)
-    }, 100)
+    setCurrentView('landing')
   }
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false)
-    // Don't set userType here - let the useEffect handle it based on session
+    setUserType('user')
+    setCurrentView('chat')
+    setHasStarted(true)
+  }
+
+  const handleGuestContinue = () => {
+    setShowAuthModal(false)
+    setUserType('guest')
+    setCurrentView('chat')
+    setHasStarted(true)
   }
 
   const handleUsePreviousAnswers = () => {
     if (storedProfile) {
       setShowReturningUserModal(false)
       setUserType('user')
+      setCurrentView('chat')
       // The profile is already saved, ChatInterface will handle it
     }
   }
@@ -164,6 +154,7 @@ export default function Home() {
   const handleStartFresh = () => {
     setShowReturningUserModal(false)
     setUserType('user')
+    setCurrentView('chat')
     // Clear previous profile data but keep Google user info
     if (storedProfile && storedProfile.googleUser) {
       const freshProfile: StoredUserProfile = {
@@ -182,14 +173,53 @@ export default function Home() {
     }
   }
 
+  const handleEditResponses = () => {
+    setShowReturningUserModal(false)
+    setUserType('user')
+    setCurrentView('chat')
+    setHasStarted(true)
+    // Start from the beginning but keep existing profile data
+    // The stored profile is already loaded, ChatInterface will handle it
+  }
+
   const isAccountSelected = userType !== null || status === 'authenticated'
   const isPortfolioStep = currentStep === 7
 
+  // Render different views based on currentView state
+  if (currentView === 'how-to-use') {
+    return <HowToUsePage onBack={handleBackToLanding} />
+  }
+
+  if (currentView === 'how-it-works') {
+    return <HowItWorksPage onBack={handleBackToLanding} />
+  }
+
+  if (currentView === 'apis') {
+    return <ApiPage onBack={handleBackToLanding} />
+  }
+
+  if (currentView === 'contact') {
+    return <ContactPage onBack={handleBackToLanding} />
+  }
+
+     if (currentView === 'landing') {
+     return (
+       <LandingPage 
+         onStartChat={handleStartChat}
+         onNavigateToHowToUse={() => setCurrentView('how-to-use')}
+         onNavigateToHowItWorks={() => setCurrentView('how-it-works')}
+         onNavigateToApis={() => setCurrentView('apis')}
+         onNavigateToContact={() => setCurrentView('contact')}
+       />
+     )
+   }
+
+  // Chat interface view (existing functionality)
   return (
     <main className={`chat-container min-h-screen bg-gray-950 ${isPortfolioStep ? 'portfolio-layout' : ''}`}>
       
       {/* User Profile - Top Right Corner */}
-      <UserProfile />
+      <UserProfile userType={userType} />
 
       {/* Top Left Logo - Only shown after account selection */}
       <AnimatePresence>
@@ -199,104 +229,93 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ duration: 0.5 }}
-            className="fixed top-0 left-5 z-50"
+            className="fixed top-4 left-6 z-50 cursor-pointer"
+            onClick={handleCompleteRestart}
           >
-            <button
-              onClick={handleCompleteRestart}
-              className="hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 rounded-lg"
-              title="Click to restart G.AI.NS"
-            >
-              {imageError ? (
-                <div className="w-16 h-16 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center text-white text-xs transition-colors">
-                  Logo
-                </div>
-              ) : (
-                <Image
-                  src="/logo-small.png"
-                  alt="G.AI.NS Logo - Click to restart"
-                  width={60}
-                  height={60}
-                  priority
-                  onError={() => setImageError(true)}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <span className="text-white text-xl font-light tracking-tight">G.AI.NS</span>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Main Content Area */}
       <div className={`main-content ${isAccountSelected ? 'with-top-logo' : ''}`}>
-        {/* Main Logo - Only shown before account selection and when not authenticated */}
-        {!isAccountSelected && !showContinueBox && status === 'unauthenticated' && (
-          <div className="text-center mb-8">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.8 }}
-              className="mb-8"
-            >
-              {imageError ? (
-                <div className="w-56 h-56 bg-gray-700 rounded-lg flex items-center justify-center text-white text-xl mx-auto">
-                  G.AI.NS
-                </div>
-              ) : (
-                <Image
-                  src="/logo-main.png"
-                  alt="G.AI.NS Logo"
-                  width={220}
-                  height={220}
-                  className="mx-auto"
-                  priority
-                  onError={() => setImageError(true)}
-                />
-              )}
-            </motion.div>
-          </div>
-        )}
-
-        {/* Chat Interface - Only show continue box after logo fades */}
+        
+        {/* Welcome Title Animation */}
         <AnimatePresence>
-          {showContinueBox && (
+          {!hasStarted && !showContinueBox && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: showWelcomeTitle ? 0 : 1, scale: showWelcomeTitle ? 0.5 : 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.5 }}
+              className="text-center"
             >
-              <ChatInterface 
-                userType={userType}
-                onAccountChoice={handleAccountChoice}
-                onCompleteRestart={handleCompleteRestart}
-                hasStarted={hasStarted}
-                onStepChange={handleStepChange}
-              />
+              <div className="text-6xl font-light text-white mb-8 tracking-tight">G.AI.NS</div>
+              <h1 className="text-4xl md:text-6xl font-light text-white mb-4">
+                Welcome to G.AI.NS
+              </h1>
+              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+                Your AI-powered investment advisor
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Auth Modal */}
-        {showAuthModal && (
-          <AuthModal 
-            onClose={() => setShowAuthModal(false)}
-            onSuccess={handleAuthSuccess}
-          />
-        )}
 
-        {/* Returning User Modal */}
-        {showReturningUserModal && storedProfile && (
-          <ReturningUserModal
-            isOpen={showReturningUserModal}
-            onClose={() => setShowReturningUserModal(false)}
-            userProfile={storedProfile}
-            onUsePrevious={handleUsePreviousAnswers}
-            onStartFresh={handleStartFresh}
-          />
-        )}
+
+        {/* Chat Interface */}
+        <AnimatePresence>
+          {isAccountSelected && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="w-full"
+            >
+                             <ChatInterface
+                 userType={userType}
+                 onAccountChoice={handleAccountChoice}
+                 onStepChange={handleStepChange}
+                 onCompleteRestart={handleCompleteRestart}
+                 hasStarted={hasStarted}
+               />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* API Status - Development Only - Temporarily disabled */}
-      {/* <ApiStatus isDevelopment={process.env.NODE_ENV === 'development'} /> */}
+      {/* Modals */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal
+            onClose={() => setShowAuthModal(false)}
+            onSuccess={handleAuthSuccess}
+            onGuestContinue={handleGuestContinue}
+            showGuestOption={true}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+                 {showReturningUserModal && storedProfile && (
+           <ReturningUserModal
+             isOpen={showReturningUserModal}
+             onClose={() => setShowReturningUserModal(false)}
+             userProfile={storedProfile}
+             onUsePrevious={handleUsePreviousAnswers}
+             onStartFresh={handleStartFresh}
+             onEditResponses={handleEditResponses}
+           />
+         )}
+      </AnimatePresence>
+
+      {/* API Status - Bottom Right Corner */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <ApiStatus />
+      </div>
     </main>
   )
 } 

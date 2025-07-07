@@ -39,12 +39,13 @@ const GrowthTypeStep: React.FC<GrowthTypeStepProps> = ({ onComplete, userProfile
   ]
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-white mb-8">Growth Type Preference</h2>
+    <div className="step-layout">
+      <div className="step-header">
+        <h2 className="text-2xl font-semibold text-white">Growth Type Preference</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="step-body">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {types.map((type) => {
           const Icon = type.icon
           const isSelected = selectedType === type.id
@@ -57,8 +58,8 @@ const GrowthTypeStep: React.FC<GrowthTypeStepProps> = ({ onComplete, userProfile
               onClick={() => setSelectedType(type.id)}
               className={`group relative p-6 rounded-xl text-left transition-all duration-300 border-2 ${
                 isSelected 
-                  ? 'bg-gray-700 border-gray-500 shadow-lg' 
-                  : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                  ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
+                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <div className="flex items-center mb-4">
@@ -79,16 +80,19 @@ const GrowthTypeStep: React.FC<GrowthTypeStepProps> = ({ onComplete, userProfile
             </motion.button>
           )
         })}
+        </div>
       </div>
 
-      <motion.button
+      <div className="step-footer">
+        <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => onComplete({ growthType: selectedType })}
-        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
+        className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
       >
         Continue
       </motion.button>
+      </div>
     </div>
   )
 }

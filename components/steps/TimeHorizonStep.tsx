@@ -7,9 +7,10 @@ import { Clock, Zap, Calendar } from 'lucide-react'
 interface TimeHorizonStepProps {
   onComplete: (data: { timeHorizon: 'short' | 'medium' | 'long' }) => void
   userProfile?: any
+  onBack?: () => void
 }
 
-const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfile }) => {
+const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfile, onBack }) => {
   const [selectedHorizon, setSelectedHorizon] = useState<'short' | 'medium' | 'long'>(
     userProfile?.timeHorizon || 'medium'
   )
@@ -39,12 +40,13 @@ const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfi
   ]
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-white mb-8">Investment Time Horizon</h2>
+    <div className="step-layout">
+      <div className="step-header">
+        <h2 className="text-2xl font-semibold text-white">Investment Time Horizon</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="step-body">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {horizons.map((horizon) => {
           const Icon = horizon.icon
           const isSelected = selectedHorizon === horizon.id
@@ -57,8 +59,8 @@ const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfi
               onClick={() => setSelectedHorizon(horizon.id)}
               className={`group relative p-6 rounded-xl text-left transition-all duration-300 border-2 ${
                 isSelected 
-                  ? 'bg-gray-700 border-gray-500 shadow-lg' 
-                  : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                  ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
+                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <div className="flex items-center mb-4">
@@ -78,16 +80,31 @@ const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfi
             </motion.button>
           )
         })}
+        </div>
       </div>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => onComplete({ timeHorizon: selectedHorizon })}
-        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg text-lg font-medium transition-colors"
-      >
-        Continue
-      </motion.button>
+      <div className="step-footer">
+        <div className="flex gap-4">
+          {onBack && (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onBack}
+              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            >
+              Back
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onComplete({ timeHorizon: selectedHorizon })}
+            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+          >
+            Continue
+          </motion.button>
+        </div>
+      </div>
     </div>
   )
 }

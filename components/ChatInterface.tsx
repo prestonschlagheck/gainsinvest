@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import { UserProfile } from '@/types'
 import { loadUserProfile, saveUserProfile, StoredUserProfile } from '@/lib/userStorage'
-import WelcomeStep from './steps/WelcomeStep'
 import RiskToleranceStep from './steps/RiskToleranceStep'
 import TimeHorizonStep from './steps/TimeHorizonStep'
 import GrowthTypeStep from './steps/GrowthTypeStep'
@@ -39,7 +38,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
   const [showRecommendations, setShowRecommendations] = useState(false)
 
   const steps = [
-    { id: 'welcome', component: WelcomeStep },
     { id: 'risk', component: RiskToleranceStep },
     { id: 'time', component: TimeHorizonStep },
     { id: 'growth', component: GrowthTypeStep },
@@ -61,8 +59,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
       } else if (storedProfile) {
         // User has partial data, use it but continue questionnaire
         setUserProfile(storedProfile)
-        // Skip welcome step and start from risk tolerance
-        setCurrentStep(1)
+        // Start from the beginning (risk tolerance)
+        setCurrentStep(0)
       } else {
         // New Google user, create profile and start from risk tolerance
         const newProfile: UserProfile = {
@@ -76,10 +74,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
           existingPortfolio: []
         }
         setUserProfile(newProfile)
-        // Skip welcome step for authenticated users
-        setCurrentStep(1)
+        // Start from the beginning (risk tolerance)
+        setCurrentStep(0)
       }
-    } else if (userType === 'user') {
+    } else if (userType) {
       const storedProfile = loadUserProfile()
       if (storedProfile && storedProfile.hasCompletedQuestionnaire) {
         // User has completed questionnaire before, show recommendations directly
@@ -91,7 +89,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
       } else {
         // New user, create profile
         const newProfile: UserProfile = {
-          isGuest: false,
+          isGuest: userType === 'guest',
           riskTolerance: 5,
           timeHorizon: 'medium',
           growthType: 'balanced',
@@ -102,8 +100,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
         }
         setUserProfile(newProfile)
       }
-    } else if (userType === 'guest') {
-      setUserProfile(prev => ({ ...prev, isGuest: true }))
     }
   }, [userType, session, status])
 
@@ -145,6 +141,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     }
   }
 
+  const handleStepBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1)
+    }
+  }
+
   const handleRestart = () => {
     // Reset all state to initial values
     setCurrentStep(0)
@@ -183,25 +185,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className={`step-container ${currentStep === 7 ? 'portfolio-container' : ''}`}
+          className={`step-container ${currentStep === 6 ? 'portfolio-container' : ''}`}
         >
-          {shouldShowWelcome ? (
-            <WelcomeStep 
-              onComplete={(data) => {
-                onAccountChoice(data.choice)
-                if (data.choice === 'guest') {
-                  handleStepComplete(data)
-                }
-              }} 
+          {(() => {
+            const StepComponent = steps[currentStep].component
+            return <StepComponent 
+              onComplete={handleStepComplete} 
+              userProfile={userProfile} 
+              onBack={currentStep > 0 ? handleStepBack : undefined}
             />
-          ) : (
-            (() => {
-              // For authenticated users, map step numbers correctly (skip welcome)
-              const stepIndex = session?.user ? Math.max(currentStep, 1) : currentStep
-              const StepComponent = steps[stepIndex].component
-              return <StepComponent onComplete={handleStepComplete} userProfile={userProfile} />
-            })()
-          )}
+          })()}
         </motion.div>
       )}
     </div>
