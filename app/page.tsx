@@ -157,6 +157,7 @@ export default function Home() {
       setShowReturningUserModal(false)
       setUserType('user')
       setCurrentView('chat')
+      setHasStarted(true)  // Ensure interface is active
       // The profile is already saved, ChatInterface will handle it
     }
   }
@@ -165,6 +166,7 @@ export default function Home() {
     setShowReturningUserModal(false)
     setUserType('user')
     setCurrentView('chat')
+    setHasStarted(true)  // Ensure questionnaire starts
     // Clear previous profile data but keep Google user info
     if (storedProfile && storedProfile.googleUser) {
       const freshProfile: StoredUserProfile = {
