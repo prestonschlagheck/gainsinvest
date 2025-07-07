@@ -118,7 +118,7 @@ export default function LandingPage({
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-6 text-center">
         {/* Main heading - moved up by 16 pixels (20-4) */}
         <motion.div
-          className="mb-3 -mt-3"
+          className="mb-3 -mt-3 relative z-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -128,9 +128,128 @@ export default function LandingPage({
           </h1>
         </motion.div>
 
+        {/* Water horizon line - positioned to intersect with search input */}
+        <div className="absolute left-0 right-0 z-10" style={{ top: '60%' }}>
+          {/* Horizon line with ripple effect */}
+          <div className="relative w-full h-1">
+            <motion.div
+              className="absolute w-full h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent opacity-60"
+              animate={{
+                scaleX: [1, 1.02, 1],
+                opacity: [0.6, 0.8, 0.6],
+              }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            {/* Ripple effects */}
+            <motion.div
+              className="absolute w-full h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent opacity-30"
+              animate={{
+                scaleX: [1, 1.05, 1],
+                opacity: [0.3, 0.5, 0.3],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 1
+              }}
+            />
+            <motion.div
+              className="absolute w-full h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent opacity-20"
+              animate={{
+                scaleX: [1, 1.03, 1],
+                opacity: [0.2, 0.4, 0.2],
+              }}
+              transition={{
+                duration: 5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 2
+              }}
+            />
+          </div>
+
+          {/* Water reflection below horizon */}
+          <div className="relative w-full mt-2">
+            {/* Reflected G.AI.NS text */}
+            <motion.div
+              className="transform scale-y-[-1] opacity-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.2 }}
+              transition={{ duration: 1, delay: 0.5 }}
+            >
+              <h1 className="text-[120px] md:text-[180px] lg:text-[240px] font-light text-gray-400 leading-none tracking-tight">
+                G.AI.NS
+              </h1>
+            </motion.div>
+
+            {/* Water distortion overlay */}
+            <div className="absolute inset-0 overflow-hidden">
+              <motion.div
+                className="w-full h-full bg-gradient-to-b from-transparent via-gray-900/30 to-gray-900/50"
+                animate={{
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              {/* Subtle water ripple lines */}
+              <motion.div
+                className="absolute w-full h-px bg-gradient-to-r from-transparent via-gray-600/40 to-transparent"
+                style={{ top: '20%' }}
+                animate={{
+                  opacity: [0.2, 0.4, 0.2],
+                  scaleX: [0.8, 1.1, 0.8],
+                }}
+                transition={{
+                  duration: 4.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 0.5
+                }}
+              />
+              <motion.div
+                className="absolute w-full h-px bg-gradient-to-r from-transparent via-gray-500/30 to-transparent"
+                style={{ top: '40%' }}
+                animate={{
+                  opacity: [0.1, 0.3, 0.1],
+                  scaleX: [0.9, 1.05, 0.9],
+                }}
+                transition={{
+                  duration: 5.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1.5
+                }}
+              />
+              <motion.div
+                className="absolute w-full h-px bg-gradient-to-r from-transparent via-gray-700/20 to-transparent"
+                style={{ top: '60%' }}
+                animate={{
+                  opacity: [0.05, 0.2, 0.05],
+                  scaleX: [1.1, 0.9, 1.1],
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 2.5
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Search input - positioned to overlap the title with frosted glass effect */}
         <motion.div
-          className="w-full max-w-4xl mb-8 -mt-12 relative"
+          className="w-full max-w-4xl mb-8 -mt-12 relative z-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -163,7 +282,7 @@ export default function LandingPage({
 
         {/* Bottom text - simplified and smaller */}
         <motion.div
-          className="text-center space-y-4"
+          className="text-center space-y-4 relative z-20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}

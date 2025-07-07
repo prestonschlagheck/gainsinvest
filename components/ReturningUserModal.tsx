@@ -74,7 +74,7 @@ export default function ReturningUserModal({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onUsePrevious}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                className="w-full border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200"
               >
                 Skip to My Previous Recommendations
               </motion.button>
@@ -90,7 +90,7 @@ export default function ReturningUserModal({
                     // Default behavior: start from beginning but keep existing answers
                   }
                 }}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                className="w-full border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 font-semibold py-3 px-4 rounded-lg transition-all duration-200"
               >
                 Edit My Previous Responses
               </motion.button>
@@ -99,7 +99,7 @@ export default function ReturningUserModal({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onStartFresh}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                className="w-full border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 font-semibold py-3 px-4 rounded-lg transition-all duration-200"
               >
                 Start Fresh
               </motion.button>

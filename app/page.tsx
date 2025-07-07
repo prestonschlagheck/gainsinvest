@@ -14,6 +14,7 @@ import HowToUsePage from '@/components/HowToUsePage'
 import HowItWorksPage from '@/components/HowItWorksPage'
 import ApiPage from '@/components/ApiPage'
 import ContactPage from '@/components/ContactPage'
+import EditResponsesPage from '@/components/EditResponsesPage'
 import { 
   loadUserProfile, 
   saveUserProfile, 
@@ -21,7 +22,7 @@ import {
   StoredUserProfile 
 } from '@/lib/userStorage'
 
-type AppView = 'landing' | 'how-to-use' | 'how-it-works' | 'apis' | 'contact' | 'chat'
+type AppView = 'landing' | 'how-to-use' | 'how-it-works' | 'apis' | 'contact' | 'chat' | 'edit-responses'
 
 export default function Home() {
   const { data: session, status } = useSession()
@@ -175,11 +176,16 @@ export default function Home() {
 
   const handleEditResponses = () => {
     setShowReturningUserModal(false)
-    setUserType('user')
-    setCurrentView('chat')
-    setHasStarted(true)
-    // Start from the beginning but keep existing profile data
-    // The stored profile is already loaded, ChatInterface will handle it
+    setCurrentView('edit-responses')
+  }
+
+  const handleSaveEditedResponses = (updatedProfile: StoredUserProfile) => {
+    setStoredProfile(updatedProfile)
+    saveUserProfile(updatedProfile)
+  }
+
+  const handleBackFromEdit = () => {
+    setShowReturningUserModal(true)
   }
 
   const isAccountSelected = userType !== null || status === 'authenticated'
@@ -202,17 +208,27 @@ export default function Home() {
     return <ContactPage onBack={handleBackToLanding} />
   }
 
-     if (currentView === 'landing') {
-     return (
-       <LandingPage 
-         onStartChat={handleStartChat}
-         onNavigateToHowToUse={() => setCurrentView('how-to-use')}
-         onNavigateToHowItWorks={() => setCurrentView('how-it-works')}
-         onNavigateToApis={() => setCurrentView('apis')}
-         onNavigateToContact={() => setCurrentView('contact')}
-       />
-     )
-   }
+  if (currentView === 'edit-responses' && storedProfile) {
+    return (
+      <EditResponsesPage 
+        userProfile={storedProfile}
+        onSave={handleSaveEditedResponses}
+        onBack={handleBackFromEdit}
+      />
+    )
+  }
+
+  if (currentView === 'landing') {
+    return (
+      <LandingPage 
+        onStartChat={handleStartChat}
+        onNavigateToHowToUse={() => setCurrentView('how-to-use')}
+        onNavigateToHowItWorks={() => setCurrentView('how-it-works')}
+        onNavigateToApis={() => setCurrentView('apis')}
+        onNavigateToContact={() => setCurrentView('contact')}
+      />
+    )
+  }
 
   // Chat interface view (existing functionality)
   return (
