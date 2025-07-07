@@ -8,6 +8,7 @@ import ChatInterface from '@/components/ChatInterface'
 import AuthModal from '@/components/AuthModal'
 import ApiStatus from '@/components/ApiStatus'
 import ReturningUserModal from '@/components/ReturningUserModal'
+import UserProfile from '@/components/UserProfile'
 import { 
   loadUserProfile, 
   saveUserProfile, 
@@ -186,6 +187,9 @@ export default function Home() {
 
   return (
     <main className={`chat-container min-h-screen bg-gray-950 ${isPortfolioStep ? 'portfolio-layout' : ''}`}>
+      
+      {/* User Profile - Top Right Corner */}
+      <UserProfile />
 
       {/* Top Left Logo - Only shown after account selection */}
       <AnimatePresence>
