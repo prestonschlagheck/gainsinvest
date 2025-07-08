@@ -281,7 +281,10 @@ export default function LandingPage({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="md:hidden fixed inset-0 z-30 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-            onClick={() => setShowMobileMenu(false)}
+            onClick={() => {
+              setShowMobileMenu(false)
+              // If we're not already on landing page, this will effectively refresh/reset to landing
+            }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -290,15 +293,8 @@ export default function LandingPage({
               className="bg-gray-900 rounded-2xl p-6 border border-gray-700 shadow-2xl max-w-sm w-full mx-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-end items-center mb-6">
-                <button
-                  onClick={() => setShowMobileMenu(false)}
-                  className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <div className="flex justify-center items-center mb-6">
+                <h2 className="text-xl font-semibold text-white uppercase tracking-wide">Explore</h2>
               </div>
 
               <div className="space-y-3">
