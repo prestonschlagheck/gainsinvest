@@ -34,6 +34,7 @@ export default function LandingPage({
 }: LandingPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const screenSize = useScreenSize()
 
   const handleInputClick = () => {
@@ -74,6 +75,10 @@ export default function LandingPage({
   const handleGuestContinue = () => {
     setShowAuthModal(false)
     onStartChat()
+  }
+
+  const handleMobileMenuToggle = () => {
+    setShowMobileMenu(!showMobileMenu)
   }
 
   return (
@@ -236,12 +241,109 @@ export default function LandingPage({
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed bottom-6 right-6 z-20">
         <button
-          onClick={handleTryGains}
+          onClick={handleMobileMenuToggle}
           className="bg-white text-black p-3 rounded-full shadow-lg hover:bg-gray-200 transition-colors"
         >
           <ArrowUp className="w-6 h-6" />
         </button>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 z-30 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-gray-900 rounded-2xl p-6 border border-gray-700 shadow-2xl max-w-sm w-full mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-white">Navigation</h2>
+                <button
+                  onClick={() => setShowMobileMenu(false)}
+                  className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setShowMobileMenu(false)
+                    onNavigateToHowToUse()
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
+                >
+                  How to Use
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setShowMobileMenu(false)
+                    onNavigateToHowItWorks()
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
+                >
+                  How it Works
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setShowMobileMenu(false)
+                    onNavigateToApis()
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
+                >
+                  Utilized APIs
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setShowMobileMenu(false)
+                    onNavigateToContact()
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
+                >
+                  Contact
+                </motion.button>
+
+                <div className="pt-3 border-t border-gray-700">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setShowMobileMenu(false)
+                      handleTryGains()
+                    }}
+                    className="w-full bg-white text-black py-3 px-4 rounded-lg text-lg font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    TRY G.AI.NS
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Auth Modal */}
       <AnimatePresence>
