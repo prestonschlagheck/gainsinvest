@@ -212,7 +212,29 @@ export default function LandingPage({
           transition={{ duration: 0.8 }}
         >
           <h1 className={`${screenSize.isMobile ? 'text-[108px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight ${screenSize.isMobile ? 'text-center' : ''}`}>
-            G.AI.NS
+            G.<motion.span
+              className="inline-block"
+              animate={{
+                color: [
+                  'rgba(255, 255, 255, 1)',      // White
+                  'rgba(147, 197, 253, 0.8)',    // Very pale blue
+                  'rgba(196, 181, 253, 0.8)',    // Very pale purple
+                  'rgba(252, 165, 165, 0.8)',    // Very pale red
+                  'rgba(254, 215, 170, 0.8)',    // Very pale orange
+                  'rgba(254, 240, 138, 0.8)',    // Very pale yellow
+                  'rgba(187, 247, 208, 0.8)',    // Very pale green
+                  'rgba(165, 243, 252, 0.8)',    // Very pale cyan
+                  'rgba(255, 255, 255, 1)',      // Back to white
+                ]
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              AI
+            </motion.span>.NS
           </h1>
         </motion.div>
 
