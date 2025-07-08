@@ -38,7 +38,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
           className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
+          <span className="hidden md:inline">Back</span>
         </button>
         
         <h1 className="text-xl font-semibold text-white">Contact</h1>

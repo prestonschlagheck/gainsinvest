@@ -77,7 +77,7 @@ export default function ApiPage({ onBack }: ApiPageProps) {
           className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
+          <span className="hidden md:inline">Back</span>
         </button>
         
         <h1 className="text-xl font-semibold text-white">Utilized APIs</h1>
