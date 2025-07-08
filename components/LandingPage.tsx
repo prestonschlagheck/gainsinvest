@@ -222,7 +222,7 @@ export default function LandingPage({
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ transform: screenSize.isMobile ? 'translateY(47px)' : 'translateY(15px)' }}
+          style={{ transform: screenSize.isMobile ? 'translateY(67px)' : 'translateY(35px)' }}
         >
           <form onSubmit={handleSubmit} className="relative">
             <input
@@ -255,9 +255,9 @@ export default function LandingPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          style={{ transform: 'translateY(15px)' }}
+          style={{ transform: 'translateY(35px)' }}
         >
-          <p className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} text-gray-300 max-w-2xl mx-auto leading-relaxed`}>
+          <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-300 max-w-2xl mx-auto leading-relaxed`}>
             Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence.
           </p>
         </motion.div>
