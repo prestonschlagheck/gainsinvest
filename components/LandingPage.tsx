@@ -206,25 +206,25 @@ export default function LandingPage({
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-6 text-center">
         {/* Main heading - moved up by 16 pixels (20-4) */}
         <motion.div
-          className="mb-3 -mt-3"
+          className={`mb-3 -mt-3 ${screenSize.isMobile ? 'flex justify-center' : ''}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className={`${screenSize.isMobile ? 'text-[108px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight`}>
+          <h1 className={`${screenSize.isMobile ? 'text-[108px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight ${screenSize.isMobile ? 'text-center' : ''}`}>
             G.AI.NS
           </h1>
         </motion.div>
 
         {/* Search input - positioned below title with frosted glass effect */}
         <motion.div
-          className={`w-full max-w-4xl mb-8 relative ${screenSize.isMobile ? 'mt-0' : '-mt-12'}`}
+          className={`w-full max-w-4xl mb-8 relative ${screenSize.isMobile ? '-mt-2 flex justify-center' : '-mt-12'}`}
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
           style={{ transform: screenSize.isMobile ? 'translateY(0px)' : 'translateY(35px)' }}
         >
-          <form onSubmit={handleSubmit} className="relative">
+          <form onSubmit={handleSubmit} className={`relative ${screenSize.isMobile ? 'w-full max-w-4xl' : ''}`}>
             <input
               type="text"
               value={searchQuery}
@@ -232,7 +232,7 @@ export default function LandingPage({
               onClick={handleInputClick}
               onFocus={handleInputFocus}
               placeholder={`${typedText}${showCursor ? '|' : ''}`}
-              className="w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer backdrop-blur-sm"
+              className={`w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer backdrop-blur-sm ${screenSize.isMobile ? 'text-center' : ''}`}
               style={{
                 background: 'rgba(31, 41, 55, 0.15)',
                 backdropFilter: 'blur(12px)',
@@ -251,13 +251,13 @@ export default function LandingPage({
 
         {/* Bottom text - simplified and smaller */}
         <motion.div
-          className="text-center space-y-4"
+          className={`text-center space-y-4 ${screenSize.isMobile ? 'flex justify-center' : ''}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          style={{ transform: 'translateY(35px)' }}
+          style={{ transform: screenSize.isMobile ? 'translateY(0px)' : 'translateY(35px)' }}
         >
-          <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-300 max-w-2xl mx-auto leading-relaxed`}>
+          <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-300 max-w-2xl mx-auto leading-relaxed ${screenSize.isMobile ? 'text-center' : ''}`}>
             Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence.
           </p>
         </motion.div>
