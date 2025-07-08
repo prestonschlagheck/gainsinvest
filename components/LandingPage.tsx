@@ -218,7 +218,7 @@ export default function LandingPage({
 
         {/* Search input - positioned below title with frosted glass effect */}
         <motion.div
-          className={`w-full max-w-4xl mb-8 relative ${screenSize.isMobile ? 'mt-4' : '-mt-12'}`}
+          className={`w-full max-w-4xl mb-8 relative ${screenSize.isMobile ? 'mt-0' : '-mt-12'}`}
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
