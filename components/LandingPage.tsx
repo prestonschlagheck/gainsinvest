@@ -167,12 +167,12 @@ export default function LandingPage({
           {/* Profile picture - show on both desktop and mobile */}
           {session?.user && session.user.image ? (
             // Logged in user profile picture
-            <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-600">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600">
               <Image
                 src={session.user.image}
                 alt={session.user.name || 'Profile'}
-                width={32}
-                height={32}
+                width={40}
+                height={40}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -180,11 +180,11 @@ export default function LandingPage({
             // Guest profile picture - clickable to login
             <button
               onClick={() => setShowAuthModal(true)}
-              className="w-8 h-8 rounded-full overflow-hidden border border-gray-600 bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-center"
+              className="w-10 h-10 rounded-full overflow-hidden border border-gray-600 bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-center"
               title="Login to access your profile"
             >
               <svg 
-                className="w-4 h-4 text-gray-300" 
+                className="w-5 h-5 text-gray-300" 
                 fill="currentColor" 
                 viewBox="0 0 20 20"
               >
