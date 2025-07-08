@@ -222,7 +222,7 @@ export default function LandingPage({
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ transform: screenSize.isMobile ? 'translateY(67px)' : 'translateY(35px)' }}
+          style={{ transform: screenSize.isMobile ? 'translateY(87px)' : 'translateY(35px)' }}
         >
           <form onSubmit={handleSubmit} className="relative">
             <input
