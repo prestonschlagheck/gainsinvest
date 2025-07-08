@@ -110,7 +110,7 @@ export default function LandingPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+    <div className="h-screen bg-gray-950 relative overflow-hidden fixed inset-0">
       {/* Animated background glow coming from the right */}
       <div className="absolute inset-0">
         <motion.div
