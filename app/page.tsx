@@ -16,6 +16,7 @@ import HowItWorksPage from '@/components/HowItWorksPage'
 import ApiPage from '@/components/ApiPage'
 import ContactPage from '@/components/ContactPage'
 import EditResponsesPage from '@/components/EditResponsesPage'
+import RecommendationsPage from '@/components/RecommendationsPage'
 import { 
   loadUserProfile, 
   saveUserProfile, 
@@ -23,7 +24,7 @@ import {
   StoredUserProfile 
 } from '@/lib/userStorage'
 
-type AppView = 'landing' | 'how-to-use' | 'how-it-works' | 'apis' | 'contact' | 'chat' | 'edit-responses'
+type AppView = 'landing' | 'how-to-use' | 'how-it-works' | 'apis' | 'contact' | 'chat' | 'edit-responses' | 'recommendations'
 
 export default function Home() {
   const { data: session, status } = useSession()
@@ -155,9 +156,9 @@ export default function Home() {
     if (storedProfile) {
       setShowReturningUserModal(false)
       setUserType('user')
-      setCurrentView('chat')
+      setCurrentView('recommendations')
       setHasStarted(true)  // Ensure interface is active
-      // The profile is already saved, ChatInterface will handle it
+      // The profile is already saved, will show recommendations directly
     }
   }
 
@@ -223,6 +224,15 @@ export default function Home() {
           setUserType('user')
           setHasStarted(true)
         }}
+      />
+    )
+  }
+
+  if (currentView === 'recommendations') {
+    return (
+      <RecommendationsPage 
+        userProfile={storedProfile!}
+        onRestart={handleCompleteRestart}
       />
     )
   }
