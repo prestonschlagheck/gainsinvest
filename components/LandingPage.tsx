@@ -290,8 +290,7 @@ export default function LandingPage({
               className="bg-gray-900 rounded-2xl p-6 border border-gray-700 shadow-2xl max-w-sm w-full mx-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-white">Navigation</h2>
+              <div className="flex justify-end items-center mb-6">
                 <button
                   onClick={() => setShowMobileMenu(false)}
                   className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-800 transition-colors"
@@ -359,7 +358,7 @@ export default function LandingPage({
                       setShowMobileMenu(false)
                       handleTryGains()
                     }}
-                    className="w-full bg-white text-black py-3 px-4 rounded-lg text-lg font-medium hover:bg-gray-200 transition-colors"
+                    className="w-full text-left p-3 rounded-lg border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white transition-all duration-200 font-medium"
                   >
                     TRY G.AI.NS
                   </motion.button>
