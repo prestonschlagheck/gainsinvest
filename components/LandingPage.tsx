@@ -216,13 +216,13 @@ export default function LandingPage({
           </h1>
         </motion.div>
 
-        {/* Search input - positioned to overlap the title with frosted glass effect */}
+        {/* Search input - positioned below title with frosted glass effect */}
         <motion.div
-          className="w-full max-w-4xl mb-8 -mt-12 relative"
+          className={`w-full max-w-4xl mb-8 relative ${screenSize.isMobile ? 'mt-4' : '-mt-12'}`}
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ transform: screenSize.isMobile ? 'translateY(87px)' : 'translateY(35px)' }}
+          style={{ transform: screenSize.isMobile ? 'translateY(0px)' : 'translateY(35px)' }}
         >
           <form onSubmit={handleSubmit} className="relative">
             <input
