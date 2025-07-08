@@ -211,7 +211,7 @@ export default function LandingPage({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-[120px] md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight">
+          <h1 className={`${screenSize.isMobile ? 'text-[108px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight`}>
             G.AI.NS
           </h1>
         </motion.div>
@@ -222,7 +222,7 @@ export default function LandingPage({
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ transform: screenSize.isMobile ? 'translateY(27px)' : 'translateY(15px)' }}
+          style={{ transform: screenSize.isMobile ? 'translateY(47px)' : 'translateY(15px)' }}
         >
           <form onSubmit={handleSubmit} className="relative">
             <input
@@ -257,11 +257,8 @@ export default function LandingPage({
           transition={{ duration: 0.8, delay: 0.4 }}
           style={{ transform: 'translateY(15px)' }}
         >
-          <p className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} text-gray-300 ${screenSize.isMobile ? 'max-w-xs' : 'max-w-2xl'} mx-auto leading-relaxed`}>
-            {screenSize.isMobile 
-              ? "AI-powered investment guidance that adapts to your goals and builds wealth smarter."
-              : "Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence."
-            }
+          <p className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} text-gray-300 max-w-2xl mx-auto leading-relaxed`}>
+            Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence.
           </p>
         </motion.div>
       </div>
