@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { TrendingUp, DollarSign, Calendar, AlertTriangle } from 'lucide-react'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface PortfolioChartProps {
   recommendations: any[]
@@ -18,6 +19,7 @@ interface DataPoint {
 }
 
 const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initialCapital, portfolioProjections }) => {
+  const screenSize = useScreenSize()
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint | null>(null)
   const [timeframe, setTimeframe] = useState<'1Y' | '3Y' | '5Y'>('3Y')
 
@@ -119,86 +121,121 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1.0 }}
-      className="bg-gray-800 rounded-xl p-6 border border-gray-700"
+      className={`bg-gray-800 rounded-xl ${screenSize.isMobile ? 'p-4' : 'p-6'} border border-gray-700`}
     >
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-xl font-semibold text-white mb-1 flex items-center gap-2">
-            Portfolio Growth Timeline
+      <div className={`${screenSize.isMobile ? 'mb-4' : 'flex items-center justify-between mb-6'}`}>
+        <div className={screenSize.isMobile ? 'mb-2' : ''}>
+          <h3 className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-semibold text-white mb-1 flex items-center gap-2`}>
+            {screenSize.isMobile ? 'Growth Timeline' : 'Portfolio Growth Timeline'}
             {!hasRealProjections && (
-              <AlertTriangle className="w-5 h-5 text-yellow-400" />
+              <AlertTriangle className={`${screenSize.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-yellow-400`} />
             )}
           </h3>
-          <p className="text-gray-400 text-sm">
-            {hasRealProjections ? (
-              'Projected portfolio value over time'
-            ) : (
-              <span className="text-yellow-400">Estimated growth based on market analysis</span>
-            )}
-          </p>
+          {!screenSize.isMobile && (
+            <p className="text-gray-400 text-sm">
+              {hasRealProjections ? (
+                'Projected portfolio value over time'
+              ) : (
+                <span className="text-yellow-400">Estimated growth based on market analysis</span>
+              )}
+            </p>
+          )}
         </div>
         
-        {/* Timeframe Selector */}
-        <div className="flex bg-gray-700 rounded-lg p-1">
-          {(['1Y', '3Y', '5Y'] as const).map((period) => (
-            <button
-              key={period}
-              onClick={() => setTimeframe(period)}
-              className={`px-3 py-1 text-sm rounded transition-colors ${
-                timeframe === period
-                  ? 'bg-gray-600 text-white'
-                  : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              {period}
-            </button>
-          ))}
-        </div>
+        {/* Timeframe Selector - Desktop only, mobile moved below */}
+        {!screenSize.isMobile && (
+          <div className="flex bg-gray-700 rounded-lg p-1">
+            {(['1Y', '3Y', '5Y'] as const).map((period) => (
+              <button
+                key={period}
+                onClick={() => setTimeframe(period)}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  timeframe === period
+                    ? 'bg-gray-600 text-white'
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                {period}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Performance Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className={`grid grid-cols-3 ${screenSize.isMobile ? 'gap-2 mb-2' : 'gap-4 mb-6'}`}>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
-            <DollarSign className="w-4 h-4 text-green-400" />
-            <span className="text-sm text-gray-400">Projected Value</span>
+            <DollarSign className={`${screenSize.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-green-400`} />
+            <span className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
+              {screenSize.isMobile ? 'Value' : 'Projected Value'}
+            </span>
           </div>
-          <div className="text-lg font-semibold text-white">
-            {formatCurrency(finalValue)}
+          <div className={`${screenSize.isMobile ? 'text-sm' : 'text-lg'} font-semibold text-white`}>
+            {screenSize.isMobile ? 
+              new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(finalValue) :
+              formatCurrency(finalValue)
+            }
           </div>
         </div>
         
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
-            <TrendingUp className="w-4 h-4 text-blue-400" />
-            <span className="text-sm text-gray-400">Total Gain</span>
+            <TrendingUp className={`${screenSize.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-blue-400`} />
+            <span className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
+              {screenSize.isMobile ? 'Gain' : 'Total Gain'}
+            </span>
           </div>
-          <div className={`text-lg font-semibold ${
+          <div className={`${screenSize.isMobile ? 'text-sm' : 'text-lg'} font-semibold ${
             totalGain >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
-            {formatCurrency(totalGain)}
+            {screenSize.isMobile ? 
+              new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(totalGain) :
+              formatCurrency(totalGain)
+            }
           </div>
         </div>
         
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
-            <Calendar className="w-4 h-4 text-purple-400" />
-            <span className="text-sm text-gray-400">Return</span>
+            <Calendar className={`${screenSize.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-purple-400`} />
+            <span className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>Return</span>
           </div>
-          <div className={`text-lg font-semibold ${
+          <div className={`${screenSize.isMobile ? 'text-sm' : 'text-lg'} font-semibold ${
             percentageGain >= 0 ? 'text-green-400' : 'text-red-400'
           }`}>
             {percentageGain >= 0 ? '+' : ''}{percentageGain.toFixed(1)}%
           </div>
         </div>
+        
+        {/* Mobile Timeframe Selector */}
+        {screenSize.isMobile && (
+          <div className="flex justify-end mb-3">
+            <div className="flex bg-gray-700 rounded-lg p-0.5">
+              {(['1Y', '3Y', '5Y'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setTimeframe(period)}
+                  className={`px-2 py-1 text-xs rounded transition-colors ${
+                    timeframe === period
+                      ? 'bg-gray-600 text-white'
+                      : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  {period}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Realistic Chart */}
       <div className="relative">
         <svg
           width="100%"
-          height="250"
-          viewBox="0 0 800 250"
+          height={screenSize.isMobile ? "200" : "250"}
+          viewBox={screenSize.isMobile ? "0 0 400 200" : "0 0 800 250"}
           className="overflow-visible"
         >
           {/* Grid lines */}

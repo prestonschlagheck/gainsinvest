@@ -4,25 +4,37 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { ArrowUp } from 'lucide-react'
+import { Session } from 'next-auth'
+import { useScreenSize } from '@/lib/useScreenSize'
+import { StoredUserProfile } from '@/lib/userStorage'
 import AuthModal from './AuthModal'
 
 interface LandingPageProps {
+  session: Session | null
+  storedProfile: StoredUserProfile | null
   onStartChat: () => void
   onNavigateToHowToUse: () => void
   onNavigateToHowItWorks: () => void
   onNavigateToApis: () => void
   onNavigateToContact: () => void
+  onUsePreviousAnswers: () => void
+  onStartFresh: () => void
 }
 
 export default function LandingPage({ 
+  session,
+  storedProfile,
   onStartChat, 
   onNavigateToHowToUse, 
   onNavigateToHowItWorks,
   onNavigateToApis,
-  onNavigateToContact
+  onNavigateToContact,
+  onUsePreviousAnswers,
+  onStartFresh
 }: LandingPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const screenSize = useScreenSize()
 
   const handleInputClick = () => {
     setShowAuthModal(true)
@@ -39,7 +51,19 @@ export default function LandingPage({
   }
 
   const handleTryGains = () => {
-    setShowAuthModal(true)
+    if (session?.user) {
+      // User is already logged in
+      if (storedProfile && storedProfile.hasCompletedQuestionnaire) {
+        // User has completed questionnaire, go directly to chat with previous answers
+        onUsePreviousAnswers()
+      } else {
+        // User hasn't completed questionnaire or is new, start fresh
+        onStartFresh()
+      }
+    } else {
+      // User not logged in, show auth modal
+      setShowAuthModal(true)
+    }
   }
 
   const handleAuthSuccess = () => {
@@ -106,12 +130,27 @@ export default function LandingPage({
           <button onClick={onNavigateToContact} className="hover:text-white transition-colors">CONTACT</button>
         </div>
 
-        <button
-          onClick={handleTryGains}
-          className="bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
-        >
-          TRY G.AI.NS
-        </button>
+        <div className="flex items-center space-x-3">
+          {/* Profile picture - only show on desktop when logged in */}
+          {session?.user && screenSize.isDesktop && session.user.image && (
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-600">
+              <Image
+                src={session.user.image}
+                alt={session.user.name || 'Profile'}
+                width={32}
+                height={32}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          
+          <button
+            onClick={handleTryGains}
+            className="bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+          >
+            TRY G.AI.NS
+          </button>
+        </div>
       </nav>
 
       {/* Main content */}

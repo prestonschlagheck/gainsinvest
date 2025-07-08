@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface SectorsStepProps {
   onComplete: (data: { sectors: string[] }) => void
@@ -26,9 +27,18 @@ const SECTORS = [
 ]
 
 const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBack }) => {
+  const screenSize = useScreenSize()
   const [selectedSectors, setSelectedSectors] = useState<string[]>(
     userProfile?.sectors || []
   )
+
+  // Dynamic grid columns based on screen size
+  const getGridColumns = () => {
+    if (screenSize.width < 480) return 'grid-cols-1'
+    if (screenSize.width < 768) return 'grid-cols-2'
+    if (screenSize.width < 1024) return 'grid-cols-3'
+    return 'grid-cols-4'
+  }
 
   const toggleSector = (sectorId: string) => {
     setSelectedSectors(prev => {
@@ -49,7 +59,7 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
       </div>
 
       <div className="step-body">
-        <div className="grid grid-cols-4 gap-3">
+        <div className={`grid ${getGridColumns()} gap-3`}>
         {SECTORS.map((sector) => {
           const isSelected = selectedSectors.includes(sector.id)
           
@@ -84,13 +94,13 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
       </div>
 
       <div className="step-footer">
-        <div className="flex gap-4">
+        <div className="flex gap-3 w-full">
           {onBack && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
+              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
@@ -99,7 +109,7 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onComplete({ sectors: selectedSectors })}
-            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
             disabled={selectedSectors.length === 0}
           >
             Continue

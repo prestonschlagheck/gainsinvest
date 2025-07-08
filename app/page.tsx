@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
+import { useScreenSize } from '@/lib/useScreenSize'
 import ChatInterface from '@/components/ChatInterface'
 import AuthModal from '@/components/AuthModal'
 import ApiStatus from '@/components/ApiStatus'
@@ -26,6 +27,7 @@ type AppView = 'landing' | 'how-to-use' | 'how-it-works' | 'apis' | 'contact' | 
 
 export default function Home() {
   const { data: session, status } = useSession()
+  const screenSize = useScreenSize()
   const [currentView, setCurrentView] = useState<AppView>('landing')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showReturningUserModal, setShowReturningUserModal] = useState(false)
@@ -53,8 +55,8 @@ export default function Home() {
       console.log('User authenticated, checking profile:', { hasProfile: !!existingProfile, hasCompleted: existingProfile?.hasCompletedQuestionnaire })
       
       if (existingProfile && existingProfile.hasCompletedQuestionnaire) {
-        // User has a previous profile - show returning user modal on chat view
-        console.log('Returning user detected, showing modal')
+        // User has a previous profile - store it but stay on landing page
+        console.log('Returning user detected, storing profile but staying on landing')
         const updatedProfile = {
           ...existingProfile,
           googleUser: {
@@ -63,19 +65,15 @@ export default function Home() {
           }
         }
         setStoredProfile(updatedProfile)
-        setShowReturningUserModal(true)
-        setCurrentView('chat') // Always go to chat view for authenticated users
         setUserType('user')
-        setHasStarted(true) // Enable the chat interface
         setShowAuthModal(false) // Close auth modal if open
+        // Stay on current view (landing page)
       } else {
-        // New user or no previous profile - go directly to questionnaire
-        console.log('New user detected, starting questionnaire')
+        // New user or no previous profile - store profile but stay on landing page
+        console.log('New user detected, storing profile but staying on landing')
         setUserType('user')
-        setHasStarted(true)
-        setShowContinueBox(true)
         setShowAuthModal(false) // Close auth modal if open
-        setCurrentView('chat') // Switch to chat view
+        // Stay on current view (landing page)
         
         // Create or update profile with Google user info
         const profileToSave: StoredUserProfile = existingProfile ? {
@@ -108,6 +106,7 @@ export default function Home() {
   const handleStartChat = () => {
     setCurrentView('chat')
     setShowWelcomeTitle(true)
+    setHasStarted(true)
   }
 
   const handleBackToLanding = () => {
@@ -168,10 +167,13 @@ export default function Home() {
     setCurrentView('chat')
     setHasStarted(true)  // Ensure questionnaire starts
     // Clear previous profile data but keep Google user info
-    if (storedProfile && storedProfile.googleUser) {
+    if (session?.user) {
       const freshProfile: StoredUserProfile = {
         isGuest: false,
-        googleUser: storedProfile.googleUser,
+        googleUser: {
+          name: session.user.name || '',
+          image: session.user.image || ''
+        },
         riskTolerance: 5,
         timeHorizon: 'medium',
         growthType: 'balanced',
@@ -228,18 +230,29 @@ export default function Home() {
      if (currentView === 'landing') {
      return (
        <LandingPage 
+         session={session}
+         storedProfile={storedProfile}
          onStartChat={handleStartChat}
          onNavigateToHowToUse={() => setCurrentView('how-to-use')}
          onNavigateToHowItWorks={() => setCurrentView('how-it-works')}
          onNavigateToApis={() => setCurrentView('apis')}
          onNavigateToContact={() => setCurrentView('contact')}
+         onUsePreviousAnswers={handleUsePreviousAnswers}
+         onStartFresh={handleStartFresh}
        />
      )
    }
 
   // Chat interface view (existing functionality)
   return (
-    <main className={`chat-container min-h-screen bg-gray-950 ${isPortfolioStep ? 'portfolio-layout' : ''}`}>
+    <main 
+      className={`chat-container min-h-screen bg-gray-950 ${isPortfolioStep ? 'portfolio-layout' : ''}`}
+      style={{
+        '--screen-width': `${screenSize.width}px`,
+        '--screen-height': `${screenSize.height}px`,
+        '--is-mobile': screenSize.isMobile ? '1' : '0'
+      } as React.CSSProperties}
+    >
       
       {/* User Profile - Top Right Corner */}
       <UserProfile 
@@ -257,11 +270,11 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5 }}
             transition={{ duration: 0.5 }}
-            className="fixed top-4 left-6 z-50 cursor-pointer"
+            className={`fixed ${screenSize.isMobile ? 'top-2 left-3' : 'top-4 left-6'} z-50 cursor-pointer`}
             onClick={handleCompleteRestart}
           >
             <div className="flex items-center space-x-2">
-              <span className="text-white text-xl font-light tracking-tight">G.AI.NS</span>
+              <span className={`text-white ${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-light tracking-tight`}>G.AI.NS</span>
             </div>
           </motion.div>
         )}
@@ -278,13 +291,13 @@ export default function Home() {
               animate={{ opacity: showWelcomeTitle ? 0 : 1, scale: showWelcomeTitle ? 0.5 : 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
               transition={{ duration: 0.5 }}
-              className="text-center"
+              className="text-center px-4"
             >
-              <div className="text-6xl font-light text-white mb-8 tracking-tight">G.AI.NS</div>
-              <h1 className="text-4xl md:text-6xl font-light text-white mb-4">
+              <div className={`${screenSize.isMobile ? 'text-4xl' : 'text-6xl'} font-light text-white ${screenSize.isMobile ? 'mb-4' : 'mb-8'} tracking-tight`}>G.AI.NS</div>
+              <h1 className={`${screenSize.isMobile ? 'text-2xl' : 'text-4xl md:text-6xl'} font-light text-white mb-4`}>
                 Welcome to G.AI.NS
               </h1>
-              <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} text-gray-400 max-w-2xl mx-auto`}>
                 Your AI-powered investment advisor
               </p>
             </motion.div>

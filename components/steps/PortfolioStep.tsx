@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, X, ArrowLeft } from 'lucide-react'
 import { PortfolioItem } from '@/types'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface PortfolioStepProps {
   onComplete: (data: { portfolio: any[] }) => void
@@ -12,6 +13,7 @@ interface PortfolioStepProps {
 }
 
 const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, onBack }) => {
+  const screenSize = useScreenSize()
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(
     userProfile?.portfolio || [{ type: 'stock', symbol: '', amount: 0 }]
   )
@@ -54,7 +56,9 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, 
     <div className="step-layout">
       <div className="step-header">
         <h2 className="text-2xl font-semibold text-white">Existing Portfolio</h2>
-        <p className="text-gray-400 mt-2">Help us understand your current investments</p>
+        {!screenSize.isMobile && (
+          <p className="text-gray-400 mt-2">Help us understand your current investments</p>
+        )}
       </div>
 
       <div className="step-body">
@@ -160,13 +164,13 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, 
       </div>
 
       <div className="step-footer">
-        <div className="flex gap-4">
+        <div className="flex gap-3 w-full">
           {onBack && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
+              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
@@ -175,7 +179,7 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleComplete}
-            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
           >
             Get My Recommendations
           </motion.button>

@@ -67,13 +67,13 @@ const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userP
       </div>
 
       <div className="step-footer">
-        <div className="flex gap-4">
+        <div className="flex gap-3 w-full">
           {onBack && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-1 border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
+              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
@@ -82,7 +82,7 @@ const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userP
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onComplete({ riskTolerance: riskLevel })}
-            className="flex-1 border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 rounded-lg text-lg font-medium transition-all duration-200"
+            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
           >
             Continue
           </motion.button>

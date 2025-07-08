@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Info, TrendingUp, TrendingDown, Minus, ArrowRight, AlertCircle } from 'lucide-react'
 import { UserProfile, InvestmentRecommendation } from '@/types'
 import PortfolioChart from './PortfolioChart'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface RecommendationsPageProps {
   userProfile: UserProfile
@@ -12,6 +13,7 @@ interface RecommendationsPageProps {
 }
 
 const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, onRestart }) => {
+  const screenSize = useScreenSize()
   const [recommendations, setRecommendations] = useState<InvestmentRecommendation[]>([])
   const [portfolioProjections, setPortfolioProjections] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -192,7 +194,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-lg mx-auto text-center py-20">
+      <div className={`w-full max-w-lg mx-auto text-center ${screenSize.isMobile ? 'py-8 px-4' : 'py-20'}`}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -353,11 +355,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     }
 
     return (
-      <div className="w-full max-w-4xl mx-auto text-center py-16">
+      <div className={`w-full max-w-4xl mx-auto text-center ${screenSize.isMobile ? 'py-8 px-4' : 'py-16'}`}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-6"
+          className={`space-y-${screenSize.isMobile ? '4' : '6'}`}
         >
           <div className="bg-red-900/20 border border-red-700 rounded-lg p-8">
             <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
@@ -424,12 +426,12 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 pb-16 pt-4">
+    <div className={`w-full max-w-7xl mx-auto space-y-${screenSize.isMobile ? '4' : '6'} ${screenSize.isMobile ? 'pb-8 pt-2 px-4' : 'pb-16 pt-4'}`}>
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-6"
+        className={`text-center ${screenSize.isMobile ? 'mb-4' : 'mb-6'}`}
       >
         <h1 className="text-xl font-semibold text-white mb-2">
           Your ideal portfolio for{' '}
@@ -447,7 +449,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       </motion.div>
 
       {/* Recommendations Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${screenSize.isMobile ? 'gap-4' : screenSize.isTablet ? 'md:grid-cols-2 gap-5' : 'lg:grid-cols-3 gap-6'}`}>
         {/* Buy Recommendations */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -551,10 +553,10 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-gray-800 rounded-xl p-6 border border-gray-700 mb-6"
+          className={`bg-gray-800 rounded-xl ${screenSize.isMobile ? 'p-4' : 'p-6'} border border-gray-700 ${screenSize.isMobile ? 'mb-4' : 'mb-6'}`}
         >
-          <h3 className="text-xl font-semibold text-white mb-4">Portfolio Projections</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <h3 className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-semibold text-white ${screenSize.isMobile ? 'mb-3' : 'mb-4'}`}>Portfolio Projections</h3>
+          <div className={`grid ${screenSize.isMobile ? 'grid-cols-2 gap-2 mb-3' : 'grid-cols-1 md:grid-cols-3 gap-4 mb-4'}`}>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">Expected Annual Return</div>
               <div className="text-lg font-semibold text-green-400">
@@ -602,22 +604,22 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid ${screenSize.isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">1-Year Projection</div>
-              <div className="text-lg font-semibold text-white">
+              <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
                 {formatCurrency(portfolioProjections.projectedValues.oneYear)}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">3-Year Projection</div>
-              <div className="text-lg font-semibold text-white">
+              <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
                 {formatCurrency(portfolioProjections.projectedValues.threeYear)}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-gray-400 mb-1">5-Year Projection</div>
-              <div className="text-lg font-semibold text-white">
+              <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
                 {formatCurrency(portfolioProjections.projectedValues.fiveYear)}
               </div>
             </div>
