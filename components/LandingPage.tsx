@@ -218,13 +218,16 @@ export default function LandingPage({
 
         {/* Search input - positioned below title with frosted glass effect */}
         <motion.div
-          className={`w-full max-w-4xl mb-8 relative ${screenSize.isMobile ? '-mt-2 flex justify-center' : '-mt-12'}`}
+          className={`w-full mb-8 relative ${screenSize.isMobile ? '-mt-8 flex justify-center' : '-mt-12'}`}
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ transform: screenSize.isMobile ? 'translateY(0px)' : 'translateY(35px)' }}
+          style={{ 
+            transform: screenSize.isMobile ? 'translateY(0px)' : 'translateY(35px)',
+            maxWidth: screenSize.isMobile ? 'calc(100vw - 6px)' : '64rem'
+          }}
         >
-          <form onSubmit={handleSubmit} className={`relative ${screenSize.isMobile ? 'w-full max-w-4xl' : ''}`}>
+          <form onSubmit={handleSubmit} className={`relative ${screenSize.isMobile ? 'w-full' : ''}`} style={{ maxWidth: screenSize.isMobile ? 'calc(100% - 6px)' : '100%' }}>
             <input
               type="text"
               value={searchQuery}
@@ -232,11 +235,13 @@ export default function LandingPage({
               onClick={handleInputClick}
               onFocus={handleInputFocus}
               placeholder={`${typedText}${showCursor ? '|' : ''}`}
-              className={`w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer backdrop-blur-sm ${screenSize.isMobile ? 'text-center' : ''}`}
+              className={`w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer ${screenSize.isMobile ? 'text-center' : ''}`}
               style={{
-                background: 'rgba(31, 41, 55, 0.15)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
+                background: 'rgba(31, 41, 55, 0.4)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
               }}
               readOnly
             />
