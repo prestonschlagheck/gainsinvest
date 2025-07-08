@@ -35,7 +35,35 @@ export default function LandingPage({
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [typedText, setTypedText] = useState('')
+  const [showCursor, setShowCursor] = useState(true)
   const screenSize = useScreenSize()
+
+  const fullText = "Try it for yourself"
+
+  // Typewriter effect
+  useEffect(() => {
+    const typeText = async () => {
+      // Wait 1 second before starting typing
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      for (let i = 0; i <= fullText.length; i++) {
+        setTypedText(fullText.slice(0, i))
+        await new Promise(resolve => setTimeout(resolve, 100)) // 100ms delay between characters
+      }
+    }
+    
+    typeText()
+  }, [fullText])
+
+  // Cursor blinking effect
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setShowCursor(prev => !prev)
+    }, 530) // Blink every 530ms
+    
+    return () => clearInterval(cursorInterval)
+  }, [])
 
   const handleInputClick = () => {
     setShowAuthModal(true)
@@ -203,7 +231,7 @@ export default function LandingPage({
               onChange={(e) => setSearchQuery(e.target.value)}
               onClick={handleInputClick}
               onFocus={handleInputFocus}
-              placeholder="Try it for yourself"
+              placeholder={`${typedText}${showCursor ? '|' : ''}`}
               className="w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer backdrop-blur-sm"
               style={{
                 background: 'rgba(31, 41, 55, 0.15)',
