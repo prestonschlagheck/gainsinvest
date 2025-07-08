@@ -235,13 +235,11 @@ export default function LandingPage({
               onClick={handleInputClick}
               onFocus={handleInputFocus}
               placeholder={`${typedText}${showCursor ? '|' : ''}`}
-              className={`w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer ${screenSize.isMobile ? 'text-center' : ''}`}
+              className={`w-full border border-gray-700 rounded-2xl px-6 py-4 text-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors cursor-pointer ${screenSize.isMobile ? 'text-left' : ''}`}
               style={{
-                background: 'rgba(31, 41, 55, 0.4)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
+                background: 'rgba(31, 41, 55, 0.2)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
               }}
               readOnly
             />

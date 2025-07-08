@@ -46,8 +46,8 @@ export default function ContactPage({ onBack }: ContactPageProps) {
         <div className="w-20"></div>
       </nav>
 
-      {/* Main content - Compact single page layout */}
-      <div className="relative z-10 h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6">
+      {/* Main content - Scrollable layout */}
+      <div className="relative z-10 min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 py-6">
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}

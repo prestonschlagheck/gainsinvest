@@ -79,8 +79,8 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
         <div className="w-20"></div>
       </nav>
 
-      {/* Main content - Updated layout to prevent scrolling */}
-      <div className="relative z-10 h-[calc(100vh-80px)] flex flex-col px-6 py-6 pb-8 overflow-hidden">
+      {/* Main content - Updated layout to allow scrolling */}
+      <div className="relative z-10 min-h-[calc(100vh-80px)] flex flex-col px-6 py-6 pb-8">
         <motion.div
           className="text-center mb-6 flex-shrink-0"
           initial={{ opacity: 0, y: 20 }}
@@ -95,8 +95,8 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
           </p>
         </motion.div>
 
-        <div className="flex-1 flex flex-col">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto mb-6 flex-1">
+        <div className="flex flex-col">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto mb-6">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
