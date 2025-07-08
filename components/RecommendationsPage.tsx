@@ -431,17 +431,17 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`text-center ${screenSize.isMobile ? 'mb-4' : 'mb-6'}`}
+        className={`text-center ${screenSize.isMobile ? 'mb-4 px-2' : 'mb-6'}`}
       >
-        <h1 className="text-xl font-semibold text-white mb-2">
+        <h1 className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-semibold text-white mb-2`}>
           Your ideal portfolio for{' '}
           <span className="text-gray-300">{getProfileSummary()}</span> approach
         </h1>
-        <p className="text-gray-400 text-sm">
+        <p className={`text-gray-400 ${screenSize.isMobile ? 'text-xs' : 'text-sm'}`}>
           Risk tolerance: {userProfile.riskTolerance}/10 • Available Capital: {formatCurrency(userProfile.capitalAvailable)}
         </p>
         {allocationBreakdown.existingPortfolioValue > 0 && (
-          <p className="text-gray-400 text-xs mt-1">
+          <p className={`text-gray-400 ${screenSize.isMobile ? 'text-xs' : 'text-xs'} mt-1`}>
             Existing Portfolio Value: {formatCurrency(allocationBreakdown.existingPortfolioValue)} • 
             Capital Utilization: {allocationBreakdown.utilizationRate.toFixed(1)}%
           </p>
@@ -628,11 +628,13 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       )}
 
       {/* Portfolio Performance Chart */}
-      <PortfolioChart 
-        recommendations={recommendations}
-        initialCapital={userProfile.capitalAvailable}
-        portfolioProjections={portfolioProjections}
-      />
+      <div className={`${screenSize.isMobile ? 'flex justify-center' : ''}`}>
+        <PortfolioChart 
+          recommendations={recommendations}
+          initialCapital={userProfile.capitalAvailable}
+          portfolioProjections={portfolioProjections}
+        />
+      </div>
 
       {/* Restart Button */}
       <motion.div

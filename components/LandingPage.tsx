@@ -131,8 +131,9 @@ export default function LandingPage({
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Profile picture - only show on desktop when logged in */}
-          {session?.user && screenSize.isDesktop && session.user.image && (
+          {/* Profile picture - show on both desktop and mobile */}
+          {session?.user && session.user.image ? (
+            // Logged in user profile picture
             <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-600">
               <Image
                 src={session.user.image}
@@ -142,6 +143,21 @@ export default function LandingPage({
                 className="w-full h-full object-cover"
               />
             </div>
+          ) : (
+            // Guest profile picture - clickable to login
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="w-8 h-8 rounded-full overflow-hidden border border-gray-600 bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-center"
+              title="Login to access your profile"
+            >
+              <svg 
+                className="w-4 h-4 text-gray-300" 
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+            </button>
           )}
           
           <button
@@ -173,7 +189,7 @@ export default function LandingPage({
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          style={{ transform: 'translateY(15px)' }}
+          style={{ transform: screenSize.isMobile ? 'translateY(27px)' : 'translateY(15px)' }}
         >
           <form onSubmit={handleSubmit} className="relative">
             <input
@@ -208,8 +224,11 @@ export default function LandingPage({
           transition={{ duration: 0.8, delay: 0.4 }}
           style={{ transform: 'translateY(15px)' }}
         >
-          <p className="text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence.
+          <p className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} text-gray-300 ${screenSize.isMobile ? 'max-w-xs' : 'max-w-2xl'} mx-auto leading-relaxed`}>
+            {screenSize.isMobile 
+              ? "AI-powered investment guidance that adapts to your goals and builds wealth smarter."
+              : "Take control of your financial future with AI-powered investment guidance that adapts to your goals and helps you build wealth smarter, faster, and with confidence."
+            }
           </p>
         </motion.div>
       </div>

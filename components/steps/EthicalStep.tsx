@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Leaf, Heart, Globe, ArrowLeft } from 'lucide-react'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface EthicalStepProps {
   onComplete: (data: { ethicalInvesting: number }) => void
@@ -11,6 +12,7 @@ interface EthicalStepProps {
 }
 
 const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBack }) => {
+  const screenSize = useScreenSize()
   const [ethicalLevel, setEthicalLevel] = useState(userProfile?.ethicalInvesting || 5)
 
   const getSelectedOption = () => {
@@ -27,49 +29,60 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
 
       <div className="step-body">
         <div className="space-y-6">
-        {/* ESG Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div className="p-4 rounded-lg border border-gray-700">
-            <h4 className="font-medium text-green-400 mb-2 flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              Environmental
-            </h4>
-            <p className="text-gray-400">Clean energy, sustainability, carbon footprint</p>
+        {/* ESG Information - simplified on mobile */}
+        {!screenSize.isMobile && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="p-4 rounded-lg border border-gray-700">
+              <h4 className="font-medium text-green-400 mb-2 flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                Environmental
+              </h4>
+              <p className="text-gray-400">Clean energy, sustainability, carbon footprint</p>
+            </div>
+            <div className="p-4 rounded-lg border border-gray-700">
+              <h4 className="font-medium text-blue-400 mb-2 flex items-center gap-2">
+                <Heart className="w-4 h-4" />
+                Social
+              </h4>
+              <p className="text-gray-400">Employee welfare, community impact, diversity</p>
+            </div>
+            <div className="p-4 rounded-lg border border-gray-700">
+              <h4 className="font-medium text-purple-400 mb-2 flex items-center gap-2">
+                <Leaf className="w-4 h-4" />
+                Governance
+              </h4>
+              <p className="text-gray-400">Board diversity, executive compensation, ethics</p>
+            </div>
           </div>
-          <div className="p-4 rounded-lg border border-gray-700">
-            <h4 className="font-medium text-blue-400 mb-2 flex items-center gap-2">
-              <Heart className="w-4 h-4" />
-              Social
-            </h4>
-            <p className="text-gray-400">Employee welfare, community impact, diversity</p>
+        )}
+
+        {/* Mobile simplified intro */}
+        {screenSize.isMobile && (
+          <div className="text-center mb-4">
+            <p className="text-gray-300 text-sm">
+              How important are environmental, social, and governance factors?
+            </p>
           </div>
-          <div className="p-4 rounded-lg border border-gray-700">
-            <h4 className="font-medium text-purple-400 mb-2 flex items-center gap-2">
-              <Leaf className="w-4 h-4" />
-              Governance
-            </h4>
-            <p className="text-gray-400">Board diversity, executive compensation, ethics</p>
-          </div>
-        </div>
+        )}
 
         {/* Priority Selection */}
         <div className="space-y-4">
           <p className="text-center text-gray-300 font-medium">ESG Priority Level:</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className={`grid ${screenSize.isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setEthicalLevel(2)}
-              className={`p-4 rounded-lg text-left transition-all duration-300 border-2 ${
+              className={`${screenSize.isMobile ? 'p-3' : 'p-4'} rounded-lg text-left transition-all duration-300 border-2 ${
                 getSelectedOption() === 'low'
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg'
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
-              <h3 className={`text-lg font-medium ${getSelectedOption() === 'low' ? 'text-white' : 'text-gray-200'}`}>
-                Low
+              <h3 className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-medium ${getSelectedOption() === 'low' ? 'text-white' : 'text-gray-200'}`}>
+                Low Priority
               </h3>
-              <p className={`text-sm ${getSelectedOption() === 'low' ? 'text-gray-300' : 'text-gray-400'}`}>
+              <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} ${getSelectedOption() === 'low' ? 'text-gray-300' : 'text-gray-400'}`}>
                 Focus on financial returns first
               </p>
             </motion.button>
@@ -78,16 +91,16 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setEthicalLevel(5)}
-              className={`p-4 rounded-lg text-left transition-all duration-300 border-2 ${
+              className={`${screenSize.isMobile ? 'p-3' : 'p-4'} rounded-lg text-left transition-all duration-300 border-2 ${
                 getSelectedOption() === 'moderate'
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg'
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
-              <h3 className={`text-lg font-medium ${getSelectedOption() === 'moderate' ? 'text-white' : 'text-gray-200'}`}>
-                Moderate
+              <h3 className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-medium ${getSelectedOption() === 'moderate' ? 'text-white' : 'text-gray-200'}`}>
+                Moderate Priority
               </h3>
-              <p className={`text-sm ${getSelectedOption() === 'moderate' ? 'text-gray-300' : 'text-gray-400'}`}>
+              <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} ${getSelectedOption() === 'moderate' ? 'text-gray-300' : 'text-gray-400'}`}>
                 Balance ESG factors with returns
               </p>
             </motion.button>
@@ -96,16 +109,16 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setEthicalLevel(9)}
-              className={`p-4 rounded-lg text-left transition-all duration-300 border-2 ${
+              className={`${screenSize.isMobile ? 'p-3' : 'p-4'} rounded-lg text-left transition-all duration-300 border-2 ${
                 getSelectedOption() === 'high'
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg'
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
-              <h3 className={`text-lg font-medium ${getSelectedOption() === 'high' ? 'text-white' : 'text-gray-200'}`}>
-                High
+              <h3 className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-medium ${getSelectedOption() === 'high' ? 'text-white' : 'text-gray-200'}`}>
+                High Priority
               </h3>
-              <p className={`text-sm ${getSelectedOption() === 'high' ? 'text-gray-300' : 'text-gray-400'}`}>
+              <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} ${getSelectedOption() === 'high' ? 'text-gray-300' : 'text-gray-400'}`}>
                 ESG factors are very important
               </p>
             </motion.button>

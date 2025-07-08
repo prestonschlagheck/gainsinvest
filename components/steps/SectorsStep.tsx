@@ -58,7 +58,7 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
         <h2 className="text-2xl font-semibold text-white">Sectors of Interest</h2>
       </div>
 
-      <div className="step-body">
+      <div className={`step-body ${screenSize.isMobile ? 'overflow-y-auto max-h-[calc(100vh-280px)]' : ''}`}>
         <div className={`grid ${getGridColumns()} gap-3`}>
         {SECTORS.map((sector) => {
           const isSelected = selectedSectors.includes(sector.id)
@@ -69,19 +69,19 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => toggleSector(sector.id)}
-              className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 h-[90px] w-full ${
+              className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 ${screenSize.isMobile ? 'h-auto min-h-[100px]' : 'h-[90px]'} w-full ${
                 isSelected 
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <div className="flex flex-col h-full justify-center">
-                <h3 className={`text-base font-semibold mb-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis px-2 ${
+                <h3 className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} font-semibold mb-1 leading-tight ${screenSize.isMobile ? 'whitespace-normal' : 'whitespace-nowrap overflow-hidden text-ellipsis'} px-2 ${
                   isSelected ? 'text-white' : 'text-gray-200'
                 }`}>
                   {sector.name}
                 </h3>
-                <p className={`text-xs leading-relaxed line-clamp-2 px-1 ${
+                <p className={`${screenSize.isMobile ? 'text-xs' : 'text-xs'} leading-relaxed ${screenSize.isMobile ? 'line-clamp-3' : 'line-clamp-2'} px-1 ${
                   isSelected ? 'text-gray-300' : 'text-gray-400'
                 }`}>
                   {sector.examples}
