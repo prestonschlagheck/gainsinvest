@@ -233,9 +233,8 @@ export default function Home() {
         userProfile={storedProfile!}
         onBack={() => setShowReturningUserModal(true)}
         onComplete={() => {
-          setCurrentView('chat')
-          setUserType('user')
-          setHasStarted(true)
+          // After editing responses, go directly to recommendations generation
+          setCurrentView('recommendations')
         }}
       />
     )
