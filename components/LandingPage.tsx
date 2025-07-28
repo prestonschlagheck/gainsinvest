@@ -213,7 +213,7 @@ export default function LandingPage({
                   <>
                     {/* Backdrop */}
                     <div 
-                      className="fixed inset-0 bg-transparent"
+                      className="fixed inset-0 z-40"
                       onClick={() => setShowProfileDropdown(false)}
                     />
                     
@@ -222,7 +222,7 @@ export default function LandingPage({
                       initial={{ opacity: 0, scale: 0.95, y: -10 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                      className="absolute right-0 mt-2 min-w-max bg-gray-800 rounded-lg border border-gray-600 shadow-lg overflow-hidden"
+                      className="absolute right-0 mt-2 min-w-max bg-gray-800 rounded-lg border border-gray-600 shadow-lg overflow-hidden z-50"
                     >
                       {/* User Info */}
                       <div className="p-4 border-b border-gray-600">
