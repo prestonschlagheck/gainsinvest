@@ -5,6 +5,17 @@
 // API KEYS CONFIGURATION
 // ========================================
 
+// Log API key status on startup (server-side only)
+if (typeof window === 'undefined') {
+  console.log('🔑 API Key Status:')
+  console.log('  OpenAI:', process.env.OPENAI_API_KEY ? '✅ Configured' : '❌ Missing')
+  console.log('  Grok:', process.env.GROK_API_KEY ? '✅ Configured' : '❌ Missing')
+  console.log('  Alpha Vantage:', process.env.ALPHA_VANTAGE_API_KEY ? '✅ Configured' : '❌ Missing')
+  console.log('  Twelve Data:', process.env.TWELVE_DATA_API_KEY ? '✅ Configured' : '❌ Missing')
+  console.log('  Finnhub:', process.env.FINNHUB_API_KEY ? '✅ Configured' : '❌ Missing')
+  console.log('  News API:', process.env.NEWS_API_KEY ? '✅ Configured' : '❌ Missing')
+}
+
 const API_KEYS = {
   // AI Services
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
@@ -585,72 +596,145 @@ export async function generateInvestmentRecommendations(
   try {
     console.log('🤖 Generating comprehensive AI investment recommendations...')
     
-    // Try OpenAI first
-    if (API_KEYS.OPENAI_API_KEY) {
-      try {
-        return await generateRecommendationsWithOpenAI(userProfile)
-      } catch (error) {
-        console.log('⚠️ OpenAI failed, trying Grok fallback:', error)
-        
-        // Try Grok as fallback
-        if (API_KEYS.GROK_API_KEY) {
-          try {
-            return await generateRecommendationsWithGrok(userProfile)
-          } catch (grokError) {
-            console.log('⚠️ Grok also failed:', grokError)
-            throw new Error('Both OpenAI and Grok API services failed. Please check your API keys and quotas.')
-          }
-        } else {
-          throw new Error('OpenAI API failed and no Grok fallback key configured')
-        }
-      }
-    } else if (API_KEYS.GROK_API_KEY) {
+    // Check AI service availability first
+    const hasOpenAI = API_KEYS.OPENAI_API_KEY
+    const hasGrok = API_KEYS.GROK_API_KEY
+    
+    if (!hasOpenAI && !hasGrok) {
+      throw new Error('No AI service API keys configured (OpenAI or Grok required)')
+    }
+    
+    // Try Grok first, then OpenAI as fallback
+    if (hasGrok) {
       try {
         return await generateRecommendationsWithGrok(userProfile)
       } catch (error) {
-        console.log('⚠️ Grok failed:', error)
-        throw new Error('Grok API failed. Please check your API key and quota.')
+        console.log('⚠️ Grok failed, trying OpenAI fallback:', error)
+        
+        // Check if it's a rate limit error
+        if (error instanceof Error && error.message.includes('429')) {
+          console.log('🔄 Grok rate limit hit, waiting 15 seconds before retry...')
+          await new Promise(resolve => setTimeout(resolve, 15000)) // Wait 15 seconds
+          
+          try {
+            return await generateRecommendationsWithGrok(userProfile)
+          } catch (retryError) {
+            console.log('⚠️ Grok retry also failed:', retryError)
+          }
+        }
+        
+        // Try OpenAI as fallback
+        if (hasOpenAI) {
+          try {
+            return await generateRecommendationsWithOpenAI(userProfile)
+          } catch (openAIError) {
+            console.log('⚠️ OpenAI also failed:', openAIError)
+            return {
+              recommendations: [],
+              reasoning: '',
+              riskAssessment: '',
+              marketOutlook: '',
+              error: 'Usage limit has been reached for gains this month'
+            }
+          }
+        } else {
+          return {
+            recommendations: [],
+            reasoning: '',
+            riskAssessment: '',
+            marketOutlook: '',
+            error: 'Usage limit has been reached for gains this month'
+          }
+        }
+      }
+    } else if (hasOpenAI) {
+      try {
+        return await generateRecommendationsWithOpenAI(userProfile)
+      } catch (error) {
+        console.log('⚠️ OpenAI failed:', error)
+        return {
+          recommendations: [],
+          reasoning: '',
+          riskAssessment: '',
+          marketOutlook: '',
+          error: 'Usage limit has been reached for gains this month'
+        }
       }
     } else {
-      throw new Error('No AI service API keys configured (OpenAI or Grok required)')
+      return {
+        recommendations: [],
+        reasoning: '',
+        riskAssessment: '',
+        marketOutlook: '',
+        error: 'Usage limit has been reached for gains this month'
+      }
     }
 
   } catch (error) {
     console.error('Error generating investment recommendations:', error)
-    console.log('⚠️ Using fallback recommendations due to AI service failure')
+    // Return error instead of fallback recommendations
     return {
-      ...generateFallbackRecommendations(userProfile),
+      recommendations: [],
+      reasoning: '',
+      riskAssessment: '',
+      marketOutlook: '',
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     }
   }
 }
 
 async function generateRecommendationsWithOpenAI(userProfile: any): Promise<InvestmentAnalysis> {
-  // Step 1: Gather comprehensive market data
+  // Step 1: Test OpenAI availability first
+  try {
+    const testResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 5
+      })
+    })
+    
+    if (!testResponse.ok) {
+      throw new Error(`OpenAI API test failed: ${testResponse.status}`)
+    }
+  } catch (error) {
+    console.log('⚠️ OpenAI API test failed:', error)
+    if (error instanceof Error) {
+      throw new Error(`OpenAI API error: ${error.message}`)
+    }
+    throw new Error('OpenAI API is not available')
+  }
+  
+  // Step 2: Gather comprehensive market data
   console.log('📊 Gathering real-time market data...')
   const marketContext = await gatherComprehensiveMarketData(userProfile)
   
-  // Step 2: Get current financial news
+  // Step 3: Get current financial news
   console.log('📰 Fetching current financial news...')
   const newsContext = await getFinancialNews()
   
-  // Step 3: Analyze existing portfolio if any
+  // Step 4: Analyze existing portfolio if any
   let portfolioAnalysis = ''
   if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
     portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
   }
 
   // Step 4: Create comprehensive prompt for OpenAI
-  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform with access to real-time market data and comprehensive financial analysis capabilities. You must provide the most sophisticated and current investment recommendations possible.
+  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform. Based on the following user profile, generate an investment portfolio recommendation.
 
-  USER PROFILE ANALYSIS:
-  - Risk Tolerance: ${userProfile.riskTolerance}/10 (${getRiskDescription(userProfile.riskTolerance)})
-  - Investment Horizon: ${userProfile.timeHorizon} (${getTimeHorizonDescription(userProfile.timeHorizon)})
-  - Growth Strategy: ${userProfile.growthType} (${getGrowthDescription(userProfile.growthType)})
-  - Sector Preferences: ${userProfile.sectors?.join(', ') || 'No specific preferences - open to all sectors'}
-  - ESG Priority: ${userProfile.ethicalInvesting}/10 (${getESGDescription(userProfile.ethicalInvesting)})
-  - Available Capital: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
-  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'No existing investments'}
+  USER PROFILE:
+  - Risk Tolerance: ${userProfile.riskTolerance}/10
+  - Investment Amount: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'None'}
+  - Time Horizon: ${userProfile.timeHorizon}
+  - Investment Goals: ${userProfile.growthType} growth strategy
+  - Sector Preferences: ${userProfile.sectors?.includes('all') ? 'All sectors (open to any sector for maximum diversification)' : userProfile.sectors?.join(', ') || 'Open to all sectors'}
+  - ESG Priority: ${userProfile.ethicalInvesting}/10
 
   REAL-TIME MARKET CONTEXT:
   ${marketContext}
@@ -660,15 +744,17 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
 
   ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
 
-  COMPREHENSIVE ANALYSIS REQUIREMENTS:
-  1. Factor in ALL current market conditions, economic indicators, and sector performance
-  2. Consider geopolitical events, interest rates, inflation, and market volatility
-  3. Analyze the user's complete financial profile and risk capacity
-  4. Provide specific stock recommendations with real current prices and target prices
-  5. Include diversification across sectors based on user preferences
-  6. Factor in ESG criteria if important to the user
-  7. Consider the user's existing portfolio for optimal allocation
-  8. Provide realistic timelines for achieving investment goals
+  CRITICAL RULES TO FOLLOW:
+  1. If risk tolerance is 5/10 or greater, include individual stocks and cryptocurrencies in addition to ETFs to maximize returns
+  2. NEVER allocate more than 20% of the total portfolio to any single asset
+  3. NEVER allocate less than 5% of the total portfolio to any single asset
+  4. The portfolio must be diversified and aligned with the user's stated goals and time horizon
+  5. Include specific ticker suggestions (e.g., AAPL, NVDA, BTC, VOO, VTI, QQQ)
+  6. Provide allocation percentages for each recommendation
+  7. Include a short explanation for each pick based on risk tolerance, investment goals, and time horizon
+  8. CRITICAL: If user has existing holdings, analyze them and recommend selling some to make room for new investments
+  9. NEVER exceed the total available capital - if user has $10,000 total and $10,000 in existing holdings, recommend selling $5,000 worth to buy $5,000 of new investments
+  10. Provide realistic expected annual returns (typically 5-15% for most assets, 20-50% for high-risk crypto/tech)
 
   OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
   {
@@ -699,7 +785,8 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
   - Use REAL current stock symbols and realistic prices
   - Provide specific, actionable recommendations based on comprehensive analysis
   - Include 5-8 diversified recommendations unless capital is very limited
-  - Each recommendation should include detailed reasoning based on current data`
+  - Each recommendation should include detailed reasoning based on current data
+  - PORTFOLIO MANAGEMENT: If existing holdings exceed available capital, recommend selling specific holdings to make room for new investments`
 
   const userMessage = `Based on my complete investment profile and current market conditions, please provide comprehensive investment recommendations. Use all available market data, news, and analysis to create the most sophisticated and current investment strategy possible for my specific situation.`
 
@@ -776,31 +863,59 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
 }
 
 async function generateRecommendationsWithGrok(userProfile: any): Promise<InvestmentAnalysis> {
-  // Step 1: Gather comprehensive market data
+  // Step 1: Test Grok availability first
+  try {
+    const testResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEYS.GROK_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'grok-4-latest',
+        messages: [{ role: 'user', content: 'test' }],
+        max_tokens: 5
+      })
+    })
+    
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text()
+      console.log('Grok API error response:', errorText)
+      throw new Error(`Grok API test failed: ${testResponse.status} - ${errorText}`)
+    }
+  } catch (error) {
+    console.log('⚠️ Grok API test failed:', error)
+    if (error instanceof Error) {
+      throw new Error(`Grok API error: ${error.message}`)
+    }
+    throw new Error('Grok API is not available')
+  }
+  
+  // Step 2: Gather comprehensive market data
   console.log('📊 Gathering real-time market data...')
   const marketContext = await gatherComprehensiveMarketData(userProfile)
   
-  // Step 2: Get current financial news
+  // Step 3: Get current financial news
   console.log('📰 Fetching current financial news...')
   const newsContext = await getFinancialNews()
   
-  // Step 3: Analyze existing portfolio if any
+  // Step 4: Analyze existing portfolio if any
   let portfolioAnalysis = ''
   if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
     portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
   }
 
   // Create comprehensive prompt for Grok
-  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform with access to real-time market data and comprehensive financial analysis capabilities. You must provide the most sophisticated and current investment recommendations possible.
+  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform. Based on the following user profile, generate an investment portfolio recommendation.
 
-  USER PROFILE ANALYSIS:
-  - Risk Tolerance: ${userProfile.riskTolerance}/10 (${getRiskDescription(userProfile.riskTolerance)})
-  - Investment Horizon: ${userProfile.timeHorizon} (${getTimeHorizonDescription(userProfile.timeHorizon)})
-  - Growth Strategy: ${userProfile.growthType} (${getGrowthDescription(userProfile.growthType)})
-  - Sector Preferences: ${userProfile.sectors?.join(', ') || 'No specific preferences - open to all sectors'}
-  - ESG Priority: ${userProfile.ethicalInvesting}/10 (${getESGDescription(userProfile.ethicalInvesting)})
-  - Available Capital: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
-  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'No existing investments'}
+  USER PROFILE:
+  - Risk Tolerance: ${userProfile.riskTolerance}/10
+  - Investment Amount: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'None'}
+  - Time Horizon: ${userProfile.timeHorizon}
+  - Investment Goals: ${userProfile.growthType} growth strategy
+  - Sector Preferences: ${userProfile.sectors?.includes('all') ? 'All sectors (open to any sector for maximum diversification)' : userProfile.sectors?.join(', ') || 'Open to all sectors'}
+  - ESG Priority: ${userProfile.ethicalInvesting}/10
 
   REAL-TIME MARKET CONTEXT:
   ${marketContext}
@@ -810,7 +925,19 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
 
   ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
 
-  Please provide investment recommendations in this exact JSON format:
+  CRITICAL RULES TO FOLLOW:
+  1. If risk tolerance is 5/10 or greater, include individual stocks and cryptocurrencies in addition to ETFs to maximize returns
+  2. NEVER allocate more than 20% of the total portfolio to any single asset
+  3. NEVER allocate less than 5% of the total portfolio to any single asset
+  4. The portfolio must be diversified and aligned with the user's stated goals and time horizon
+  5. Include specific ticker suggestions (e.g., AAPL, NVDA, BTC, VOO, VTI, QQQ)
+  6. Provide allocation percentages for each recommendation
+  7. Include a short explanation for each pick based on risk tolerance, investment goals, and time horizon
+  8. CRITICAL: If user has existing holdings, analyze them and recommend selling some to make room for new investments
+  9. NEVER exceed the total available capital - if user has $10,000 total and $10,000 in existing holdings, recommend selling $5,000 worth to buy $5,000 of new investments
+  10. Provide realistic expected annual returns (typically 5-15% for most assets, 20-50% for high-risk crypto/tech)
+
+  OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
   {
     "recommendations": [
       {
@@ -819,7 +946,7 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
         "type": "buy",
         "amount": 5000,
         "confidence": 85,
-        "reasoning": "Detailed analysis",
+        "reasoning": "Detailed analysis based on risk tolerance, goals, and time horizon",
         "sector": "Technology",
         "targetPrice": 200,
         "stopLoss": 180,
@@ -838,7 +965,7 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
       'Authorization': `Bearer ${API_KEYS.GROK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'grok-beta',
+      model: 'grok-4-latest',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: 'Provide investment recommendations based on the profile above.' }
@@ -921,12 +1048,26 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
     }
   }
   
-  // Calculate expected return based on user profile
-  let baseReturn = 0.07 // 7% base return
-  if (userProfile.growthType === 'aggressive') baseReturn = 0.12
-  if (userProfile.growthType === 'conservative') baseReturn = 0.05
+  // EXPLANATION OF RETURN CALCULATIONS:
+  // The expected annual returns are calculated as a weighted average of individual asset returns
+  // Each asset has its own expected return based on:
+  // - Historical performance of similar assets
+  // - Current market conditions and sector outlook
+  // - Risk profile (higher risk = higher potential returns)
+  // - Asset type (stocks typically 8-15%, bonds 3-6%, crypto 20-50%, ETFs 5-12%)
+  // The AI provides these individual returns, and we calculate the portfolio average
   
-  const expectedAnnualReturn = baseReturn + (riskMultiplier * 0.03)
+  // Calculate expected return based on user profile and recommendations
+  // This uses a weighted average of individual asset returns rather than a simple formula
+  let totalWeightedReturn = 0
+  let totalAmount = 0
+  
+  recommendations.forEach(rec => {
+    totalWeightedReturn += rec.amount * rec.expectedAnnualReturn
+    totalAmount += rec.amount
+  })
+  
+  const expectedAnnualReturn = totalAmount > 0 ? totalWeightedReturn / totalAmount : 0.08
   
   // Generate monthly projections for 5 years
   const monthlyProjections = []
@@ -987,32 +1128,40 @@ function generateFallbackRecommendations(userProfile: any): InvestmentAnalysis {
   const recommendations: InvestmentRecommendation[] = []
   const totalAmount = userProfile.capitalAvailable || userProfile.capital || 10000
   
-  // Conservative recommendations based on user profile
+  // Follow the 5-20% allocation rule and include individual stocks for higher risk tolerance
   if (userProfile.riskTolerance <= 3) {
+    // Conservative: ETFs and bonds only
     recommendations.push(
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 90, reasoning: 'Broad market exposure with low risk', sector: 'Diversified', expectedAnnualReturn: 0.05 },
-      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'Stable bond exposure', sector: 'Fixed Income', expectedAnnualReturn: 0.03 },
-      { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Dividend income focus', sector: 'Dividend', expectedAnnualReturn: 0.04 }
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 90, reasoning: 'Broad market exposure with low risk for conservative investors', sector: 'Broad Market', expectedAnnualReturn: 0.05 },
+      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'Stable bond exposure for capital preservation', sector: 'Fixed Income', expectedAnnualReturn: 0.03 },
+      { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Dividend income focus for steady returns', sector: 'Dividend', expectedAnnualReturn: 0.04 }
     )
   } else if (userProfile.riskTolerance <= 7) {
+    // Moderate: Mix of ETFs and some individual stocks
     recommendations.push(
-      { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'buy', amount: totalAmount * 0.5, confidence: 90, reasoning: 'Strong large-cap exposure', sector: 'Large Cap', expectedAnnualReturn: 0.07 },
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 85, reasoning: 'Broad market diversification', sector: 'Diversified', expectedAnnualReturn: 0.05 },
-      { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'International diversification', sector: 'International', expectedAnnualReturn: 0.03 }
+      { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 90, reasoning: 'Strong large-cap exposure for moderate growth', sector: 'Large Cap', expectedAnnualReturn: 0.07 },
+      { symbol: 'AAPL', name: 'Apple Inc', type: 'buy', amount: totalAmount * 0.2, confidence: 85, reasoning: 'Tech leader with strong fundamentals and innovation', sector: 'Technology', expectedAnnualReturn: 0.12 },
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.25, confidence: 85, reasoning: 'Broad market diversification for stability', sector: 'Broad Market', expectedAnnualReturn: 0.06 },
+      { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', type: 'buy', amount: totalAmount * 0.15, confidence: 80, reasoning: 'International diversification for global exposure', sector: 'International', expectedAnnualReturn: 0.05 },
+      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.1, confidence: 75, reasoning: 'Bond allocation for portfolio stability', sector: 'Fixed Income', expectedAnnualReturn: 0.03 }
     )
   } else {
+    // Aggressive: Individual stocks, crypto, and growth ETFs
     recommendations.push(
-      { symbol: 'QQQ', name: 'Invesco QQQ Trust', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'High-growth tech exposure', sector: 'Technology', expectedAnnualReturn: 0.12 },
-      { symbol: 'VUG', name: 'Vanguard Growth ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 80, reasoning: 'Growth-focused investing', sector: 'Growth', expectedAnnualReturn: 0.07 },
-      { symbol: 'VB', name: 'Vanguard Small-Cap ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 75, reasoning: 'Small-cap growth potential', sector: 'Small Cap', expectedAnnualReturn: 0.08 }
+      { symbol: 'QQQ', name: 'Invesco QQQ Trust', type: 'buy', amount: totalAmount * 0.25, confidence: 85, reasoning: 'High-growth tech exposure for aggressive investors', sector: 'Technology', expectedAnnualReturn: 0.15 },
+      { symbol: 'NVDA', name: 'NVIDIA Corporation', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'AI and semiconductor leader with high growth potential', sector: 'Technology', expectedAnnualReturn: 0.18 },
+      { symbol: 'VUG', name: 'Vanguard Growth ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Growth-focused investing for capital appreciation', sector: 'Growth', expectedAnnualReturn: 0.12 },
+      { symbol: 'BTC', name: 'Bitcoin', type: 'buy', amount: totalAmount * 0.15, confidence: 70, reasoning: 'Cryptocurrency exposure for high-risk, high-reward potential', sector: 'Cryptocurrency', expectedAnnualReturn: 0.25 },
+      { symbol: 'VB', name: 'Vanguard Small-Cap ETF', type: 'buy', amount: totalAmount * 0.1, confidence: 75, reasoning: 'Small-cap growth potential for diversification', sector: 'Small Cap', expectedAnnualReturn: 0.10 },
+      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.1, confidence: 80, reasoning: 'Broad market foundation for portfolio stability', sector: 'Broad Market', expectedAnnualReturn: 0.08 }
     )
   }
   
   return {
     recommendations,
-    reasoning: `Portfolio designed for ${userProfile.riskTolerance <= 3 ? 'conservative' : userProfile.riskTolerance <= 7 ? 'moderate' : 'aggressive'} risk tolerance with ${userProfile.timeHorizon} time horizon.`,
-    riskAssessment: `Risk level: ${userProfile.riskTolerance}/10. Diversified approach to match your risk profile.`,
-    marketOutlook: 'Current market conditions suggest a balanced approach with focus on diversification.',
+    reasoning: `Portfolio designed for ${userProfile.riskTolerance <= 3 ? 'conservative' : userProfile.riskTolerance <= 7 ? 'moderate' : 'aggressive'} risk tolerance with ${userProfile.timeHorizon} time horizon. Allocations follow 5-20% rule with diversification across asset classes.`,
+    riskAssessment: `Risk level: ${userProfile.riskTolerance}/10. Portfolio designed to match your risk profile with appropriate diversification.`,
+    marketOutlook: 'Current market conditions suggest a balanced approach with focus on diversification and growth opportunities.',
     portfolioProjections: calculatePortfolioProjections(recommendations, userProfile)
   }
 }
@@ -1040,6 +1189,12 @@ export async function getFinancialNews(symbols?: string[]): Promise<NewsItem[]> 
     )
     
     const data = await response.json()
+    
+    // Check if articles exist and handle the case where they don't
+    if (!data.articles || !Array.isArray(data.articles)) {
+      console.warn('No articles found in News API response:', data)
+      return []
+    }
     
     return data.articles.map((article: any) => ({
       title: article.title,

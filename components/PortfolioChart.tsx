@@ -53,6 +53,10 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
   }
 
   // Create accurate projection data using portfolio projections
+  // The expected returns are correlated to the selected time frame:
+  // - 1Y: Uses portfolioProjections.projectedValues.oneYear (calculated from individual asset returns)
+  // - 3Y: Uses portfolioProjections.projectedValues.threeYear (calculated from individual asset returns)
+  // - 5Y: Uses portfolioProjections.projectedValues.fiveYear (calculated from individual asset returns)
   const chartData = useMemo(() => {
     const timeframes = { '1Y': 12, '3Y': 36, '5Y': 60 }
     const months = timeframes[timeframe]
@@ -62,6 +66,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
     const startValue = initialCapital
     
     // Use actual projection targets from portfolioProjections
+    // These values are calculated as weighted averages of individual asset expected returns
     const targets = {
       0: startValue,
       12: portfolioProjections?.projectedValues?.oneYear || startValue * 1.08,

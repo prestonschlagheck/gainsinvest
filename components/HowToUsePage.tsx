@@ -32,7 +32,7 @@ export default function HowToUsePage({ onBack }: HowToUsePageProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-950 relative overflow-hidden fixed inset-0" style={{ minHeight: '100vh', height: '100vh' }}>
       {/* Background glow effect */}
       <div className="absolute inset-0">
         <motion.div
@@ -64,13 +64,13 @@ export default function HowToUsePage({ onBack }: HowToUsePageProps) {
           <span className="hidden md:inline">Back</span>
         </button>
         
-        <h1 className="text-xl font-semibold text-white">How to Use G.AI.NS</h1>
+        <h1 className="text-xl font-semibold text-white text-center flex-1">How to Use G.AI.NS</h1>
         
         <div className="w-20"></div>
       </nav>
 
       {/* Main content - Scrollable layout */}
-      <div className="relative z-10 min-h-[calc(100vh-80px)] flex flex-col px-6 py-6">
+      <div className="relative z-10 flex flex-col px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
         <motion.div
           className="text-center mb-6"
           initial={{ opacity: 0, y: 20 }}

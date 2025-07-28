@@ -31,15 +31,16 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       setIsLoading(true)
       setLoadingPercentage(0)
       
-      // Steady loading progress during API call
+      // Realistic loading progress based on actual API call timing
       const progressInterval = setInterval(() => {
         setLoadingPercentage(prev => {
-          if (prev < 95) {
-            return Math.min(prev + 1, 95) // Steady 1% increment, max 95%
+          // More realistic progress that matches the actual API call duration
+          if (prev < 90) {
+            return Math.min(prev + 0.5, 90) // Slower progress, max 90%
           }
           return prev
         })
-      }, 150) // Slower, steady pace
+      }, 200) // Update every 200ms for smoother progress
       
       try {
         // Call the API route
@@ -67,17 +68,10 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             timestamp: new Date().toISOString()
           })
           
-          // If we have recommendations despite the error, show them (fallback mode)
-          if (analysis.recommendations && analysis.recommendations.length > 0) {
-            setLoadingPercentage(100)
-            await new Promise(resolve => setTimeout(resolve, 300))
-            setRecommendations(analysis.recommendations)
-            setPortfolioProjections(analysis.portfolioProjections)
-            setIsLoading(false)
-            return
-          }
-          
-          throw new Error(analysis.error || analysis.details || 'API configuration error')
+          // Always show error instead of fallback recommendations
+          setApiError(true)
+          setIsLoading(false)
+          return
         }
 
         // Complete the loading to 100%
@@ -85,6 +79,18 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         
         // Brief pause to show 100% completion
         await new Promise(resolve => setTimeout(resolve, 300))
+
+        // Check if we have valid recommendations
+        if (!analysis.recommendations || analysis.recommendations.length === 0) {
+          setErrorDetails({
+            message: 'No recommendations generated. Please check your API configuration.',
+            apiStatus: null,
+            timestamp: new Date().toISOString()
+          })
+          setApiError(true)
+          setIsLoading(false)
+          return
+        }
 
         setRecommendations(analysis.recommendations)
         setPortfolioProjections(analysis.portfolioProjections)
@@ -206,84 +212,79 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             </h2>
           </div>
           
-          {/* Continuously Scrolling Graph */}
-          <div className="relative h-32 bg-gray-900/50 rounded-lg p-4 border border-gray-700 overflow-hidden">
-            <svg 
-              width="100%" 
-              height="100%" 
-              viewBox="0 0 400 80" 
-              className="overflow-hidden"
-            >
-              {/* Simple grid background */}
-              <defs>
-                <pattern id="grid" width="40" height="20" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 20" fill="none" stroke="rgb(75 85 99)" strokeWidth="0.5" opacity="0.3"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              
-              {/* Realistic zigzag growth line */}
-              <motion.path
-                d="M 0 65 L 30 58 L 50 62 L 80 55 L 100 48 L 120 52 L 150 45 L 180 38 L 200 42 L 230 35 L 260 28 L 290 32 L 320 25 L 350 18 L 380 22 L 400 15"
-                fill="none"
-                stroke="url(#growthGradient)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: loadingPercentage / 100 }}
-                transition={{ 
-                  duration: 0.3, 
-                  ease: "easeOut"
-                }}
-              />
-              
-              {/* Data points that align with key zigzag points */}
-              {[
-                { x: 80, y: 55 }, { x: 150, y: 45 }, { x: 230, y: 35 }, 
-                { x: 290, y: 32 }, { x: 350, y: 18 }, { x: 400, y: 15 }
-              ].map((point, index) => {
-                const shouldShow = loadingPercentage > (index + 1) * 16
-                return (
-                  <motion.circle
-                    key={index}
-                    cx={point.x}
-                    cy={point.y}
-                    r="3"
-                    fill="#10b981"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ 
-                      scale: shouldShow ? 1 : 0,
-                      opacity: shouldShow ? 1 : 0
-                    }}
-                    transition={{ 
-                      duration: 0.3,
-                      ease: "easeOut"
-                    }}
-                  />
-                )
-              })}
-              
-              {/* Gradient definition */}
-              <defs>
-                <linearGradient id="growthGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#10b981" />
-                  <stop offset="50%" stopColor="#3b82f6" />
-                  <stop offset="100%" stopColor="#8b5cf6" />
-                </linearGradient>
-              </defs>
-            </svg>
-            
-            {/* Animated percentage counter in top right */}
-            <div className="absolute top-2 right-2">
+          {/* AI Process Steps */}
+          <div className="space-y-4">
+            {[
+              { name: "Testing Grok AI", delay: 0, duration: 2000 },
+              { name: "Gathering Market Data", delay: 2000, duration: 3000 },
+              { name: "Fetching Financial News", delay: 5000, duration: 2000 },
+              { name: "Analyzing Portfolio", delay: 7000, duration: 2500 },
+              { name: "Generating Recommendations", delay: 9500, duration: 3000 }
+            ].map((step, index) => (
               <motion.div
-                className="text-lg font-bold text-green-400 font-mono bg-gray-900/80 px-2 py-1 rounded"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
+                key={step.name}
+                className="flex items-center justify-between bg-gray-900/50 rounded-lg p-4 border border-gray-700"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: step.delay / 1000 }}
               >
-                {Math.floor(loadingPercentage)}%
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                    <motion.div
+                      className="w-4 h-4 bg-gray-500 rounded-full"
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        backgroundColor: [
+                          "#6b7280", // gray-500
+                          "#10b981", // green-500
+                          "#10b981"  // green-500
+                        ]
+                      }}
+                      transition={{
+                        duration: step.duration / 1000,
+                        delay: step.delay / 1000,
+                        ease: "easeInOut"
+                      }}
+                    />
+                  </div>
+                  <span className="text-gray-300 text-sm">{step.name}</span>
+                </div>
+                
+                {/* Check mark that appears when step completes */}
+                <motion.div
+                  className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ 
+                    scale: 1, 
+                    opacity: 1 
+                  }}
+                  transition={{ 
+                    delay: (step.delay + step.duration) / 1000,
+                    duration: 0.3,
+                    ease: "easeOut"
+                  }}
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </motion.div>
               </motion.div>
+            ))}
+          </div>
+          
+          {/* Progress indicator */}
+          <div className="mt-8">
+            <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <span>Processing...</span>
+              <span>{Math.floor(loadingPercentage)}%</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <motion.div
+                className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${loadingPercentage}%` }}
+                transition={{ duration: 0.3 }}
+              />
             </div>
           </div>
         </motion.div>
@@ -293,7 +294,9 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
   if (apiError) {
     const getErrorTitle = () => {
-      if (errorDetails?.message?.includes('rate limit exceeded')) {
+      if (errorDetails?.message?.includes('Usage limit has been reached for gains this month')) {
+        return 'Monthly Usage Limit Reached'
+      } else if (errorDetails?.message?.includes('rate limit exceeded')) {
         return 'API Rate Limit Exceeded'
       } else if (errorDetails?.message?.includes('quota exceeded')) {
         return 'API Quota Exceeded'
@@ -307,7 +310,9 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     }
 
     const getErrorMessage = () => {
-      if (errorDetails?.message?.includes('rate limit exceeded')) {
+      if (errorDetails?.message?.includes('Usage limit has been reached for gains this month')) {
+        return 'We\'ve reached our monthly limit for AI-powered investment recommendations. Please check back next month for personalized insights.'
+      } else if (errorDetails?.message?.includes('rate limit exceeded')) {
         return 'One of your API services has exceeded its rate limit. Please wait before trying again.'
       } else if (errorDetails?.message?.includes('quota exceeded')) {
         return 'One of your API services has exceeded its quota. Please check your billing or upgrade your plan.'
@@ -361,9 +366,13 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           animate={{ opacity: 1 }}
           className={`space-y-${screenSize.isMobile ? '4' : '6'}`}
         >
-          <div className="bg-red-900/20 border border-red-700 rounded-lg p-8">
-            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-red-400 mb-3">{getErrorTitle()}</h2>
+          <div className={`${errorDetails?.message?.includes('Usage limit has been reached for gains this month') 
+            ? 'bg-blue-900/20 border border-blue-700' 
+            : 'bg-red-900/20 border border-red-700'} rounded-lg p-8`}>
+            <AlertCircle className={`w-16 h-16 mx-auto mb-4 ${errorDetails?.message?.includes('Usage limit has been reached for gains this month') 
+              ? 'text-blue-400' : 'text-red-400'}`} />
+            <h2 className={`text-2xl font-semibold mb-3 ${errorDetails?.message?.includes('Usage limit has been reached for gains this month') 
+              ? 'text-blue-400' : 'text-red-400'}`}>{getErrorTitle()}</h2>
             <div className="text-gray-300 mb-6 max-w-lg mx-auto">
               <p className="mb-4">
                 {getErrorMessage()}
@@ -686,22 +695,14 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }
 
-  const getStrengthColor = (strength: 'weak' | 'moderate' | 'strong') => {
-    switch (strength) {
-      case 'weak': return 'text-red-400'
-      case 'moderate': return 'text-yellow-400' 
-      case 'strong': return 'text-green-400'
-      default: return 'text-yellow-400'
-    }
+  const getReturnColor = (returnRate: number) => {
+    if (returnRate >= 0.12) return 'text-green-400'
+    if (returnRate >= 0.08) return 'text-yellow-400'
+    return 'text-red-400'
   }
 
-  const getStrengthDisplay = (strength: 'weak' | 'moderate' | 'strong') => {
-    switch (strength) {
-      case 'weak': return 'Weak'
-      case 'moderate': return 'Strong' 
-      case 'strong': return 'Very Strong'
-      default: return 'Moderate'
-    }
+  const formatReturn = (returnRate: number) => {
+    return `${(returnRate * 100).toFixed(1)}%`
   }
 
   // Check if this is placeholder data
@@ -720,13 +721,13 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className={`rounded-xl p-4 border ${
+      className={`rounded-xl p-3 border ${
         isPlaceholder 
           ? 'bg-red-900/10 border-red-700/50' 
           : getTypeColor(recommendation.type) + ' bg-gray-800/50'
       }`}
     >
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2">
         <div>
           <h3 className={`font-bold text-lg flex items-center gap-2 ${
             isPlaceholder ? 'text-red-400' : 'text-white'
@@ -744,13 +745,13 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
         </div>
         <button
           onClick={onInfoClick}
-          className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+          className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
         >
           <Info className="w-4 h-4" />
         </button>
       </div>
       
-      <div className="space-y-2 mb-3">
+      <div className="space-y-1">
         <div className="flex justify-between items-center">
           <span className="text-sm text-gray-400">Amount:</span>
           <span className={`font-semibold ${isPlaceholder ? 'text-red-400' : 'text-white'}`}>
@@ -758,11 +759,11 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
           </span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-400">Strength:</span>
-          <span className={`font-semibold capitalize ${
-            isPlaceholder ? 'text-red-400' : getStrengthColor(recommendation.strength)
+          <span className="text-sm text-gray-400">Est. Return/Year:</span>
+          <span className={`font-semibold ${
+            isPlaceholder ? 'text-red-400' : getReturnColor(recommendation.expectedAnnualReturn)
           }`}>
-            {getStrengthDisplay(recommendation.strength)}
+            {formatReturn(recommendation.expectedAnnualReturn)}
           </span>
         </div>
       </div>
@@ -773,7 +774,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className={`mt-3 p-3 rounded-lg border ${
+          className={`mt-2 p-2 rounded-lg border ${
             isPlaceholder 
               ? 'bg-red-900/20 border-red-700/50' 
               : 'bg-gray-900/50 border-gray-600'
@@ -782,7 +783,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
           <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-300'}`}>
             {recommendation.reasoning}
           </p>
-          <div className={`mt-2 text-xs ${isPlaceholder ? 'text-red-400' : 'text-gray-500'}`}>
+          <div className={`mt-1 text-xs ${isPlaceholder ? 'text-red-400' : 'text-gray-500'}`}>
             Sector: {recommendation.sector}
             {isPlaceholder && (
               <span className="ml-2 text-red-400">

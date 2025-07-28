@@ -12,6 +12,7 @@ interface SectorsStepProps {
 }
 
 const SECTORS = [
+  { id: 'all', name: 'All Sectors', examples: 'Open to any sector for maximum diversification' },
   { id: 'technology', name: 'Technology', examples: 'Apple, Microsoft, Google, Meta' },
   { id: 'healthcare', name: 'Healthcare', examples: 'Johnson & Johnson, Pfizer, UnitedHealth' },
   { id: 'finance', name: 'Financial Services', examples: 'JPMorgan Chase, Bank of America, Visa' },
@@ -19,11 +20,7 @@ const SECTORS = [
   { id: 'energy', name: 'Energy', examples: 'ExxonMobil, Chevron, NextEra Energy' },
   { id: 'industrials', name: 'Industrials', examples: 'Boeing, Caterpillar, General Electric' },
   { id: 'materials', name: 'Materials', examples: 'Dow, DuPont, Freeport-McMoRan' },
-  { id: 'utilities', name: 'Utilities', examples: 'NextEra Energy, Duke Energy, Southern Company' },
-  { id: 'realestate', name: 'Real Estate', examples: 'American Tower, Prologis, Crown Castle' },
-  { id: 'telecommunications', name: 'Telecommunications', examples: 'Verizon, AT&T, T-Mobile' },
-  { id: 'retail', name: 'Retail', examples: 'Amazon, Walmart, Home Depot, Target' },
-  { id: 'transportation', name: 'Transportation', examples: 'UPS, FedEx, Union Pacific, Delta' }
+  { id: 'utilities', name: 'Utilities', examples: 'NextEra Energy, Duke Energy, Southern Company' }
 ]
 
 const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBack }) => {
@@ -37,17 +34,27 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
     if (screenSize.width < 480) return 'grid-cols-1'
     if (screenSize.width < 768) return 'grid-cols-2'
     if (screenSize.width < 1024) return 'grid-cols-3'
-    return 'grid-cols-4'
+    return 'grid-cols-3' // 3 columns for desktop to fit 9 sectors perfectly
   }
 
   const toggleSector = (sectorId: string) => {
     setSelectedSectors(prev => {
-      if (prev.includes(sectorId)) {
-        // Remove the sector if it's already selected
-        return prev.filter(id => id !== sectorId)
+      if (sectorId === 'all') {
+        // If "All Sectors" is selected, toggle it on/off
+        if (prev.includes('all')) {
+          return prev.filter(id => id !== 'all')
+        } else {
+          return [...prev, 'all']
+        }
       } else {
-        // Add the sector
-        return [...prev, sectorId]
+        // If selecting a specific sector
+        if (prev.includes(sectorId)) {
+          // Remove the sector if it's already selected
+          return prev.filter(id => id !== sectorId)
+        } else {
+          // Add the sector
+          return [...prev, sectorId]
+        }
       }
     })
   }
@@ -69,19 +76,19 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => toggleSector(sector.id)}
-              className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 ${screenSize.isMobile ? 'h-auto min-h-[100px]' : 'h-[90px]'} w-full ${
+              className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 ${screenSize.isMobile ? 'h-auto min-h-[120px]' : 'h-[90px]'} w-full ${
                 isSelected 
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
               <div className="flex flex-col h-full justify-center">
-                <h3 className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} font-semibold mb-1 leading-tight ${screenSize.isMobile ? 'whitespace-normal' : 'whitespace-nowrap overflow-hidden text-ellipsis'} px-2 ${
+                <h3 className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} font-semibold mb-2 leading-tight px-2 ${
                   isSelected ? 'text-white' : 'text-gray-200'
                 }`}>
                   {sector.name}
                 </h3>
-                <p className={`${screenSize.isMobile ? 'text-xs' : 'text-xs'} leading-relaxed ${screenSize.isMobile ? 'line-clamp-3' : 'line-clamp-2'} px-1 ${
+                <p className={`${screenSize.isMobile ? 'text-xs' : 'text-xs'} leading-relaxed px-2 ${
                   isSelected ? 'text-gray-300' : 'text-gray-400'
                 }`}>
                   {sector.examples}

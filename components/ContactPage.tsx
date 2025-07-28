@@ -9,7 +9,7 @@ interface ContactPageProps {
 
 export default function ContactPage({ onBack }: ContactPageProps) {
   return (
-    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-950 relative overflow-hidden fixed inset-0" style={{ minHeight: '100vh', height: '100vh' }}>
       {/* Background glow effect */}
       <div className="absolute inset-0">
         <motion.div
@@ -41,20 +41,20 @@ export default function ContactPage({ onBack }: ContactPageProps) {
           <span className="hidden md:inline">Back</span>
         </button>
         
-        <h1 className="text-xl font-semibold text-white">Contact</h1>
+        <h1 className="text-xl font-semibold text-white text-center flex-1">Contact</h1>
         
         <div className="w-20"></div>
       </nav>
 
       {/* Main content - Scrollable layout */}
-      <div className="relative z-10 min-h-[calc(100vh-80px)] flex flex-col items-center justify-center px-6 py-6">
+      <div className="relative z-10 flex flex-col px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
         <motion.div
-          className="text-center mb-8"
+          className="text-center mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-4xl md:text-5xl font-light text-white mb-4">
+          <h2 className="text-4xl md:text-5xl font-light text-white mb-3">
             Get in Touch
           </h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">

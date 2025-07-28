@@ -21,8 +21,19 @@ A sophisticated AI-powered investment chatbot that helps inexperienced investors
    ```
 
 2. **Set up API Keys**
-   - Create a `.env.local` file in the root directory
-   - Configure the multi-provider system (add at least one financial API for basic functionality):
+   
+   **Option A: Quick Setup (Recommended)**
+   ```bash
+   npm run setup
+   ```
+   This will create your `.env.local` file automatically.
+   
+   **Option B: Manual Setup**
+   ```bash
+   cp env.example .env.local
+   ```
+   
+   Then edit `.env.local` and add your API keys:
    ```env
    # AI Services (Required for recommendations)
    OPENAI_API_KEY=your_openai_api_key_here
@@ -31,6 +42,7 @@ A sophisticated AI-powered investment chatbot that helps inexperienced investors
    ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here     # 25/day free
    TWELVE_DATA_API_KEY=your_twelve_data_key_here         # 800/day free
    FINNHUB_API_KEY=your_finnhub_key_here                 # 60/minute free
+   NEWS_API_KEY=your_news_api_key_here                   # 1000/month free
    
    # Authentication (Required for user accounts)
    NEXTAUTH_SECRET=your-secret-key-here
@@ -39,11 +51,17 @@ A sophisticated AI-powered investment chatbot that helps inexperienced investors
    GOOGLE_CLIENT_SECRET=your_google_client_secret
    ```
    
-   **🔑 Quick API Setup:**
-   - [Alpha Vantage](https://www.alphavantage.co/support/#api-key) - Free, instant
-   - [Twelve Data](https://twelvedata.com/) - Free account, 800 calls/day  
-   - [Finnhub](https://finnhub.io/register) - Free account, 60 calls/minute
-   - [OpenAI](https://platform.openai.com/api-keys) - Pay-as-you-go, ~$0.01 per recommendation
+   **🔑 Required APIs (Start Here):**
+   - [OpenAI](https://platform.openai.com/api-keys) - AI analysis (~$0.002 per 1K tokens)
+   - [Alpha Vantage](https://www.alphavantage.co/support/#api-key) - Stock data (25/day free)
+   - [Finnhub](https://finnhub.io/register) - Backup data (60/minute free)
+   - [News API](https://newsapi.org/) - Market news (1000/month free)
+   
+   **🔧 Optional APIs (Enhanced Features):**
+   - [Twelve Data](https://twelvedata.com/) - Additional data (800/day free)
+   - [Grok](https://x.ai/) - Alternative AI (beta)
+   
+   **📖 Detailed Setup Guide:** See [API_SETUP_GUIDE.md](API_SETUP_GUIDE.md) for comprehensive instructions.
 
 3. **Run Development Server**
    ```bash
@@ -200,6 +218,44 @@ npm start
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
+
+## 🔧 Troubleshooting
+
+### API Issues
+
+**Problem**: "OpenAI API error: Invalid API key"
+- **Solution**: Verify your OpenAI API key is correct and has credits
+
+**Problem**: "Alpha Vantage error: Invalid response format"
+- **Solution**: Check your Alpha Vantage API key and ensure you haven't exceeded daily limits
+
+**Problem**: "Twelve Data error: You have run out of API credits"
+- **Solution**: Wait for the next minute or upgrade your plan
+
+**Problem**: "Grok API error: The model grok-beta does not exist"
+- **Solution**: ✅ **FIXED** - Updated to use `grok-1` model
+
+**Problem**: "Error fetching financial news: Cannot read properties of undefined"
+- **Solution**: ✅ **FIXED** - Added proper error handling for missing articles
+
+### General Issues
+
+**Problem**: APIs not working after adding keys
+- **Solution**: Restart your development server (`npm run dev`)
+
+**Problem**: Environment variables not loading
+- **Solution**: Ensure `.env.local` is in the root directory and not committed to Git
+
+**Problem**: CORS errors in browser
+- **Solution**: All API calls are server-side, so this shouldn't happen. Check your network connection.
+
+### Getting Help
+
+1. Check the console logs for detailed error messages
+2. Verify all API keys are correctly set in `.env.local`
+3. Ensure you haven't exceeded API rate limits
+4. Restart the development server after making changes
+5. See [API_SETUP_GUIDE.md](API_SETUP_GUIDE.md) for detailed instructions
 
 ## 📄 License
 

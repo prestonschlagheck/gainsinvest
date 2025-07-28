@@ -64,7 +64,7 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, 
       <div className="step-body">
         <div className="space-y-4">
         {/* Portfolio Items */}
-        <div className="space-y-4">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           {portfolio.map((item, index) => (
             <motion.div
               key={index}

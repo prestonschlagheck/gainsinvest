@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ArrowLeft, Globe, Database, Shield, Zap, TrendingUp, BarChart } from 'lucide-react'
+import XaiUsage from './XaiUsage'
 
 interface ApiPageProps {
   onBack: () => void
@@ -36,8 +37,8 @@ export default function ApiPage({ onBack }: ApiPageProps) {
     {
       icon: <Zap className="w-6 h-6" />,
       name: "AI Processing API",
-      provider: "OpenAI GPT-4",
-      description: "Advanced language model for natural conversation, investment reasoning, and personalized financial advice generation."
+      provider: "XAI Grok-4 & OpenAI GPT-4",
+      description: "Advanced language models for natural conversation, investment reasoning, and personalized financial advice generation with fallback capabilities."
     },
     {
       icon: <Shield className="w-6 h-6" />,
@@ -48,7 +49,7 @@ export default function ApiPage({ onBack }: ApiPageProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-950 relative overflow-hidden">
+    <div className="min-h-screen bg-gray-950 relative overflow-hidden fixed inset-0" style={{ minHeight: '100vh', height: '100vh' }}>
       {/* Background glow effect */}
       <div className="absolute inset-0">
         <motion.div
@@ -80,13 +81,13 @@ export default function ApiPage({ onBack }: ApiPageProps) {
           <span className="hidden md:inline">Back</span>
         </button>
         
-        <h1 className="text-xl font-semibold text-white">Utilized APIs</h1>
+        <h1 className="text-xl font-semibold text-white text-center flex-1">Utilized APIs</h1>
         
         <div className="w-20"></div>
       </nav>
 
       {/* Main content - Scrollable layout */}
-      <div className="relative z-10 min-h-[calc(100vh-80px)] flex flex-col px-6 py-6">
+      <div className="relative z-10 flex flex-col px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
         <motion.div
           className="text-center mb-4"
           initial={{ opacity: 0, y: 20 }}
@@ -150,6 +151,16 @@ export default function ApiPage({ onBack }: ApiPageProps) {
           >
             Start Using G.AI.NS
           </button>
+        </motion.div>
+
+        {/* XAI Usage Component */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="max-w-md mx-auto"
+        >
+          <XaiUsage />
         </motion.div>
       </div>
     </div>

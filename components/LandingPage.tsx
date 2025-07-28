@@ -19,6 +19,7 @@ interface LandingPageProps {
   onNavigateToContact: () => void
   onUsePreviousAnswers: () => void
   onStartFresh: () => void
+  onGuestContinue: () => void
 }
 
 export default function LandingPage({ 
@@ -30,7 +31,8 @@ export default function LandingPage({
   onNavigateToApis,
   onNavigateToContact,
   onUsePreviousAnswers,
-  onStartFresh
+  onStartFresh,
+  onGuestContinue
 }: LandingPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -102,7 +104,7 @@ export default function LandingPage({
 
   const handleGuestContinue = () => {
     setShowAuthModal(false)
-    onStartChat()
+    onGuestContinue()
   }
 
   const handleMobileMenuToggle = () => {
@@ -110,7 +112,7 @@ export default function LandingPage({
   }
 
   return (
-    <div className="h-screen bg-gray-950 relative overflow-hidden fixed inset-0">
+    <div className="h-screen bg-gray-950 relative overflow-hidden fixed inset-0" style={{ height: '100vh', minHeight: '100vh' }}>
       {/* Animated background glow coming from the right */}
       <div className="absolute inset-0">
         <motion.div
@@ -151,7 +153,7 @@ export default function LandingPage({
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm">
+      <nav className={`relative z-20 flex items-center justify-between ${screenSize.isMobile ? 'px-4' : 'px-6'} py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm`}>
         <div className="flex items-center space-x-2">
           <span className="text-white text-xl font-light tracking-tight">G.AI.NS</span>
         </div>
@@ -195,7 +197,7 @@ export default function LandingPage({
           
           <button
             onClick={handleTryGains}
-            className="bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+            className={`bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors ${screenSize.isMobile ? 'hidden' : ''}`}
           >
             TRY G.AI.NS
           </button>
@@ -212,29 +214,30 @@ export default function LandingPage({
           transition={{ duration: 0.8 }}
         >
           <h1 className={`${screenSize.isMobile ? 'text-[108px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight ${screenSize.isMobile ? 'text-center' : ''}`}>
-            G.<motion.span
-              className="inline-block"
+            G.<motion.div
+              className="inline-block relative"
               animate={{
-                color: [
-                  'rgba(255, 255, 255, 1)',      // White
-                  'rgba(147, 197, 253, 0.8)',    // Very pale blue
-                  'rgba(196, 181, 253, 0.8)',    // Very pale purple
-                  'rgba(252, 165, 165, 0.8)',    // Very pale red
-                  'rgba(254, 215, 170, 0.8)',    // Very pale orange
-                  'rgba(254, 240, 138, 0.8)',    // Very pale yellow
-                  'rgba(187, 247, 208, 0.8)',    // Very pale green
-                  'rgba(165, 243, 252, 0.8)',    // Very pale cyan
-                  'rgba(255, 255, 255, 1)',      // Back to white
+                backgroundImage: [
+                  'linear-gradient(23deg, rgba(59, 130, 246, 1.0) 0%, rgba(147, 51, 234, 0.9) 40%, rgba(168, 85, 247, 0.8) 100%)',
+                  'linear-gradient(95deg, rgba(147, 51, 234, 0.9) 0%, rgba(168, 85, 247, 1.0) 35%, rgba(139, 92, 246, 0.8) 100%)',
+                  'linear-gradient(167deg, rgba(168, 85, 247, 1.0) 0%, rgba(139, 92, 246, 0.9) 30%, rgba(99, 102, 241, 0.8) 100%)',
+                  'linear-gradient(239deg, rgba(139, 92, 246, 0.9) 0%, rgba(99, 102, 241, 1.0) 45%, rgba(79, 70, 229, 0.8) 100%)',
+                  'linear-gradient(311deg, rgba(99, 102, 241, 1.0) 0%, rgba(79, 70, 229, 0.9) 50%, rgba(59, 130, 246, 0.8) 100%)',
+                  'linear-gradient(23deg, rgba(59, 130, 246, 1.0) 0%, rgba(147, 51, 234, 0.9) 40%, rgba(168, 85, 247, 0.8) 100%)'
                 ]
               }}
               transition={{
-                duration: 8,
+                duration: 10,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: [0.25, 0.1, 0.25, 1]
               }}
-            >
-              AI
-            </motion.span>.NS
+              style={{
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                WebkitTextFillColor: 'transparent'
+              }}
+            >AI</motion.div>.NS
           </h1>
         </motion.div>
 

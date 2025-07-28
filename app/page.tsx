@@ -39,6 +39,7 @@ export default function Home() {
 
   const [currentStep, setCurrentStep] = useState(0)
   const [storedProfile, setStoredProfile] = useState<StoredUserProfile | null>(null)
+  const [showRecommendationsInChat, setShowRecommendationsInChat] = useState(false)
   
   // Debug logging
   useEffect(() => {
@@ -55,51 +56,43 @@ export default function Home() {
       const existingProfile = loadUserProfile()
       console.log('User authenticated, checking profile:', { hasProfile: !!existingProfile, hasCompleted: existingProfile?.hasCompletedQuestionnaire })
       
+      // Create or update profile with Google user info
+      const profileToSave: StoredUserProfile = existingProfile ? {
+        ...existingProfile,
+        googleUser: {
+          name: session.user.name || '',
+          image: session.user.image || ''
+        }
+      } : {
+        isGuest: false,
+        googleUser: {
+          name: session.user.name || '',
+          image: session.user.image || ''
+        },
+        riskTolerance: 5,
+        timeHorizon: 'medium',
+        growthType: 'balanced',
+        sectors: [],
+        ethicalInvesting: 5,
+        capitalAvailable: 0,
+        existingPortfolio: [],
+        hasCompletedQuestionnaire: false
+      }
+      
+      saveUserProfile(profileToSave)
+      setStoredProfile(profileToSave)
+      setUserType('user')
+      setShowAuthModal(false) // Close auth modal if open
+      
+      // If user has completed questionnaire, show returning user modal
       if (existingProfile && existingProfile.hasCompletedQuestionnaire) {
-        // User has a previous profile - store it but stay on landing page
-        console.log('Returning user detected, storing profile but staying on landing')
-        const updatedProfile = {
-          ...existingProfile,
-          googleUser: {
-            name: session.user.name || '',
-            image: session.user.image || ''
-          }
-        }
-        setStoredProfile(updatedProfile)
-        setUserType('user')
-        setShowAuthModal(false) // Close auth modal if open
-        // Stay on current view (landing page)
+        console.log('Returning user detected, showing modal')
+        setShowReturningUserModal(true)
       } else {
-        // New user or no previous profile - store profile but stay on landing page
-        console.log('New user detected, storing profile but staying on landing')
-        setUserType('user')
-        setShowAuthModal(false) // Close auth modal if open
-        // Stay on current view (landing page)
-        
-        // Create or update profile with Google user info
-        const profileToSave: StoredUserProfile = existingProfile ? {
-          ...existingProfile,
-          googleUser: {
-            name: session.user.name || '',
-            image: session.user.image || ''
-          }
-        } : {
-          isGuest: false,
-          googleUser: {
-            name: session.user.name || '',
-            image: session.user.image || ''
-          },
-          riskTolerance: 5,
-          timeHorizon: 'medium',
-          growthType: 'balanced',
-          sectors: [],
-          ethicalInvesting: 5,
-          capitalAvailable: 0,
-          existingPortfolio: [],
-          hasCompletedQuestionnaire: false
-        }
-        
-        saveUserProfile(profileToSave)
+        console.log('New user detected, starting fresh questionnaire')
+        // New user - start with questionnaire
+        setCurrentView('chat')
+        setHasStarted(true)
       }
     }
   }, [session, status])
@@ -135,6 +128,7 @@ export default function Home() {
     setCurrentStep(0)
     setShowReturningUserModal(false)
     setStoredProfile(null)
+    setShowRecommendationsInChat(false)
     setCurrentView('landing')
   }
 
@@ -150,15 +144,30 @@ export default function Home() {
     setUserType('guest')
     setCurrentView('chat')
     setHasStarted(true)
+    setShowRecommendationsInChat(false) // Ensure questionnaire starts
+    // Clear any existing profile for guest users to ensure fresh start
+    const guestProfile: StoredUserProfile = {
+      isGuest: true,
+      riskTolerance: 5,
+      timeHorizon: 'medium',
+      growthType: 'balanced',
+      sectors: [],
+      ethicalInvesting: 5,
+      capitalAvailable: 0,
+      existingPortfolio: [],
+      hasCompletedQuestionnaire: false
+    }
+    saveUserProfile(guestProfile)
+    setStoredProfile(guestProfile)
   }
 
   const handleUsePreviousAnswers = () => {
     if (storedProfile) {
       setShowReturningUserModal(false)
       setUserType('user')
-      setCurrentView('recommendations')
+      setCurrentView('chat')
       setHasStarted(true)  // Ensure interface is active
-      // The profile is already saved, will show recommendations directly
+      setShowRecommendationsInChat(true)  // Show recommendations in chat interface
     }
   }
 
@@ -167,6 +176,7 @@ export default function Home() {
     setUserType('user')
     setCurrentView('chat')
     setHasStarted(true)  // Ensure questionnaire starts
+    setShowRecommendationsInChat(false) // Ensure questionnaire starts
     // Clear previous profile data but keep Google user info
     if (session?.user) {
       const freshProfile: StoredUserProfile = {
@@ -185,6 +195,7 @@ export default function Home() {
         hasCompletedQuestionnaire: false
       }
       saveUserProfile(freshProfile)
+      setStoredProfile(freshProfile)
     }
   }
 
@@ -249,6 +260,7 @@ export default function Home() {
          onNavigateToContact={() => setCurrentView('contact')}
          onUsePreviousAnswers={handleUsePreviousAnswers}
          onStartFresh={handleStartFresh}
+         onGuestContinue={handleGuestContinue}
        />
      )
    }
@@ -284,7 +296,9 @@ export default function Home() {
             onClick={handleCompleteRestart}
           >
             <div className="flex items-center space-x-2">
-              <span className={`text-white ${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-light tracking-tight`}>G.AI.NS</span>
+              <span className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-light tracking-tight text-white`}>
+                G.AI.NS
+              </span>
             </div>
           </motion.div>
         )}
@@ -303,7 +317,9 @@ export default function Home() {
               transition={{ duration: 0.5 }}
               className="text-center px-4"
             >
-              <div className={`${screenSize.isMobile ? 'text-4xl' : 'text-6xl'} font-light text-white ${screenSize.isMobile ? 'mb-4' : 'mb-8'} tracking-tight`}>G.AI.NS</div>
+              <div className={`${screenSize.isMobile ? 'text-4xl' : 'text-6xl'} font-light ${screenSize.isMobile ? 'mb-4' : 'mb-8'} tracking-tight text-white`}>
+                G.AI.NS
+              </div>
               <h1 className={`${screenSize.isMobile ? 'text-2xl' : 'text-4xl md:text-6xl'} font-light text-white mb-4`}>
                 Welcome to G.AI.NS
               </h1>
@@ -332,6 +348,7 @@ export default function Home() {
                  onStepChange={handleStepChange}
                  onCompleteRestart={handleCompleteRestart}
                  hasStarted={hasStarted}
+                 showRecommendations={showRecommendationsInChat}
                />
             </motion.div>
           )}
@@ -363,10 +380,7 @@ export default function Home() {
          )}
       </AnimatePresence>
 
-      {/* API Status - Bottom Right Corner */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <ApiStatus />
-      </div>
+
     </main>
   )
 } 

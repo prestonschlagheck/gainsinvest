@@ -34,6 +34,7 @@
     place-items: center;
     min-height: calc(100vh - 3rem);
     width: 100%;
+    overflow: hidden;
   }
 
   .main-content.with-top-logo {
@@ -75,7 +76,7 @@
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
-    gap: 2rem;
+    gap: 1.5rem;
   }
 
   .step-header {
@@ -97,6 +98,8 @@
     min-height: 300px;
     padding: 1rem 0;
     width: 100%;
+    max-height: calc(100vh - 200px);
+    overflow: hidden;
   }
 
   .step-body > * {
@@ -167,6 +170,18 @@
     }
   }
 
+  /* Desktop-specific rules to prevent scrolling */
+  @media (min-width: 1024px) {
+    .main-content {
+      overflow: hidden;
+    }
+    
+    .step-body {
+      overflow: hidden;
+      max-height: calc(100vh - 250px);
+    }
+  }
+
   @media (max-width: 1100px) {
     .chat-container.portfolio-layout {
       grid-template-columns: 1fr min(900px, calc(100vw - 3rem)) 1fr;
@@ -215,6 +230,8 @@
       gap: 1rem;
       padding: 0.5rem 0;
       min-height: 60vh;
+      overflow: visible;
+      max-height: none;
     }
     
     .step-body > * {

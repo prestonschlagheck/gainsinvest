@@ -20,9 +20,10 @@ interface ChatInterfaceProps {
   onCompleteRestart?: () => void
   hasStarted?: boolean
   onStepChange?: (step: number) => void
+  showRecommendations?: boolean
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice, onCompleteRestart, hasStarted = false, onStepChange }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice, onCompleteRestart, hasStarted = false, onStepChange, showRecommendations: forceShowRecommendations }) => {
   const { data: session, status } = useSession()
   const [currentStep, setCurrentStep] = useState(0)
   const [userProfile, setUserProfile] = useState<UserProfile>({
@@ -53,9 +54,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     if (status === 'authenticated' && session?.user) {
       const storedProfile = loadUserProfile()
       if (storedProfile && storedProfile.hasCompletedQuestionnaire) {
-        // User has completed questionnaire before, show recommendations directly
+        // User has completed questionnaire before, but don't auto-show recommendations
+        // Let the parent component handle the flow via ReturningUserModal
         setUserProfile(storedProfile)
-        setShowRecommendations(true)
+        // Don't set showRecommendations to true - let parent handle this
       } else if (storedProfile) {
         // User has partial data, use it but continue questionnaire
         setUserProfile(storedProfile)
@@ -80,9 +82,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     } else if (userType) {
       const storedProfile = loadUserProfile()
       if (storedProfile && storedProfile.hasCompletedQuestionnaire) {
-        // User has completed questionnaire before, show recommendations directly
-        setUserProfile(storedProfile)
-        setShowRecommendations(true)
+        // For guest users, always start fresh regardless of previous completion
+        const newProfile: UserProfile = {
+          isGuest: userType === 'guest',
+          riskTolerance: 5,
+          timeHorizon: 'medium',
+          growthType: 'balanced',
+          sectors: [],
+          ethicalInvesting: 5,
+          capitalAvailable: 0,
+          existingPortfolio: []
+        }
+        setUserProfile(newProfile)
+        setCurrentStep(0) // Always start from beginning for guests
       } else if (storedProfile) {
         // User has partial data, use it but continue questionnaire
         setUserProfile(storedProfile)
@@ -169,7 +181,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     }
   }
 
-  if (showRecommendations) {
+  if (showRecommendations || forceShowRecommendations) {
     return <RecommendationsPage userProfile={userProfile} onRestart={handleRestart} />
   }
 
