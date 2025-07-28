@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { validateApiKeys, getApiStatus } from '../lib/api'
 
 interface ApiStatusProps {
   className?: string
@@ -13,13 +12,25 @@ export default function ApiStatus({ className = '' }: ApiStatusProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const checkApiStatus = () => {
+    const checkApiStatus = async () => {
       try {
-        const keys = validateApiKeys()
-        setApiKeys(keys)
+        // Use server-side validation endpoint
+        const response = await fetch('/api/validate-keys')
+        const data = await response.json()
         
-        const status = getApiStatus()
-        setApiStatus(status)
+        // Convert the server response to the expected format
+        const keys = {
+          openai: data.details.openai,
+          grok: data.details.grok,
+          alphaVantage: data.details.alphaVantage,
+          twelveData: data.details.twelveData,
+          finnhub: data.details.finnhub,
+          polygon: data.details.polygon,
+          newsApi: data.details.newsApi,
+        }
+        
+        setApiKeys(keys)
+        setApiStatus([]) // We'll handle status separately if needed
       } catch (error) {
         console.error('Error checking API status:', error)
       } finally {
