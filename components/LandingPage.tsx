@@ -8,7 +8,6 @@ import { Session } from 'next-auth'
 import { useScreenSize } from '@/lib/useScreenSize'
 import { StoredUserProfile } from '@/lib/userStorage'
 import AuthModal from './AuthModal'
-import UserProfile from './UserProfile'
 
 interface LandingPageProps {
   session: Session | null
@@ -42,6 +41,7 @@ export default function LandingPage({
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   const [typedText, setTypedText] = useState('')
   const [showCursor, setShowCursor] = useState(true)
   const screenSize = useScreenSize()
@@ -173,12 +173,145 @@ export default function LandingPage({
         <div className="flex items-center space-x-3">
           {/* Profile component for logged-in users, guest button for others */}
           {session?.user ? (
-            <UserProfile 
-              userType="user"
-              onStartFresh={onStartFresh}
-              onEditResponses={onEditResponses}
-              onViewRecommendations={onViewRecommendations}
-            />
+            <div className="relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                className="flex items-center gap-3 transition-all duration-200 hover:opacity-80"
+              >
+                {/* User Name - matches navigation styling */}
+                <span className="text-gray-300 text-sm font-medium whitespace-nowrap hover:text-white transition-colors">
+                  {session.user.name || 'User'}
+                </span>
+                
+                {/* Profile Image */}
+                {session.user.image ? (
+                  <Image
+                    src={session.user.image}
+                    alt={session.user.name || 'User'}
+                    width={32}
+                    height={32}
+                    className="rounded-full border-2 border-gray-400 hover:border-gray-300 transition-colors"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-gray-400 hover:border-gray-300 transition-colors bg-gray-600">
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </motion.button>
+
+              {/* Dropdown Menu */}
+              <AnimatePresence>
+                {showProfileDropdown && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 bg-transparent"
+                      onClick={() => setShowProfileDropdown(false)}
+                    />
+                    
+                    {/* Dropdown Content */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      className="absolute right-0 mt-2 min-w-max bg-gray-800 rounded-lg border border-gray-600 shadow-lg overflow-hidden"
+                    >
+                      {/* User Info */}
+                      <div className="p-4 border-b border-gray-600">
+                        <div className="flex items-center gap-3">
+                          {session.user.image ? (
+                            <Image
+                              src={session.user.image}
+                              alt={session.user.name || 'User'}
+                              width={40}
+                              height={40}
+                              className="rounded-full"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-600">
+                              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate">
+                              {session.user.name || 'User'}
+                            </p>
+                            <p className="text-gray-400 text-xs truncate">
+                              {session.user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="py-2">
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false)
+                            onStartFresh()
+                          }}
+                          className="w-full p-3 text-left transition-colors flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                          Start Fresh
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false)
+                            onEditResponses?.()
+                          }}
+                          className="w-full p-3 text-left transition-colors flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Edit My Responses
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false)
+                            onViewRecommendations?.()
+                          }}
+                          className="w-full p-3 text-left transition-colors flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          View My Previous Recommendations
+                        </button>
+
+                        <div className="border-t border-gray-600 my-2"></div>
+
+                        <button
+                          onClick={() => {
+                            setShowProfileDropdown(false)
+                            // Sign out functionality would be handled by the parent
+                            console.log('Sign out clicked')
+                          }}
+                          className="w-full p-3 text-left transition-colors flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
             // Guest profile picture - clickable to login
             <button
