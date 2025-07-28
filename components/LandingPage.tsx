@@ -159,18 +159,21 @@ export default function LandingPage({
       </div>
 
       {/* Navigation */}
-      <nav className={`relative z-20 flex items-center justify-between ${screenSize.isMobile ? 'px-4' : 'px-6'} py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm`}>
+      <nav className={`relative z-20 flex items-center ${screenSize.isMobile ? 'px-4' : 'px-6'} py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm`}>
+        {/* Left section - Logo */}
         <div className="flex items-center space-x-2">
           <span className="text-white text-xl font-light tracking-tight">G.AI.NS</span>
         </div>
         
-        <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-300">
+        {/* Center section - Navigation menu */}
+        <div className="hidden md:flex items-center justify-center flex-1 space-x-8 text-sm font-medium text-gray-300">
           <button onClick={onNavigateToHowToUse} className="hover:text-white transition-colors">HOW TO USE</button>
           <button onClick={onNavigateToHowItWorks} className="hover:text-white transition-colors">HOW IT WORKS</button>
           <button onClick={onNavigateToApis} className="hover:text-white transition-colors">UTILIZED APIS</button>
           <button onClick={onNavigateToContact} className="hover:text-white transition-colors">CONTACT</button>
         </div>
 
+        {/* Right section - Profile/Login */}
         <div className="flex items-center space-x-3">
           {/* Profile component for logged-in users, guest button for others */}
           {session?.user ? (
