@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateInvestmentRecommendations, generateFallbackRecommendations } from '@/lib/api'
 
+// In-memory job storage (in production, use Redis or database)
+const jobs = new Map<string, {
+  id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  result?: any
+  error?: string
+  createdAt: Date
+  updatedAt: Date
+}>()
+
+// Generate unique job ID
+function generateJobId(): string {
+  return `job_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+}
+
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route Called:', {
     url: request.url,
@@ -39,73 +54,38 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
     
-    // For production: Use fast fallback recommendations to avoid timeout
-    if (process.env.NODE_ENV === 'production') {
-      console.log('🏃‍♂️ Using fast fallback recommendations for production')
-      
-      try {
-        // Quick timeout for AI generation (15 seconds max)
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 15000)
-        )
-        
-        const analysisPromise = generateInvestmentRecommendations(userProfile)
-        
-        const analysis = await Promise.race([analysisPromise, timeoutPromise])
-        
-        console.log('✅ Fast AI generation successful')
-        return NextResponse.json(analysis)
-        
-      } catch (error) {
-        console.log('⚠️ AI generation timeout, using intelligent fallback')
-        
-        // Generate intelligent fallback recommendations
-        const fallbackAnalysis = generateFallbackRecommendations(userProfile)
-        return NextResponse.json(fallbackAnalysis)
+    // Create job entry
+    const jobId = generateJobId()
+    const job = {
+      id: jobId,
+      status: 'pending' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    jobs.set(jobId, job)
+    console.log('💼 Created job:', jobId)
+    
+    // Start background processing (don't await)
+    processRecommendationJob(jobId, userProfile).catch(error => {
+      console.error('❌ Background job failed:', error)
+      const failedJob = jobs.get(jobId)
+      if (failedJob) {
+        failedJob.status = 'failed'
+        failedJob.error = error.message
+        failedJob.updatedAt = new Date()
+        jobs.set(jobId, failedJob)
       }
-    }
+    })
     
-    // For development: Use full AI generation
-    const analysis = await generateInvestmentRecommendations(userProfile)
-    console.log('📊 Generated analysis:', JSON.stringify(analysis, null, 2))
-    console.log('🔍 Analysis has error:', !!analysis.error)
-    console.log('📈 Analysis has recommendations:', analysis.recommendations?.length || 0)
+    // Return immediately with job ID
+    return NextResponse.json({
+      jobId,
+      status: 'pending',
+      message: 'Recommendation generation started. Use /api/recommendations/status to check progress.',
+      estimatedTime: '30-60 seconds'
+    })
     
-    // If the analysis includes an error field, it means there was an API issue
-    if (analysis.error) {
-      console.log('❌ Error detected in analysis, returning error response')
-      // Get API status information for detailed error reporting
-      const apiStatus = await getDetailedApiStatus()
-      
-      const errorResponse = {
-        ...analysis,
-        apiError: true,
-        errorDetails: {
-          message: analysis.error,
-          apiStatus,
-          timestamp: new Date().toISOString()
-        }
-      }
-      console.log('Returning error response:', JSON.stringify(errorResponse, null, 2))
-      return NextResponse.json(errorResponse)
-    }
-    
-    // If we have valid recommendations, return them without any error flags
-    if (analysis.recommendations && analysis.recommendations.length > 0) {
-      console.log('✅ Valid recommendations found, returning success response')
-      console.log('Success response structure:', {
-        hasRecommendations: !!analysis.recommendations,
-        recommendationsLength: analysis.recommendations.length,
-        hasPortfolioProjections: !!analysis.portfolioProjections,
-        hasReasoning: !!analysis.reasoning,
-        hasRiskAssessment: !!analysis.riskAssessment,
-        hasMarketOutlook: !!analysis.marketOutlook
-      })
-      return NextResponse.json(analysis)
-    }
-    
-    console.log('⚠️ No recommendations found, returning analysis as-is')
-    return NextResponse.json(analysis)
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     const errorStack = error instanceof Error ? error.stack : undefined
@@ -117,17 +97,13 @@ export async function POST(request: NextRequest) {
       name: errorName
     })
 
-    // Get API status information for detailed error reporting
-    const apiStatus = await getDetailedApiStatus()
-    
     return NextResponse.json(
       { 
-        error: 'Failed to generate recommendations',
+        error: 'Failed to start recommendation generation',
         details: errorMessage,
         apiError: true,
         errorDetails: {
           message: errorMessage,
-          apiStatus,
           timestamp: new Date().toISOString()
         }
       },
@@ -136,39 +112,76 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function getDetailedApiStatus() {
-  try {
-    // Simplified API status check - focus on functionality rather than configuration
-    const apiKeys = {
-      openai: !!process.env.OPENAI_API_KEY,
-      grok: !!process.env.GROK_API_KEY,
-      alphaVantage: !!process.env.ALPHA_VANTAGE_API_KEY,
-      twelveData: !!process.env.TWELVE_DATA_API_KEY,
-      finnhub: !!process.env.FINNHUB_API_KEY,
-    }
-
-    const hasAIService = apiKeys.openai || apiKeys.grok
-    const hasFinancialData = apiKeys.alphaVantage || apiKeys.twelveData || apiKeys.finnhub
-    
-    return {
-      hasRequiredKeys: hasAIService && hasFinancialData,
-      aiServices: {
-        openai: apiKeys.openai,
-        grok: apiKeys.grok,
-        configured: hasAIService
-      },
-      financialDataAPIs: {
-        alphaVantage: apiKeys.alphaVantage,
-        twelveData: apiKeys.twelveData,
-        finnhub: apiKeys.finnhub,
-        configured: hasFinancialData
-      }
-    }
-  } catch (error) {
-    console.error('Failed to get API status:', error)
-    return {
-      hasRequiredKeys: false,
-      error: 'Unable to check API status'
-    }
+// Background processing function
+async function processRecommendationJob(jobId: string, userProfile: any) {
+  console.log('🔄 Starting background processing for job:', jobId)
+  
+  const job = jobs.get(jobId)
+  if (!job) {
+    throw new Error('Job not found')
   }
+  
+  // Update job status
+  job.status = 'processing'
+  job.updatedAt = new Date()
+  jobs.set(jobId, job)
+  
+  try {
+    // This can take as long as needed - no timeout limits
+    console.log('🤖 Generating AI recommendations...')
+    const analysis = await generateInvestmentRecommendations(userProfile)
+    
+    console.log('✅ AI generation completed for job:', jobId)
+    
+    // Update job with results
+    job.status = 'completed'
+    job.result = analysis
+    job.updatedAt = new Date()
+    jobs.set(jobId, job)
+    
+    console.log('💾 Job completed and saved:', jobId)
+    
+  } catch (error) {
+    console.error('❌ Job processing failed:', error)
+    job.status = 'failed'
+    job.error = error instanceof Error ? error.message : 'Unknown error'
+    job.updatedAt = new Date()
+    jobs.set(jobId, job)
+    throw error
+  }
+}
+
+// GET endpoint to check job status
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const jobId = searchParams.get('jobId')
+  
+  if (!jobId) {
+    return NextResponse.json({ error: 'Job ID required' }, { status: 400 })
+  }
+  
+  const job = jobs.get(jobId)
+  if (!job) {
+    return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+  }
+  
+  // Clean response based on status
+  const response: any = {
+    jobId: job.id,
+    status: job.status,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt
+  }
+  
+  if (job.status === 'completed' && job.result) {
+    response.result = job.result
+    // Clean up completed job after retrieval
+    jobs.delete(jobId)
+  } else if (job.status === 'failed' && job.error) {
+    response.error = job.error
+    // Clean up failed job after retrieval
+    jobs.delete(jobId)
+  }
+  
+  return NextResponse.json(response)
 } 

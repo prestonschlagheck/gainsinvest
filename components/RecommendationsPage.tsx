@@ -202,24 +202,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         recommendations: 'pending'
       })
       
-      // Realistic loading progress based on actual API call timing
-      const progressInterval = setInterval(() => {
-        setLoadingPercentage(prev => {
-          // More realistic progress that matches the actual API call duration
-          if (prev < 90) {
-            return Math.min(prev + 0.5, 90) // Slower progress, max 90%
-          }
-          return prev
-        })
-      }, 200) // Update every 200ms for smoother progress
-      
       try {
-        // Simulate API status updates
-        setTimeout(() => setApiStatus(prev => ({ ...prev, grok: 'success' })), 2000)
-        setTimeout(() => setApiStatus(prev => ({ ...prev, marketData: 'success' })), 5000)
-        setTimeout(() => setApiStatus(prev => ({ ...prev, news: 'success' })), 7000)
-        setTimeout(() => setApiStatus(prev => ({ ...prev, analysis: 'success' })), 9500)
-        
         // Enhanced logging for deployment debugging
         console.log('🌐 Environment:', {
           origin: window.location.origin,
@@ -227,7 +210,8 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           isProduction: process.env.NODE_ENV === 'production'
         })
         
-        // Call the API route
+        // Start the recommendation job
+        console.log('🚀 Starting recommendation job...')
         const response = await fetch(`${window.location.origin}/api/recommendations`, {
           method: 'POST',
           headers: {
@@ -243,8 +227,6 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           url: response.url
         })
         
-        clearInterval(progressInterval)
-        
         if (!response.ok) {
           const errorText = await response.text()
           console.error('❌ API Response Error:', {
@@ -255,104 +237,115 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           throw new Error(`API request failed: ${response.status} - ${errorText}`)
         }
 
-        const analysis = await response.json()
+        const jobResponse = await response.json()
+        console.log('💼 Job started:', jobResponse)
         
-        // Add debugging logs
-        console.log('🔍 API Response Analysis:', {
-          hasError: !!analysis.error,
-          hasApiError: !!analysis.apiError,
-          hasRecommendations: !!analysis.recommendations,
-          recommendationsLength: analysis.recommendations?.length || 0,
-          fullResponse: analysis
-        })
-        
-        if (analysis.error || analysis.apiError) {
-          console.log('❌ Error detected in response:', analysis.error || analysis.apiError)
-          
-          // Update API status based on error type
-          if (analysis.error?.includes('Grok') || analysis.error?.includes('AI')) {
-            setApiStatus(prev => ({ ...prev, grok: 'failed' }))
-          }
-          if (analysis.error?.includes('market') || analysis.error?.includes('financial')) {
-            setApiStatus(prev => ({ ...prev, marketData: 'failed' }))
-          }
-          if (analysis.error?.includes('news')) {
-            setApiStatus(prev => ({ ...prev, news: 'failed' }))
-          }
-          
-          // Only show error if we don't have valid recommendations
-          // This allows for partial success scenarios
-          if (analysis.recommendations && analysis.recommendations.length > 0) {
-            console.log('✅ Found recommendations despite error, proceeding with display')
-            setApiStatus(prev => ({ ...prev, recommendations: 'success' }))
-            setRecommendations(analysis.recommendations)
-            setPortfolioProjections(analysis.portfolioProjections)
-            setIsLoading(false)
-            return
-          }
-          
-          // Set detailed error information
-          setErrorDetails(analysis.errorDetails || {
-            message: analysis.error || analysis.details || 'Unknown error',
-            apiStatus: null,
-            timestamp: new Date().toISOString()
-          })
-          
-          // Always show error instead of fallback recommendations
-          setApiError(true)
-          setIsLoading(false)
-          return
+        if (jobResponse.jobId) {
+          // Poll for job completion
+          await pollJobStatus(jobResponse.jobId)
+        } else {
+          throw new Error('No job ID received')
         }
-
-        // Complete the loading to 100%
-        setLoadingPercentage(100)
-        setApiStatus(prev => ({ ...prev, recommendations: 'success' }))
         
-        // Brief pause to show 100% completion
-        await new Promise(resolve => setTimeout(resolve, 300))
-
-        // Check if we have valid recommendations
-        if (!analysis.recommendations || analysis.recommendations.length === 0) {
-          console.log('❌ No recommendations found in response')
-          setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
-          setErrorDetails({
-            message: 'No recommendations generated. Please check your API configuration.',
-            apiStatus: null,
-            timestamp: new Date().toISOString()
-          })
-          setApiError(true)
-          setIsLoading(false)
-          return
-        }
-
-        console.log('✅ Valid recommendations found, setting state:', analysis.recommendations.length)
-        setRecommendations(analysis.recommendations)
-        setPortfolioProjections(analysis.portfolioProjections)
-        setIsLoading(false)
-        return
       } catch (error) {
         console.error('API Error:', error)
-        
-        clearInterval(progressInterval)
         
         // Update API status to failed
         setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
         
-        // Check API key status for better error messaging if we don't already have it
-        if (!errorDetails) {
-          try {
-            const keyResponse = await fetch(`${window.location.origin}/api/validate-keys`)
-            const keyStatus = await keyResponse.json()
-            setApiKeyStatus(keyStatus)
-          } catch (keyError) {
-            console.error('Failed to check API keys:', keyError)
-          }
-        }
+        setErrorDetails({
+          message: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        })
         
         setIsLoading(false)
         setApiError(true)
         return
       }
+    }
+    
+    const pollJobStatus = async (jobId: string) => {
+      console.log('🔄 Polling job status:', jobId)
+      let attempts = 0
+      const maxAttempts = 120 // 2 minutes max (2 second intervals)
+      
+      // Update API status as we progress
+      setTimeout(() => setApiStatus(prev => ({ ...prev, grok: 'success' })), 2000)
+      setTimeout(() => setApiStatus(prev => ({ ...prev, marketData: 'success' })), 8000)
+      setTimeout(() => setApiStatus(prev => ({ ...prev, news: 'success' })), 15000)
+      setTimeout(() => setApiStatus(prev => ({ ...prev, analysis: 'success' })), 25000)
+      
+      const pollInterval = setInterval(async () => {
+        attempts++
+        
+        try {
+          const statusResponse = await fetch(`${window.location.origin}/api/recommendations?jobId=${jobId}`)
+          
+          if (!statusResponse.ok) {
+            throw new Error(`Status check failed: ${statusResponse.status}`)
+          }
+          
+          const statusData = await statusResponse.json()
+          console.log('📊 Job status:', statusData.status)
+          
+          // Update loading percentage based on time elapsed
+          const progressPercentage = Math.min((attempts / maxAttempts) * 90, 90)
+          setLoadingPercentage(progressPercentage)
+          
+          if (statusData.status === 'completed') {
+            clearInterval(pollInterval)
+            
+            console.log('✅ Job completed successfully')
+            setApiStatus(prev => ({ ...prev, recommendations: 'success' }))
+            setLoadingPercentage(100)
+            
+            // Brief pause to show completion
+            await new Promise(resolve => setTimeout(resolve, 500))
+            
+            const analysis = statusData.result
+            if (analysis && analysis.recommendations && analysis.recommendations.length > 0) {
+              setRecommendations(analysis.recommendations)
+              setPortfolioProjections(analysis.portfolioProjections)
+              setIsLoading(false)
+            } else {
+              throw new Error('No recommendations in completed job')
+            }
+            
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval)
+            
+            console.error('❌ Job failed:', statusData.error)
+            setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
+            
+            setErrorDetails({
+              message: statusData.error || 'Job processing failed',
+              timestamp: new Date().toISOString()
+            })
+            
+            setIsLoading(false)
+            setApiError(true)
+            
+          } else if (attempts >= maxAttempts) {
+            clearInterval(pollInterval)
+            
+            console.error('⏰ Job polling timeout')
+            setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
+            
+            setErrorDetails({
+              message: 'Request timeout - please try again',
+              timestamp: new Date().toISOString()
+            })
+            
+            setIsLoading(false)
+            setApiError(true)
+          }
+          
+        } catch (error) {
+          console.error('❌ Polling error:', error)
+          attempts++ // Count errors against max attempts
+        }
+        
+      }, 2000) // Poll every 2 seconds
     }
     
     generateRecommendations()
