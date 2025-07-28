@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { ArrowUp } from 'lucide-react'
 import { Session } from 'next-auth'
+import { signOut } from 'next-auth/react'
 import { useScreenSize } from '@/lib/useScreenSize'
 import { StoredUserProfile } from '@/lib/userStorage'
 import AuthModal from './AuthModal'
@@ -296,8 +297,8 @@ export default function LandingPage({
                         <button
                           onClick={() => {
                             setShowProfileDropdown(false)
-                            // Sign out functionality would be handled by the parent
-                            console.log('Sign out clicked')
+                            // Sign out the user
+                            signOut({ callbackUrl: window.location.origin })
                           }}
                           className="w-full p-3 text-left transition-colors flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700"
                         >
