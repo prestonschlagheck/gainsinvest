@@ -634,7 +634,7 @@ export async function generateInvestmentRecommendations(
               reasoning: '',
               riskAssessment: '',
               marketOutlook: '',
-              error: 'Usage limit has been reached for gains this month'
+              error: error instanceof Error ? error.message : 'AI service temporarily unavailable'
             }
           }
         } else {
@@ -643,7 +643,7 @@ export async function generateInvestmentRecommendations(
             reasoning: '',
             riskAssessment: '',
             marketOutlook: '',
-            error: 'Usage limit has been reached for gains this month'
+            error: error instanceof Error ? error.message : 'Grok API configuration issue'
           }
         }
       }
@@ -657,7 +657,7 @@ export async function generateInvestmentRecommendations(
           reasoning: '',
           riskAssessment: '',
           marketOutlook: '',
-          error: 'Usage limit has been reached for gains this month'
+          error: error instanceof Error ? error.message : 'OpenAI API configuration issue'
         }
       }
     } else {
@@ -666,7 +666,7 @@ export async function generateInvestmentRecommendations(
         reasoning: '',
         riskAssessment: '',
         marketOutlook: '',
-        error: 'Usage limit has been reached for gains this month'
+        error: 'No AI service API keys configured (OpenAI or Grok required)'
       }
     }
 
@@ -865,6 +865,7 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
 async function generateRecommendationsWithGrok(userProfile: any): Promise<InvestmentAnalysis> {
   // Step 1: Test Grok availability first
   try {
+    console.log('🔍 Testing Grok API availability...')
     const testResponse = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -880,9 +881,12 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
     
     if (!testResponse.ok) {
       const errorText = await testResponse.text()
-      console.log('Grok API error response:', errorText)
+      console.log('❌ Grok API error response:', errorText)
+      console.log('❌ Grok API status:', testResponse.status)
       throw new Error(`Grok API test failed: ${testResponse.status} - ${errorText}`)
     }
+    
+    console.log('✅ Grok API test successful')
   } catch (error) {
     console.log('⚠️ Grok API test failed:', error)
     if (error instanceof Error) {
