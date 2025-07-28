@@ -261,6 +261,8 @@ export default function Home() {
          onUsePreviousAnswers={handleUsePreviousAnswers}
          onStartFresh={handleStartFresh}
          onGuestContinue={handleGuestContinue}
+         onEditResponses={handleEditResponses}
+         onViewRecommendations={handleUsePreviousAnswers}
        />
      )
    }

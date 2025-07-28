@@ -8,6 +8,7 @@ import { Session } from 'next-auth'
 import { useScreenSize } from '@/lib/useScreenSize'
 import { StoredUserProfile } from '@/lib/userStorage'
 import AuthModal from './AuthModal'
+import UserProfile from './UserProfile'
 
 interface LandingPageProps {
   session: Session | null
@@ -20,6 +21,8 @@ interface LandingPageProps {
   onUsePreviousAnswers: () => void
   onStartFresh: () => void
   onGuestContinue: () => void
+  onEditResponses?: () => void
+  onViewRecommendations?: () => void
 }
 
 export default function LandingPage({ 
@@ -32,7 +35,9 @@ export default function LandingPage({
   onNavigateToContact,
   onUsePreviousAnswers,
   onStartFresh,
-  onGuestContinue
+  onGuestContinue,
+  onEditResponses,
+  onViewRecommendations
 }: LandingPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -166,18 +171,14 @@ export default function LandingPage({
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Profile picture - show on both desktop and mobile */}
-          {session?.user && session.user.image ? (
-            // Logged in user profile picture
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600">
-              <Image
-                src={session.user.image}
-                alt={session.user.name || 'Profile'}
-                width={40}
-                height={40}
-                className="w-full h-full object-cover"
-              />
-            </div>
+          {/* Profile component for logged-in users, guest button for others */}
+          {session?.user ? (
+            <UserProfile 
+              userType="user"
+              onStartFresh={onStartFresh}
+              onEditResponses={onEditResponses}
+              onViewRecommendations={onViewRecommendations}
+            />
           ) : (
             // Guest profile picture - clickable to login
             <button
