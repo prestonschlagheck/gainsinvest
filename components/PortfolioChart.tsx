@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, DollarSign, Calendar, AlertTriangle } from 'lucide-react'
-import { useScreenSize } from '@/lib/useScreenSize'
+import { AlertTriangle, DollarSign, TrendingUp, Calendar } from 'lucide-react'
+import { useScreenSize } from '../lib/useScreenSize'
 
 interface PortfolioChartProps {
   recommendations: any[]
@@ -18,10 +18,53 @@ interface DataPoint {
   label: string
 }
 
+interface StockPriceData {
+  [symbol: string]: {
+    currentPrice: number
+    lastUpdated: string
+  }
+}
+
 const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initialCapital, portfolioProjections }) => {
   const screenSize = useScreenSize()
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint | null>(null)
   const [timeframe, setTimeframe] = useState<'1Y' | '3Y' | '5Y'>('3Y')
+  const [stockPrices, setStockPrices] = useState<StockPriceData>({})
+
+  // Fetch real-time stock prices
+  useEffect(() => {
+    const fetchStockPrices = async () => {
+      try {
+        const symbols = recommendations.filter(r => r.type === 'buy').map(r => r.symbol)
+        const pricePromises = symbols.map(async (symbol) => {
+          const response = await fetch(`/api/stock-price?symbol=${symbol}`)
+          if (response.ok) {
+            const data = await response.json()
+            return { symbol, ...data }
+          }
+          return null
+        })
+        
+        const results = await Promise.all(pricePromises)
+        const priceData: StockPriceData = {}
+        results.forEach(result => {
+          if (result) {
+            priceData[result.symbol] = {
+              currentPrice: result.price,
+              lastUpdated: result.lastUpdated
+            }
+          }
+        })
+        setStockPrices(priceData)
+      } catch (error) {
+        console.error('Error fetching stock prices:', error)
+      }
+    }
+
+    if (recommendations.length > 0) {
+      fetchStockPrices()
+    }
+  }, [recommendations])
 
   const formatDateLabel = (dateString: string) => {
     try {
@@ -52,66 +95,45 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
     }).format(amount)
   }
 
-  // Create accurate projection data using portfolio projections
-  // The expected returns are correlated to the selected time frame:
-  // - 1Y: Uses portfolioProjections.projectedValues.oneYear (calculated from individual asset returns)
-  // - 3Y: Uses portfolioProjections.projectedValues.threeYear (calculated from individual asset returns)
-  // - 5Y: Uses portfolioProjections.projectedValues.fiveYear (calculated from individual asset returns)
+  // Chart data calculation with real-time prices
   const chartData = useMemo(() => {
     const timeframes = { '1Y': 12, '3Y': 36, '5Y': 60 }
     const months = timeframes[timeframe]
     
-    // Create accurate projection data
-    const data: DataPoint[] = []
-    const startValue = initialCapital
-    
-    // Use actual projection targets from portfolioProjections
-    // These values are calculated as weighted averages of individual asset expected returns
-    const targets = {
-      0: startValue,
-      12: portfolioProjections?.projectedValues?.oneYear || startValue * 1.08,
-      36: portfolioProjections?.projectedValues?.threeYear || startValue * Math.pow(1.08, 3),
-      60: portfolioProjections?.projectedValues?.fiveYear || startValue * Math.pow(1.08, 5)
-    }
-    
-    // Generate monthly data points with smooth interpolation
-    for (let i = 0; i <= months; i++) {
-      const currentDate = new Date()
-      currentDate.setMonth(currentDate.getMonth() + i)
-      
-      let value: number
-      
-      // Use exact target values at key points
-      if (targets[i as keyof typeof targets] !== undefined) {
-        value = targets[i as keyof typeof targets]
-      } else {
-        // Simple linear interpolation between targets
-        if (i <= 12) {
-          const progress = i / 12
-          value = targets[0] + (targets[12] - targets[0]) * progress
-        } else if (i <= 36) {
-          const progress = (i - 12) / (36 - 12)
-          value = targets[12] + (targets[36] - targets[12]) * progress
-        } else {
-          const progress = (i - 36) / (60 - 36)
-          value = targets[36] + (targets[60] - targets[36]) * progress
-        }
-        
-        // Add small realistic market fluctuations (±2%)
-        const fluctuation = (Math.sin(i * 0.8) * 0.01) + (Math.cos(i * 1.2) * 0.008)
-        value = value * (1 + fluctuation)
+    if (!portfolioProjections?.monthlyProjections) {
+      // Fallback data if no projections available
+      const fallbackData: DataPoint[] = []
+      for (let i = 0; i <= months; i++) {
+        const projectedValue = initialCapital * (1 + 0.08) ** (i / 12)
+        fallbackData.push({
+          month: i,
+          value: projectedValue,
+          date: new Date(Date.now() + i * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 7),
+          label: formatDateLabel(new Date(Date.now() + i * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 7))
+        })
       }
-      
-      data.push({
-        month: i,
-        value: Math.round(value),
-        date: currentDate.toISOString().substr(0, 7),
-        label: formatDateLabel(currentDate.toISOString().substr(0, 7))
-      })
+      return fallbackData
     }
+
+    return portfolioProjections.monthlyProjections
+      .filter((projection: any) => projection.month <= months)
+      .map((projection: any) => ({
+        month: projection.month,
+        value: projection.value,
+        date: projection.date,
+        label: formatDateLabel(projection.date)
+      }))
+  }, [portfolioProjections, timeframe, initialCapital])
+
+  // Calculate expected return based on selected timeframe
+  const getExpectedReturnForTimeframe = () => {
+    if (!portfolioProjections?.projectedValues) return 0
     
-    return data
-  }, [portfolioProjections, initialCapital, timeframe])
+    const finalValue = chartData[chartData.length - 1]?.value || initialCapital
+    const totalReturn = ((finalValue - initialCapital) / initialCapital) * 100
+    
+    return totalReturn
+  }
 
   const maxValue = Math.max(...chartData.map((d: DataPoint) => d.value))
   const minValue = Math.min(...chartData.map((d: DataPoint) => d.value))
@@ -120,6 +142,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
   const totalGain = finalValue - initialCapital
   const percentageGain = ((totalGain / initialCapital) * 100)
   const hasRealProjections = portfolioProjections?.projectedValues?.oneYear
+  const expectedReturn = getExpectedReturnForTimeframe()
 
   return (
     <motion.div
@@ -128,10 +151,10 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
       transition={{ delay: 1.0 }}
       className={`bg-gray-800 rounded-xl ${screenSize.isMobile ? 'p-4' : 'p-6'} border border-gray-700`}
     >
-      <div className={`${screenSize.isMobile ? 'mb-4' : 'flex items-center justify-between mb-6'}`}>
+      <div className={`${screenSize.isMobile ? 'mb-4' : 'flex items-start justify-between mb-6'}`}>
         <div className={screenSize.isMobile ? 'mb-2' : ''}>
           <h3 className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-semibold text-white mb-1 flex items-center gap-2`}>
-            {screenSize.isMobile ? 'Growth Timeline' : 'Portfolio Growth Timeline'}
+            {screenSize.isMobile ? 'Portfolio Dashboard' : 'Portfolio Dashboard'}
             {!hasRealProjections && (
               <AlertTriangle className={`${screenSize.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-yellow-400`} />
             )}
@@ -139,9 +162,9 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
           {!screenSize.isMobile && (
             <p className="text-gray-400 text-sm">
               {hasRealProjections ? (
-                'Projected portfolio value over time'
+                'Portfolio projections and growth timeline'
               ) : (
-                <span className="text-yellow-400">Estimated growth based on market analysis</span>
+                <span className="text-yellow-400">Estimated projections based on market analysis</span>
               )}
             </p>
           )}
@@ -149,7 +172,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
         
         {/* Timeframe Selector - Desktop only, mobile moved below */}
         {!screenSize.isMobile && (
-          <div className="flex bg-gray-700 rounded-lg p-1">
+          <div className="flex bg-gray-700 rounded-lg p-1 mt-0">
             {(['1Y', '3Y', '5Y'] as const).map((period) => (
               <button
                 key={period}
@@ -167,52 +190,76 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
         )}
       </div>
 
+      {/* Portfolio Projections Dashboard */}
+      {portfolioProjections && (
+        <div className={`grid ${screenSize.isMobile ? 'grid-cols-2 gap-3 mb-2' : 'grid-cols-4 gap-4 mb-3'}`}>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Estimated Annual Return</div>
+            <div className="text-lg font-semibold text-green-400">
+              {(() => {
+                if (portfolioProjections?.expectedAnnualReturn) {
+                  return `${portfolioProjections.expectedAnnualReturn.toFixed(1)}%`
+                }
+                return '7.0%'
+              })()}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">1-Year Projection</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
+              {formatCurrency(portfolioProjections.projectedValues.oneYear)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">3-Year Projection</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
+              {formatCurrency(portfolioProjections.projectedValues.threeYear)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">5-Year Projection</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
+              {formatCurrency(portfolioProjections.projectedValues.fiveYear)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Total Investment</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-blue-400`}>
+              {formatCurrency(portfolioProjections.totalInvestment)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Total Gain</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold ${
+              portfolioProjections.projectedValues.fiveYear > portfolioProjections.totalInvestment ? 'text-green-400' : 'text-red-400'
+            }`}>
+              {formatCurrency(portfolioProjections.projectedValues.fiveYear - portfolioProjections.totalInvestment)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Projected Value</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
+              {formatCurrency(portfolioProjections.projectedValues.fiveYear)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Return Percentage</div>
+            <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold ${
+              portfolioProjections.totalInvestment > 0 ? 
+                `${(((portfolioProjections.projectedValues.fiveYear - portfolioProjections.totalInvestment) / portfolioProjections.totalInvestment) * 100).toFixed(1)}%` :
+                '0.0%'
+              }`}>
+              {portfolioProjections.totalInvestment > 0 ? 
+                `${(((portfolioProjections.projectedValues.fiveYear - portfolioProjections.totalInvestment) / portfolioProjections.totalInvestment) * 100).toFixed(1)}%` :
+                '0.0%'
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Performance Summary */}
       <div className={`grid grid-cols-3 ${screenSize.isMobile ? 'gap-2 mb-2' : 'gap-4 mb-6'}`}>
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <DollarSign className={`${screenSize.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-green-400`} />
-            <span className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
-              {screenSize.isMobile ? 'Value' : 'Projected Value'}
-            </span>
-          </div>
-          <div className={`${screenSize.isMobile ? 'text-sm' : 'text-lg'} font-semibold text-white`}>
-            {screenSize.isMobile ? 
-              new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(finalValue) :
-              formatCurrency(finalValue)
-            }
-          </div>
-        </div>
-        
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <TrendingUp className={`${screenSize.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-blue-400`} />
-            <span className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>
-              {screenSize.isMobile ? 'Gain' : 'Total Gain'}
-            </span>
-          </div>
-          <div className={`${screenSize.isMobile ? 'text-sm' : 'text-lg'} font-semibold ${
-            totalGain >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            {screenSize.isMobile ? 
-              new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact' }).format(totalGain) :
-              formatCurrency(totalGain)
-            }
-          </div>
-        </div>
-        
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1 mb-1">
-            <Calendar className={`${screenSize.isMobile ? 'w-3 h-3' : 'w-4 h-4'} text-purple-400`} />
-            <span className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} text-gray-400`}>Return</span>
-          </div>
-          <div className={`${screenSize.isMobile ? 'text-sm' : 'text-lg'} font-semibold ${
-            percentageGain >= 0 ? 'text-green-400' : 'text-red-400'
-          }`}>
-            {percentageGain >= 0 ? '+' : ''}{percentageGain.toFixed(1)}%
-          </div>
-        </div>
-        
         {/* Mobile Timeframe Selector */}
         {screenSize.isMobile && (
           <div className="flex justify-end mb-3">
@@ -331,7 +378,12 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="absolute top-4 right-4 bg-gray-900 border border-gray-600 rounded-lg p-4 text-sm shadow-lg z-10 min-w-[200px]"
+            className="absolute bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm shadow-lg z-10 min-w-[180px] pointer-events-none"
+            style={{
+              left: `${50 + (chartData.findIndex(d => d.month === hoveredPoint.month) / (chartData.length - 1)) * 700}px`,
+              top: `${30 + (1 - (hoveredPoint.value - minValue) / valueRange) * 180 - 60}px`,
+              transform: 'translateX(-50%)'
+            }}
           >
             <div className="text-white font-semibold mb-1">{hoveredPoint.label}</div>
             <div className={`text-lg font-bold mb-1 ${hasRealProjections ? "text-blue-400" : "text-yellow-400"}`}>
@@ -351,16 +403,76 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
       {recommendations.length > 0 && (
         <div className="mt-6">
           <h4 className="text-sm font-medium text-gray-300 mb-3">Portfolio Composition</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
-            {recommendations.filter(r => r.type === 'buy').map((rec, index) => (
-              <div key={index} className="p-2 bg-gray-700 border border-gray-600 rounded text-gray-300">
-                <div className="font-medium">{rec.symbol}</div>
-                <div>{formatCurrency(rec.amount)}</div>
-                <div className="text-xs opacity-75">
-                  {(rec.expectedAnnualReturn * 100).toFixed(1)}% expected return
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+            {recommendations.filter(r => r.type === 'buy').map((rec, index) => {
+              // Calculate expected return for the selected timeframe
+              const annualReturn = rec.expectedAnnualReturn || 0.08
+              let timeframeReturn = 0
+              
+              if (timeframe === '1Y') {
+                timeframeReturn = annualReturn * 100
+              } else if (timeframe === '3Y') {
+                timeframeReturn = (Math.pow(1 + annualReturn, 3) - 1) * 100
+              } else if (timeframe === '5Y') {
+                timeframeReturn = (Math.pow(1 + annualReturn, 5) - 1) * 100
+              }
+              
+              // Use real-time current price or fallback to estimated
+              const realTimePrice = stockPrices[rec.symbol]?.currentPrice
+              const currentPrice = realTimePrice || (rec.targetPrice + rec.stopLoss) / 2
+              const sharesOwned = rec.amount / currentPrice
+              
+              // Calculate target and stop loss prices
+              const targetPrice = rec.targetPrice || 120
+              const stopLoss = rec.stopLoss || 100
+              
+              // Calculate most likely price (weighted average of target and stop loss)
+              const mostLikelyPrice = (targetPrice * 0.6) + (stopLoss * 0.4)
+              
+              let highPrice = targetPrice
+              let lowPrice = stopLoss
+              let mostLikelyValue = sharesOwned * mostLikelyPrice
+              
+              if (timeframe === '3Y') {
+                highPrice = targetPrice * Math.pow(1 + annualReturn, 2)
+                lowPrice = stopLoss * Math.pow(1 + annualReturn * 0.5, 2)
+                mostLikelyValue = sharesOwned * (mostLikelyPrice * Math.pow(1 + annualReturn, 2))
+              } else if (timeframe === '5Y') {
+                highPrice = targetPrice * Math.pow(1 + annualReturn, 4)
+                lowPrice = stopLoss * Math.pow(1 + annualReturn * 0.5, 4)
+                mostLikelyValue = sharesOwned * (mostLikelyPrice * Math.pow(1 + annualReturn, 4))
+              }
+              
+              const highValue = sharesOwned * highPrice
+              const lowValue = sharesOwned * lowPrice
+              
+              return (
+                <div key={index} className="p-3 bg-gray-700 border border-gray-600 rounded text-gray-300">
+                  <div className="font-semibold text-sm mb-2">{rec.symbol}</div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Current Price:</span>
+                      <span className="text-white">
+                        ${currentPrice.toFixed(2)}
+                        {realTimePrice && <span className="text-green-400 ml-1">●</span>}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-green-400">High ({timeframe}):</span>
+                      <span className="text-green-400">{formatCurrency(highValue)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-red-400">Low ({timeframe}):</span>
+                      <span className="text-red-400">{formatCurrency(lowValue)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-600 pt-1 mt-1">
+                      <span className="text-blue-400 font-medium">Most Likely:</span>
+                      <span className="text-blue-400 font-medium">{formatCurrency(mostLikelyValue)}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

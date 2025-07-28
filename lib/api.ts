@@ -741,6 +741,10 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
   8. CRITICAL: If user has existing holdings, analyze them and recommend selling some to make room for new investments
   9. NEVER exceed the total available capital - if user has $10,000 total and $10,000 in existing holdings, recommend selling $5,000 worth to buy $5,000 of new investments
   10. Provide realistic expected annual returns (typically 5-15% for most assets, 20-50% for high-risk crypto/tech)
+  11. CRITICAL: Use ONLY current real-time market prices for targetPrice and stopLoss calculations
+  12. CRITICAL: Ensure targetPrice and stopLoss reflect current market conditions and analyst consensus
+  13. CRITICAL: For cryptocurrencies like BTC, use current market prices (BTC is currently ~$110,000, not $70,000)
+  14. CRITICAL: All price targets must be based on current market analysis, not outdated estimates
 
   OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
   {

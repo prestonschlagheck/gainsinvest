@@ -14,10 +14,11 @@ export async function POST(request: NextRequest) {
     
     // If the analysis includes an error field, it means there was an API issue
     if (analysis.error) {
+      console.log('❌ Error detected in analysis, returning error response')
       // Get API status information for detailed error reporting
       const apiStatus = await getDetailedApiStatus()
       
-      return NextResponse.json({
+      const errorResponse = {
         ...analysis,
         apiError: true,
         errorDetails: {
@@ -25,14 +26,26 @@ export async function POST(request: NextRequest) {
           apiStatus,
           timestamp: new Date().toISOString()
         }
-      })
+      }
+      console.log('Returning error response:', JSON.stringify(errorResponse, null, 2))
+      return NextResponse.json(errorResponse)
     }
     
     // If we have valid recommendations, return them without any error flags
     if (analysis.recommendations && analysis.recommendations.length > 0) {
+      console.log('✅ Valid recommendations found, returning success response')
+      console.log('Success response structure:', {
+        hasRecommendations: !!analysis.recommendations,
+        recommendationsLength: analysis.recommendations.length,
+        hasPortfolioProjections: !!analysis.portfolioProjections,
+        hasReasoning: !!analysis.reasoning,
+        hasRiskAssessment: !!analysis.riskAssessment,
+        hasMarketOutlook: !!analysis.marketOutlook
+      })
       return NextResponse.json(analysis)
     }
     
+    console.log('⚠️ No recommendations found, returning analysis as-is')
     return NextResponse.json(analysis)
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'

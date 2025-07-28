@@ -12,6 +12,156 @@ interface RecommendationsPageProps {
   onRestart: () => void
 }
 
+// Recommendation Card Component
+interface RecommendationCardProps {
+  recommendation: InvestmentRecommendation
+  onInfoClick: () => void
+  isInfoOpen: boolean
+  index: number
+}
+
+const RecommendationCard: React.FC<RecommendationCardProps> = ({
+  recommendation,
+  onInfoClick,
+  isInfoOpen,
+  index
+}) => {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+  }
+
+  const getTypeColor = (type: 'buy' | 'sell' | 'hold') => {
+    switch (type) {
+      case 'buy': return 'bg-green-900/20 border-green-700'
+      case 'sell': return 'bg-red-900/20 border-red-700'
+      case 'hold': return 'bg-yellow-900/20 border-yellow-700'
+    }
+  }
+
+  const getReturnColor = (returnRate: number) => {
+    // Use green shades instead of yellow/red
+    if (returnRate >= 0.15) return 'text-green-600'
+    if (returnRate >= 0.12) return 'text-green-500'
+    if (returnRate >= 0.08) return 'text-green-400'
+    return 'text-green-300'
+  }
+
+  const formatReturn = (returnRate: number) => {
+    return `${(returnRate * 100).toFixed(1)}%`
+  }
+
+  // Simplify long asset names to prevent multi-line display
+  const simplifyAssetName = (name: string) => {
+    const simplifications: { [key: string]: string } = {
+      'Vanguard Total Bond Market ETF': 'Vanguard Bond ETF',
+      'Vanguard Total Stock Market ETF': 'Vanguard Stock ETF',
+      'Vanguard Total International Stock ETF': 'Vanguard International ETF',
+      'Vanguard High Dividend Yield ETF': 'Vanguard Dividend ETF',
+      'Vanguard Growth ETF': 'Vanguard Growth ETF',
+      'Vanguard Small-Cap ETF': 'Vanguard Small-Cap ETF',
+      'Invesco QQQ Trust': 'QQQ Trust',
+      'SPDR Gold Shares': 'Gold Shares',
+      'Health Care Select Sector SPDR Fund': 'Healthcare SPDR',
+      'Financial Select Sector SPDR Fund': 'Financial SPDR',
+      'Technology Select Sector SPDR Fund': 'Technology SPDR',
+      'Consumer Discretionary Select Sector SPDR Fund': 'Consumer SPDR',
+      'Energy Select Sector SPDR Fund': 'Energy SPDR',
+      'Real Estate Select Sector SPDR Fund': 'Real Estate SPDR',
+      'Utilities Select Sector SPDR Fund': 'Utilities SPDR',
+      'Materials Select Sector SPDR Fund': 'Materials SPDR',
+      'Industrials Select Sector SPDR Fund': 'Industrials SPDR',
+      'Consumer Staples Select Sector SPDR Fund': 'Consumer Staples SPDR',
+      'Communication Services Select Sector SPDR Fund': 'Communication SPDR'
+    }
+    
+    return simplifications[name] || name
+  }
+
+  // Check if this is placeholder data
+  const isPlaceholder = (['VTI', 'BND', 'VEA'].includes(recommendation.symbol) && 
+                        (recommendation.reasoning.includes('broad market exposure') ||
+                         recommendation.reasoning.includes('provides stability') ||
+                         recommendation.reasoning.includes('international diversification') ||
+                         recommendation.reasoning.includes('Broad market exposure') ||
+                         recommendation.reasoning.includes('Provides stability') ||
+                         recommendation.reasoning.includes('International diversification'))) ||
+                       (recommendation.reasoning.includes('Unable to provide specific investment recommendations') ||
+                        recommendation.reasoning.includes('Consider consulting with a financial advisor'))
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className={`rounded-xl p-3 border ${
+        isPlaceholder 
+          ? 'bg-red-900/10 border-red-700/50' 
+          : getTypeColor(recommendation.type) + ' bg-gray-800/50'
+      }`}
+    >
+      <div className="flex items-start justify-between mb-1">
+        <div>
+          <h3 className={`font-bold text-lg flex items-center gap-2 ${
+            isPlaceholder ? 'text-red-400' : 'text-white'
+          }`}>
+            {recommendation.symbol}
+            {isPlaceholder && (
+              <span className="text-xs bg-red-900/30 text-red-300 px-2 py-1 rounded border border-red-700/50">
+                PLACEHOLDER
+              </span>
+            )}
+          </h3>
+          <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-400'} mb-0`}>
+            {simplifyAssetName(recommendation.name)}
+          </p>
+        </div>
+        <div className="text-right">
+          <div className={`font-semibold ${isPlaceholder ? 'text-red-400' : 'text-white'}`}>
+            {formatCurrency(recommendation.amount)}
+          </div>
+          <button
+            onClick={onInfoClick}
+            className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors mt-1"
+          >
+            <Info className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Info Panel */}
+      {isInfoOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className={`mt-2 p-2 rounded-lg border ${
+            isPlaceholder 
+              ? 'bg-red-900/20 border-red-700/50' 
+              : 'bg-gray-900/50 border-gray-600'
+          }`}
+        >
+          <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-300'}`}>
+            {recommendation.reasoning}
+          </p>
+          <div className={`mt-1 text-xs ${isPlaceholder ? 'text-red-400' : 'text-gray-500'}`}>
+            Sector: {recommendation.sector}
+            {isPlaceholder && (
+              <span className="ml-2 text-red-400">
+                • Configure API keys for personalized recommendations
+              </span>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
+  )
+}
+
 const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, onRestart }) => {
   const screenSize = useScreenSize()
   const [recommendations, setRecommendations] = useState<InvestmentRecommendation[]>([])
@@ -60,7 +210,28 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
         const analysis = await response.json()
         
+        // Add debugging logs
+        console.log('🔍 API Response Analysis:', {
+          hasError: !!analysis.error,
+          hasApiError: !!analysis.apiError,
+          hasRecommendations: !!analysis.recommendations,
+          recommendationsLength: analysis.recommendations?.length || 0,
+          fullResponse: analysis
+        })
+        
         if (analysis.error || analysis.apiError) {
+          console.log('❌ Error detected in response:', analysis.error || analysis.apiError)
+          
+          // Only show error if we don't have valid recommendations
+          // This allows for partial success scenarios
+          if (analysis.recommendations && analysis.recommendations.length > 0) {
+            console.log('✅ Found recommendations despite error, proceeding with display')
+            setRecommendations(analysis.recommendations)
+            setPortfolioProjections(analysis.portfolioProjections)
+            setIsLoading(false)
+            return
+          }
+          
           // Set detailed error information
           setErrorDetails(analysis.errorDetails || {
             message: analysis.error || analysis.details || 'Unknown error',
@@ -82,6 +253,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
         // Check if we have valid recommendations
         if (!analysis.recommendations || analysis.recommendations.length === 0) {
+          console.log('❌ No recommendations found in response')
           setErrorDetails({
             message: 'No recommendations generated. Please check your API configuration.',
             apiStatus: null,
@@ -92,6 +264,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           return
         }
 
+        console.log('✅ Valid recommendations found, setting state:', analysis.recommendations.length)
         setRecommendations(analysis.recommendations)
         setPortfolioProjections(analysis.portfolioProjections)
         setIsLoading(false)
@@ -453,11 +626,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       </motion.div>
 
       {/* Recommendations Sections */}
-      <div className={`grid grid-cols-1 ${screenSize.isMobile ? 'gap-4' : screenSize.isTablet ? 'md:grid-cols-2 gap-5' : 'lg:grid-cols-3 gap-6'}`}>
+      <div className="space-y-6">
         {/* Buy Recommendations */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="space-y-4"
         >
@@ -471,15 +644,17 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             </div>
           </div>
           
-          {recommendations.filter(r => r.type === 'buy').map((rec, index) => (
-            <RecommendationCard
-              key={rec.symbol}
-              recommendation={rec}
-              onInfoClick={() => setSelectedInfo(selectedInfo === rec.symbol ? null : rec.symbol)}
-              isInfoOpen={selectedInfo === rec.symbol}
-              index={index}
-            />
-          ))}
+          <div className={`grid ${screenSize.isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'} gap-4`}>
+            {recommendations.filter(r => r.type === 'buy').map((rec, index) => (
+              <RecommendationCard
+                key={rec.symbol}
+                recommendation={rec}
+                onInfoClick={() => setSelectedInfo(selectedInfo === rec.symbol ? null : rec.symbol)}
+                isInfoOpen={selectedInfo === rec.symbol}
+                index={index}
+              />
+            ))}
+          </div>
         </motion.div>
 
         {/* Hold Recommendations */}
@@ -504,22 +679,24 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               <p className="text-gray-400">No hold recommendations at this time</p>
             </div>
           ) : (
-            recommendations.filter(r => r.type === 'hold').map((rec, index) => (
-              <RecommendationCard
-                key={rec.symbol}
-                recommendation={rec}
-                onInfoClick={() => setSelectedInfo(selectedInfo === rec.symbol ? null : rec.symbol)}
-                isInfoOpen={selectedInfo === rec.symbol}
-                index={index}
-              />
-            ))
+            <div className={`grid ${screenSize.isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'} gap-4`}>
+              {recommendations.filter(r => r.type === 'hold').map((rec, index) => (
+                <RecommendationCard
+                  key={rec.symbol}
+                  recommendation={rec}
+                  onInfoClick={() => setSelectedInfo(selectedInfo === rec.symbol ? null : rec.symbol)}
+                  isInfoOpen={selectedInfo === rec.symbol}
+                  index={index}
+                />
+              ))}
+            </div>
           )}
         </motion.div>
 
         {/* Sell Recommendations */}
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           className="space-y-4"
         >
@@ -538,98 +715,20 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               <p className="text-gray-400">No sell recommendations at this time</p>
             </div>
           ) : (
-            recommendations.filter(r => r.type === 'sell').map((rec, index) => (
-              <RecommendationCard
-                key={rec.symbol}
-                recommendation={rec}
-                onInfoClick={() => setSelectedInfo(selectedInfo === rec.symbol ? null : rec.symbol)}
-                isInfoOpen={selectedInfo === rec.symbol}
-                index={index}
-              />
-            ))
+            <div className={`grid ${screenSize.isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3'} gap-4`}>
+              {recommendations.filter(r => r.type === 'sell').map((rec, index) => (
+                <RecommendationCard
+                  key={rec.symbol}
+                  recommendation={rec}
+                  onInfoClick={() => setSelectedInfo(selectedInfo === rec.symbol ? null : rec.symbol)}
+                  isInfoOpen={selectedInfo === rec.symbol}
+                  index={index}
+                />
+              ))}
+            </div>
           )}
         </motion.div>
       </div>
-
-      {/* Portfolio Projections Summary */}
-      {portfolioProjections && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className={`bg-gray-800 rounded-xl ${screenSize.isMobile ? 'p-4' : 'p-6'} border border-gray-700 ${screenSize.isMobile ? 'mb-4' : 'mb-6'}`}
-        >
-          <h3 className={`${screenSize.isMobile ? 'text-lg' : 'text-xl'} font-semibold text-white ${screenSize.isMobile ? 'mb-3' : 'mb-4'}`}>Portfolio Projections</h3>
-          <div className={`grid ${screenSize.isMobile ? 'grid-cols-2 gap-2 mb-3' : 'grid-cols-1 md:grid-cols-3 gap-4 mb-4'}`}>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">Expected Annual Return</div>
-              <div className="text-lg font-semibold text-green-400">
-                {(() => {
-                  // Calculate average annual return over 5 years from portfolio projections
-                  if (portfolioProjections?.projectedValues?.fiveYear && userProfile.capitalAvailable > 0) {
-                    const initialValue = userProfile.capitalAvailable
-                    const finalValue = portfolioProjections.projectedValues.fiveYear
-                    const annualReturn = Math.pow(finalValue / initialValue, 1/5) - 1
-                    return `${(annualReturn * 100).toFixed(1)}%`
-                  }
-                  
-                  // Fallback: Calculate weighted average return based on actual recommendations
-                  const buyRecommendations = recommendations.filter(r => r.type === 'buy')
-                  if (buyRecommendations.length > 0) {
-                    const totalAmount = buyRecommendations.reduce((sum, r) => sum + r.amount, 0)
-                    const weightedReturn = buyRecommendations.reduce((sum, r) => {
-                      const expectedReturn = r.expectedAnnualReturn || 0.08 // fallback to 8%
-                      const weight = r.amount / totalAmount
-                      return sum + (expectedReturn * weight)
-                    }, 0)
-                    return `${(weightedReturn * 100).toFixed(1)}%`
-                  }
-                  
-                  // Final fallback
-                  return portfolioProjections?.expectedAnnualReturn 
-                    ? `${portfolioProjections.expectedAnnualReturn.toFixed(1)}%`
-                    : '7.0%'
-                })()}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">Risk Level</div>
-              <div className={`text-lg font-semibold capitalize ${
-                userProfile.riskTolerance <= 3 ? 'text-green-400' :
-                userProfile.riskTolerance <= 7 ? 'text-yellow-400' : 'text-red-400'
-              }`}>
-                {userProfile.riskTolerance <= 3 ? 'low' : userProfile.riskTolerance <= 7 ? 'medium' : 'high'}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">Diversification Score</div>
-              <div className="text-lg font-semibold text-blue-400">
-                {Math.min(100, Math.max(40, (recommendations.filter(r => r.type === 'buy').length * 15) + (userProfile.sectors.length * 8)))}
-              </div>
-            </div>
-          </div>
-          <div className={`grid ${screenSize.isMobile ? 'grid-cols-2 gap-2' : 'grid-cols-1 md:grid-cols-3 gap-4'}`}>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">1-Year Projection</div>
-              <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
-                {formatCurrency(portfolioProjections.projectedValues.oneYear)}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">3-Year Projection</div>
-              <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
-                {formatCurrency(portfolioProjections.projectedValues.threeYear)}
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-1">5-Year Projection</div>
-              <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
-                {formatCurrency(portfolioProjections.projectedValues.fiveYear)}
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
 
       {/* Portfolio Performance Chart */}
       <div className={`${screenSize.isMobile ? 'flex justify-center' : ''}`}>
@@ -659,137 +758,4 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   )
 }
 
-// Recommendation Card Component
-interface RecommendationCardProps {
-  recommendation: InvestmentRecommendation
-  onInfoClick: () => void
-  isInfoOpen: boolean
-  index: number
-}
-
-const RecommendationCard: React.FC<RecommendationCardProps> = ({
-  recommendation,
-  onInfoClick,
-  isInfoOpen,
-  index
-}) => {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const getTypeColor = (type: 'buy' | 'sell' | 'hold') => {
-    switch (type) {
-      case 'buy': return 'bg-green-900/20 border-green-700'
-      case 'sell': return 'bg-red-900/20 border-red-700'
-      case 'hold': return 'bg-yellow-900/20 border-yellow-700'
-    }
-  }
-
-  const getReturnColor = (returnRate: number) => {
-    if (returnRate >= 0.12) return 'text-green-400'
-    if (returnRate >= 0.08) return 'text-yellow-400'
-    return 'text-red-400'
-  }
-
-  const formatReturn = (returnRate: number) => {
-    return `${(returnRate * 100).toFixed(1)}%`
-  }
-
-  // Check if this is placeholder data
-  const isPlaceholder = (['VTI', 'BND', 'VEA'].includes(recommendation.symbol) && 
-                        (recommendation.reasoning.includes('broad market exposure') ||
-                         recommendation.reasoning.includes('provides stability') ||
-                         recommendation.reasoning.includes('international diversification') ||
-                         recommendation.reasoning.includes('Broad market exposure') ||
-                         recommendation.reasoning.includes('Provides stability') ||
-                         recommendation.reasoning.includes('International diversification'))) ||
-                       (recommendation.reasoning.includes('Unable to provide specific investment recommendations') ||
-                        recommendation.reasoning.includes('Consider consulting with a financial advisor'))
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className={`rounded-xl p-3 border ${
-        isPlaceholder 
-          ? 'bg-red-900/10 border-red-700/50' 
-          : getTypeColor(recommendation.type) + ' bg-gray-800/50'
-      }`}
-    >
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <h3 className={`font-bold text-lg flex items-center gap-2 ${
-            isPlaceholder ? 'text-red-400' : 'text-white'
-          }`}>
-            {recommendation.symbol}
-            {isPlaceholder && (
-              <span className="text-xs bg-red-900/30 text-red-300 px-2 py-1 rounded border border-red-700/50">
-                PLACEHOLDER
-              </span>
-            )}
-          </h3>
-          <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-400'}`}>
-            {recommendation.name}
-          </p>
-        </div>
-        <button
-          onClick={onInfoClick}
-          className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          <Info className="w-4 h-4" />
-        </button>
-      </div>
-      
-      <div className="space-y-1">
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-400">Amount:</span>
-          <span className={`font-semibold ${isPlaceholder ? 'text-red-400' : 'text-white'}`}>
-            {formatCurrency(recommendation.amount)}
-          </span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-400">Est. Return/Year:</span>
-          <span className={`font-semibold ${
-            isPlaceholder ? 'text-red-400' : getReturnColor(recommendation.expectedAnnualReturn)
-          }`}>
-            {formatReturn(recommendation.expectedAnnualReturn)}
-          </span>
-        </div>
-      </div>
-
-      {/* Info Panel */}
-      {isInfoOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className={`mt-2 p-2 rounded-lg border ${
-            isPlaceholder 
-              ? 'bg-red-900/20 border-red-700/50' 
-              : 'bg-gray-900/50 border-gray-600'
-          }`}
-        >
-          <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-300'}`}>
-            {recommendation.reasoning}
-          </p>
-          <div className={`mt-1 text-xs ${isPlaceholder ? 'text-red-400' : 'text-gray-500'}`}>
-            Sector: {recommendation.sector}
-            {isPlaceholder && (
-              <span className="ml-2 text-red-400">
-                • Configure API keys for personalized recommendations
-              </span>
-            )}
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
-
-export default RecommendationsPage 
+export default RecommendationsPage
