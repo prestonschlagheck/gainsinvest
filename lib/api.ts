@@ -5,32 +5,42 @@
 // API KEYS CONFIGURATION
 // ========================================
 
+// Enhanced environment variable validation
+const getEnvVar = (key: string, fallback: string = ''): string => {
+  const value = process.env[key] || fallback
+  if (typeof window === 'undefined') {
+    console.log(`🔑 ${key}:`, value ? '✅ Set' : '❌ Missing')
+  }
+  return value
+}
+
 // Log API key status on startup (server-side only)
 if (typeof window === 'undefined') {
   console.log('🔑 API Key Status:')
-  console.log('  OpenAI:', process.env.OPENAI_API_KEY ? '✅ Configured' : '❌ Missing')
-  console.log('  Grok:', process.env.GROK_API_KEY ? '✅ Configured' : '❌ Missing')
-  console.log('  Alpha Vantage:', process.env.ALPHA_VANTAGE_API_KEY ? '✅ Configured' : '❌ Missing')
-  console.log('  Twelve Data:', process.env.TWELVE_DATA_API_KEY ? '✅ Configured' : '❌ Missing')
-  console.log('  Finnhub:', process.env.FINNHUB_API_KEY ? '✅ Configured' : '❌ Missing')
-  console.log('  News API:', process.env.NEWS_API_KEY ? '✅ Configured' : '❌ Missing')
+  console.log('  Environment:', process.env.NODE_ENV || 'unknown')
+  console.log('  OpenAI:', getEnvVar('OPENAI_API_KEY') ? '✅ Configured' : '❌ Missing')
+  console.log('  Grok:', getEnvVar('GROK_API_KEY') ? '✅ Configured' : '❌ Missing')
+  console.log('  Alpha Vantage:', getEnvVar('ALPHA_VANTAGE_API_KEY') ? '✅ Configured' : '❌ Missing')
+  console.log('  Twelve Data:', getEnvVar('TWELVE_DATA_API_KEY') ? '✅ Configured' : '❌ Missing')
+  console.log('  Finnhub:', getEnvVar('FINNHUB_API_KEY') ? '✅ Configured' : '❌ Missing')
+  console.log('  News API:', getEnvVar('NEWS_API_KEY') ? '✅ Configured' : '❌ Missing')
 }
 
 const API_KEYS = {
   // AI Services
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
-  GROK_API_KEY: process.env.GROK_API_KEY || '',
+  OPENAI_API_KEY: getEnvVar('OPENAI_API_KEY'),
+  GROK_API_KEY: getEnvVar('GROK_API_KEY'),
   
   // Financial Data APIs (in priority order)
-  ALPHA_VANTAGE_API_KEY: process.env.ALPHA_VANTAGE_API_KEY || '',
-  TWELVE_DATA_API_KEY: process.env.TWELVE_DATA_API_KEY || '',
-  FINNHUB_API_KEY: process.env.FINNHUB_API_KEY || '',
+  ALPHA_VANTAGE_API_KEY: getEnvVar('ALPHA_VANTAGE_API_KEY'),
+  TWELVE_DATA_API_KEY: getEnvVar('TWELVE_DATA_API_KEY'),
+  FINNHUB_API_KEY: getEnvVar('FINNHUB_API_KEY'),
   
   // Additional APIs
-  POLYGON_API_KEY: process.env.POLYGON_API_KEY || '',
-  YAHOO_FINANCE_API_KEY: process.env.YAHOO_FINANCE_API_KEY || '',
-  NEWS_API_KEY: process.env.NEWS_API_KEY || '',
-  MARKETAUX_API_KEY: process.env.MARKETAUX_API_KEY || '',
+  POLYGON_API_KEY: getEnvVar('POLYGON_API_KEY'),
+  YAHOO_FINANCE_API_KEY: getEnvVar('YAHOO_FINANCE_API_KEY'),
+  NEWS_API_KEY: getEnvVar('NEWS_API_KEY'),
+  MARKETAUX_API_KEY: getEnvVar('MARKETAUX_API_KEY'),
 }
 
 // ========================================

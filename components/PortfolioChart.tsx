@@ -37,7 +37,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
       try {
         const symbols = recommendations.filter(r => r.type === 'buy').map(r => r.symbol)
         const pricePromises = symbols.map(async (symbol) => {
-          const response = await fetch(`/api/stock-price?symbol=${symbol}`)
+          const response = await fetch(`${window.location.origin}/api/stock-price?symbol=${symbol}`)
           if (response.ok) {
             const data = await response.json()
             return { symbol, ...data }

@@ -220,8 +220,15 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         setTimeout(() => setApiStatus(prev => ({ ...prev, news: 'success' })), 7000)
         setTimeout(() => setApiStatus(prev => ({ ...prev, analysis: 'success' })), 9500)
         
+        // Enhanced logging for deployment debugging
+        console.log('🌐 Environment:', {
+          origin: window.location.origin,
+          isDevelopment: process.env.NODE_ENV === 'development',
+          isProduction: process.env.NODE_ENV === 'production'
+        })
+        
         // Call the API route
-        const response = await fetch('/api/recommendations', {
+        const response = await fetch(`${window.location.origin}/api/recommendations`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -229,10 +236,23 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           body: JSON.stringify(userProfile)
         })
         
+        console.log('📡 API Response Status:', {
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url
+        })
+        
         clearInterval(progressInterval)
         
         if (!response.ok) {
-          throw new Error(`API request failed: ${response.status}`)
+          const errorText = await response.text()
+          console.error('❌ API Response Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText
+          })
+          throw new Error(`API request failed: ${response.status} - ${errorText}`)
         }
 
         const analysis = await response.json()
@@ -321,7 +341,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         // Check API key status for better error messaging if we don't already have it
         if (!errorDetails) {
           try {
-            const keyResponse = await fetch('/api/validate-keys')
+            const keyResponse = await fetch(`${window.location.origin}/api/validate-keys`)
             const keyStatus = await keyResponse.json()
             setApiKeyStatus(keyStatus)
           } catch (keyError) {
