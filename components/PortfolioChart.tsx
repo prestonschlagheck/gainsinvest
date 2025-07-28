@@ -380,7 +380,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
             animate={{ opacity: 1, scale: 1 }}
             className="absolute bg-gray-900 border border-gray-600 rounded-lg p-3 text-sm shadow-lg z-10 min-w-[180px] pointer-events-none"
             style={{
-              left: `${50 + (chartData.findIndex(d => d.month === hoveredPoint.month) / (chartData.length - 1)) * 700}px`,
+              left: `${50 + (chartData.findIndex((d: DataPoint) => d.month === hoveredPoint.month) / (chartData.length - 1)) * 700}px`,
               top: `${30 + (1 - (hoveredPoint.value - minValue) / valueRange) * 180 - 60}px`,
               transform: 'translateX(-50%)'
             }}
