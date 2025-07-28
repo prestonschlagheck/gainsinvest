@@ -200,20 +200,18 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
   if (isLoading) {
     return (
-      <div className={`w-full max-w-lg mx-auto text-center ${screenSize.isMobile ? 'py-8 px-4' : 'py-20'}`}>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="space-y-8"
-        >
-          <div>
-            <h2 className="text-3xl font-bold text-white mb-8">
-              Creating Your Portfolio
-            </h2>
-          </div>
-          
-          {/* AI Process Steps */}
-          <div className="space-y-4">
+      <div className="step-layout">
+        <div className="step-header">
+          <h2 className="text-2xl font-semibold text-white">Creating Your Portfolio</h2>
+        </div>
+
+        <div className="step-body">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-4 w-full max-w-md mx-auto"
+          >
+            {/* AI Process Steps */}
             {[
               { name: "Testing Grok AI", delay: 0, duration: 2000 },
               { name: "Gathering Market Data", delay: 2000, duration: 3000 },
@@ -270,14 +268,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                 </motion.div>
               </motion.div>
             ))}
-          </div>
-          
-          {/* Progress indicator */}
-          <div className="mt-8">
-            <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>Processing...</span>
-              <span>{Math.floor(loadingPercentage)}%</span>
-            </div>
+          </motion.div>
+        </div>
+
+        <div className="step-footer">
+          <div className="w-full max-w-md mx-auto">
             <div className="w-full bg-gray-700 rounded-full h-2">
               <motion.div
                 className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full"
@@ -287,7 +282,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               />
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     )
   }
