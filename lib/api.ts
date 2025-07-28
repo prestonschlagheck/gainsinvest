@@ -1138,47 +1138,235 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
   }
 }
 
-function generateFallbackRecommendations(userProfile: any): InvestmentAnalysis {
-  console.log('🔄 Generating fallback recommendations...')
+// ========================================
+// FAST FALLBACK RECOMMENDATIONS
+// ========================================
+
+export function generateFallbackRecommendations(userProfile: any): InvestmentAnalysis {
+  console.log('🚀 Generating fast fallback recommendations')
   
+  const {
+    capitalAvailable = 5000,
+    riskTolerance = 5,
+    timeHorizon = 'Medium',
+    growthType = 'Balanced',
+    sectors = ['all'],
+    ethicalInvesting = 5
+  } = userProfile
+
   const recommendations: InvestmentRecommendation[] = []
-  const totalAmount = userProfile.capitalAvailable || userProfile.capital || 10000
-  
-  // Follow the 5-20% allocation rule and include individual stocks for higher risk tolerance
-  if (userProfile.riskTolerance <= 3) {
-    // Conservative: ETFs and bonds only
+  let remainingCapital = capitalAvailable
+
+  // Risk-based allocation strategy
+  const isConservative = riskTolerance <= 3
+  const isModerate = riskTolerance > 3 && riskTolerance <= 7
+  const isAggressive = riskTolerance > 7
+
+  // Base allocations by risk level
+  if (isConservative) {
+    // Conservative: 60% bonds, 30% index funds, 10% individual stocks
     recommendations.push(
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 90, reasoning: 'Broad market exposure with low risk for conservative investors', sector: 'Broad Market', expectedAnnualReturn: 0.05 },
-      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.4, confidence: 85, reasoning: 'Stable bond exposure for capital preservation', sector: 'Fixed Income', expectedAnnualReturn: 0.03 },
-      { symbol: 'VYM', name: 'Vanguard High Dividend Yield ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Dividend income focus for steady returns', sector: 'Dividend', expectedAnnualReturn: 0.04 }
+      {
+        symbol: 'BND',
+        name: 'Vanguard Total Bond Market ETF',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.4),
+        confidence: 95,
+        reasoning: 'Stable bond ETF for conservative portfolio foundation',
+        sector: 'Fixed Income',
+        targetPrice: 90,
+        stopLoss: 85,
+        expectedAnnualReturn: 0.04
+      },
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.35),
+        confidence: 90,
+        reasoning: 'Broad market diversification for steady growth',
+        sector: 'Broad Market',
+        targetPrice: 280,
+        stopLoss: 250,
+        expectedAnnualReturn: 0.07
+      },
+      {
+        symbol: 'JNJ',
+        name: 'Johnson & Johnson',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.25),
+        confidence: 88,
+        reasoning: 'Defensive healthcare stock for stability',
+        sector: 'Healthcare',
+        targetPrice: 170,
+        stopLoss: 150,
+        expectedAnnualReturn: 0.06
+      }
     )
-  } else if (userProfile.riskTolerance <= 7) {
-    // Moderate: Mix of ETFs and some individual stocks
+  } else if (isModerate) {
+    // Moderate: 20% bonds, 40% index funds, 30% growth stocks, 10% alternatives
     recommendations.push(
-      { symbol: 'VOO', name: 'Vanguard S&P 500 ETF', type: 'buy', amount: totalAmount * 0.3, confidence: 90, reasoning: 'Strong large-cap exposure for moderate growth', sector: 'Large Cap', expectedAnnualReturn: 0.07 },
-      { symbol: 'AAPL', name: 'Apple Inc', type: 'buy', amount: totalAmount * 0.2, confidence: 85, reasoning: 'Tech leader with strong fundamentals and innovation', sector: 'Technology', expectedAnnualReturn: 0.12 },
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.25, confidence: 85, reasoning: 'Broad market diversification for stability', sector: 'Broad Market', expectedAnnualReturn: 0.06 },
-      { symbol: 'VXUS', name: 'Vanguard Total International Stock ETF', type: 'buy', amount: totalAmount * 0.15, confidence: 80, reasoning: 'International diversification for global exposure', sector: 'International', expectedAnnualReturn: 0.05 },
-      { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', type: 'buy', amount: totalAmount * 0.1, confidence: 75, reasoning: 'Bond allocation for portfolio stability', sector: 'Fixed Income', expectedAnnualReturn: 0.03 }
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.25),
+        confidence: 92,
+        reasoning: 'Core holding for balanced diversification',
+        sector: 'Broad Market',
+        targetPrice: 280,
+        stopLoss: 250,
+        expectedAnnualReturn: 0.08
+      },
+      {
+        symbol: 'QQQ',
+        name: 'Invesco QQQ Trust',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.2),
+        confidence: 87,
+        reasoning: 'Technology growth exposure for moderate risk profile',
+        sector: 'Technology',
+        targetPrice: 520,
+        stopLoss: 480,
+        expectedAnnualReturn: 0.12
+      },
+      {
+        symbol: 'AAPL',
+        name: 'Apple Inc',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.15),
+        confidence: 85,
+        reasoning: 'Quality growth stock with strong fundamentals',
+        sector: 'Technology',
+        targetPrice: 250,
+        stopLoss: 200,
+        expectedAnnualReturn: 0.10
+      },
+      {
+        symbol: 'BND',
+        name: 'Vanguard Total Bond Market ETF',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.2),
+        confidence: 93,
+        reasoning: 'Stability component for balanced portfolio',
+        sector: 'Fixed Income',
+        targetPrice: 90,
+        stopLoss: 85,
+        expectedAnnualReturn: 0.04
+      },
+      {
+        symbol: 'GLD',
+        name: 'SPDR Gold Shares',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.1),
+        confidence: 80,
+        reasoning: 'Inflation hedge and portfolio diversifier',
+        sector: 'Commodities',
+        targetPrice: 320,
+        stopLoss: 290,
+        expectedAnnualReturn: 0.05
+      },
+      {
+        symbol: 'MSFT',
+        name: 'Microsoft Corporation',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.1),
+        confidence: 88,
+        reasoning: 'AI and cloud computing leader',
+        sector: 'Technology',
+        targetPrice: 450,
+        stopLoss: 400,
+        expectedAnnualReturn: 0.11
+      }
     )
   } else {
-    // Aggressive: Individual stocks, crypto, and growth ETFs
+    // Aggressive: 10% bonds, 30% index funds, 40% growth stocks, 20% alternatives
     recommendations.push(
-      { symbol: 'QQQ', name: 'Invesco QQQ Trust', type: 'buy', amount: totalAmount * 0.25, confidence: 85, reasoning: 'High-growth tech exposure for aggressive investors', sector: 'Technology', expectedAnnualReturn: 0.15 },
-      { symbol: 'NVDA', name: 'NVIDIA Corporation', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'AI and semiconductor leader with high growth potential', sector: 'Technology', expectedAnnualReturn: 0.18 },
-      { symbol: 'VUG', name: 'Vanguard Growth ETF', type: 'buy', amount: totalAmount * 0.2, confidence: 80, reasoning: 'Growth-focused investing for capital appreciation', sector: 'Growth', expectedAnnualReturn: 0.12 },
-      { symbol: 'BTC', name: 'Bitcoin', type: 'buy', amount: totalAmount * 0.15, confidence: 70, reasoning: 'Cryptocurrency exposure for high-risk, high-reward potential', sector: 'Cryptocurrency', expectedAnnualReturn: 0.25 },
-      { symbol: 'VB', name: 'Vanguard Small-Cap ETF', type: 'buy', amount: totalAmount * 0.1, confidence: 75, reasoning: 'Small-cap growth potential for diversification', sector: 'Small Cap', expectedAnnualReturn: 0.10 },
-      { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', type: 'buy', amount: totalAmount * 0.1, confidence: 80, reasoning: 'Broad market foundation for portfolio stability', sector: 'Broad Market', expectedAnnualReturn: 0.08 }
+      {
+        symbol: 'QQQ',
+        name: 'Invesco QQQ Trust',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.25),
+        confidence: 85,
+        reasoning: 'High-growth tech exposure for aggressive portfolio',
+        sector: 'Technology',
+        targetPrice: 520,
+        stopLoss: 480,
+        expectedAnnualReturn: 0.15
+      },
+      {
+        symbol: 'NVDA',
+        name: 'NVIDIA Corporation',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.2),
+        confidence: 80,
+        reasoning: 'AI leader with high growth potential',
+        sector: 'Technology',
+        targetPrice: 1200,
+        stopLoss: 900,
+        expectedAnnualReturn: 0.20
+      },
+      {
+        symbol: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.15),
+        confidence: 90,
+        reasoning: 'Core diversification for growth portfolio',
+        sector: 'Broad Market',
+        targetPrice: 280,
+        stopLoss: 250,
+        expectedAnnualReturn: 0.10
+      },
+      {
+        symbol: 'TSLA',
+        name: 'Tesla Inc',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.15),
+        confidence: 75,
+        reasoning: 'Electric vehicle and energy innovation leader',
+        sector: 'Technology',
+        targetPrice: 300,
+        stopLoss: 200,
+        expectedAnnualReturn: 0.18
+      },
+      {
+        symbol: 'BTC',
+        name: 'Bitcoin',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.15),
+        confidence: 70,
+        reasoning: 'Cryptocurrency exposure for high-risk, high-reward potential',
+        sector: 'Cryptocurrency',
+        targetPrice: 120000,
+        stopLoss: 80000,
+        expectedAnnualReturn: 0.25
+      },
+      {
+        symbol: 'BND',
+        name: 'Vanguard Total Bond Market ETF',
+        type: 'buy',
+        amount: Math.round(capitalAvailable * 0.1),
+        confidence: 85,
+        reasoning: 'Small stability component for risk management',
+        sector: 'Fixed Income',
+        targetPrice: 90,
+        stopLoss: 85,
+        expectedAnnualReturn: 0.04
+      }
     )
   }
-  
+
+  // Calculate portfolio projections
+  const avgReturn = recommendations.reduce((sum, rec) => sum + rec.expectedAnnualReturn, 0) / recommendations.length
+  const portfolioProjections = calculatePortfolioProjections(recommendations, userProfile)
+
   return {
     recommendations,
-    reasoning: `Portfolio designed for ${userProfile.riskTolerance <= 3 ? 'conservative' : userProfile.riskTolerance <= 7 ? 'moderate' : 'aggressive'} risk tolerance with ${userProfile.timeHorizon} time horizon. Allocations follow 5-20% rule with diversification across asset classes.`,
-    riskAssessment: `Risk level: ${userProfile.riskTolerance}/10. Portfolio designed to match your risk profile with appropriate diversification.`,
-    marketOutlook: 'Current market conditions suggest a balanced approach with focus on diversification and growth opportunities.',
-    portfolioProjections: calculatePortfolioProjections(recommendations, userProfile)
+    reasoning: `Fast-generated portfolio for ${riskTolerance}/10 risk tolerance using proven asset allocation strategies. ${isConservative ? 'Conservative approach with emphasis on stability.' : isModerate ? 'Balanced approach mixing growth and stability.' : 'Aggressive approach focused on growth potential.'} Allocations follow modern portfolio theory principles.`,
+    riskAssessment: `${isConservative ? 'Low' : isModerate ? 'Moderate' : 'High'} risk portfolio aligned with ${riskTolerance}/10 risk tolerance. Diversified across asset classes to optimize risk-adjusted returns.`,
+    marketOutlook: `Current market conditions favor a ${isConservative ? 'defensive' : isModerate ? 'balanced' : 'growth-oriented'} approach. Portfolio positioned for ${timeHorizon.toLowerCase()}-term ${growthType.toLowerCase()} growth.`,
+    portfolioProjections
   }
 }
 

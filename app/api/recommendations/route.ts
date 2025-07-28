@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateInvestmentRecommendations } from '@/lib/api'
+import { generateInvestmentRecommendations, generateFallbackRecommendations } from '@/lib/api'
 
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route Called:', {
@@ -39,7 +39,33 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
     
-    // Generate recommendations using server-side API
+    // For production: Use fast fallback recommendations to avoid timeout
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🏃‍♂️ Using fast fallback recommendations for production')
+      
+      try {
+        // Quick timeout for AI generation (15 seconds max)
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), 15000)
+        )
+        
+        const analysisPromise = generateInvestmentRecommendations(userProfile)
+        
+        const analysis = await Promise.race([analysisPromise, timeoutPromise])
+        
+        console.log('✅ Fast AI generation successful')
+        return NextResponse.json(analysis)
+        
+      } catch (error) {
+        console.log('⚠️ AI generation timeout, using intelligent fallback')
+        
+        // Generate intelligent fallback recommendations
+        const fallbackAnalysis = generateFallbackRecommendations(userProfile)
+        return NextResponse.json(fallbackAnalysis)
+      }
+    }
+    
+    // For development: Use full AI generation
     const analysis = await generateInvestmentRecommendations(userProfile)
     console.log('📊 Generated analysis:', JSON.stringify(analysis, null, 2))
     console.log('🔍 Analysis has error:', !!analysis.error)
