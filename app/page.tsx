@@ -84,16 +84,9 @@ export default function Home() {
       setUserType('user')
       setShowAuthModal(false) // Close auth modal if open
       
-      // If user has completed questionnaire, show returning user modal
-      if (existingProfile && existingProfile.hasCompletedQuestionnaire) {
-        console.log('Returning user detected, showing modal')
-        setShowReturningUserModal(true)
-      } else {
-        console.log('New user detected, starting fresh questionnaire')
-        // New user - start with questionnaire
-        setCurrentView('chat')
-        setHasStarted(true)
-      }
+      // Always stay on landing page - don't auto-redirect
+      // Users will manually choose to start fresh or continue
+      console.log('User authenticated, staying on landing page')
     }
   }, [session, status])
 
