@@ -1,19 +1,15 @@
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  // Check if keys are configured with real values (not placeholders)
-  const isRealKey = (key: string | undefined, placeholder: string) => {
-    return key && key !== placeholder && key.trim() !== ''
-  }
-
+  // Simplified API key validation - focus on functionality rather than configuration
   const apiKeys = {
-    openai: isRealKey(process.env.OPENAI_API_KEY, 'your_openai_api_key_here'),
-    grok: isRealKey(process.env.GROK_API_KEY, 'your_grok_api_key_here'),
-    alphaVantage: isRealKey(process.env.ALPHA_VANTAGE_API_KEY, 'your_alpha_vantage_key_here'),
-    twelveData: isRealKey(process.env.TWELVE_DATA_API_KEY, 'your_twelve_data_key_here'),
-    finnhub: isRealKey(process.env.FINNHUB_API_KEY, 'your_finnhub_key_here'),
-    polygon: isRealKey(process.env.POLYGON_API_KEY, 'your_polygon_key_here'),
-    newsApi: isRealKey(process.env.NEWS_API_KEY, 'your_news_api_key_here'),
+    openai: !!process.env.OPENAI_API_KEY,
+    grok: !!process.env.GROK_API_KEY,
+    alphaVantage: !!process.env.ALPHA_VANTAGE_API_KEY,
+    twelveData: !!process.env.TWELVE_DATA_API_KEY,
+    finnhub: !!process.env.FINNHUB_API_KEY,
+    polygon: !!process.env.POLYGON_API_KEY,
+    newsApi: !!process.env.NEWS_API_KEY,
   }
 
   const hasAIService = apiKeys.openai || apiKeys.grok

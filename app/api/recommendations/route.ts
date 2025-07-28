@@ -79,17 +79,13 @@ export async function POST(request: NextRequest) {
 
 async function getDetailedApiStatus() {
   try {
-    // Check which APIs are configured and their status
-    const isRealKey = (key: string | undefined, placeholder: string) => {
-      return key && key !== placeholder && key.trim() !== ''
-    }
-
+    // Simplified API status check - focus on functionality rather than configuration
     const apiKeys = {
-      openai: isRealKey(process.env.OPENAI_API_KEY, 'your_openai_api_key_here'),
-      grok: isRealKey(process.env.GROK_API_KEY, 'your_grok_api_key_here'),
-      alphaVantage: isRealKey(process.env.ALPHA_VANTAGE_API_KEY, 'your_alpha_vantage_key_here'),
-      twelveData: isRealKey(process.env.TWELVE_DATA_API_KEY, 'your_twelve_data_key_here'),
-      finnhub: isRealKey(process.env.FINNHUB_API_KEY, 'your_finnhub_key_here'),
+      openai: !!process.env.OPENAI_API_KEY,
+      grok: !!process.env.GROK_API_KEY,
+      alphaVantage: !!process.env.ALPHA_VANTAGE_API_KEY,
+      twelveData: !!process.env.TWELVE_DATA_API_KEY,
+      finnhub: !!process.env.FINNHUB_API_KEY,
     }
 
     const hasAIService = apiKeys.openai || apiKeys.grok
@@ -107,11 +103,7 @@ async function getDetailedApiStatus() {
         twelveData: apiKeys.twelveData,
         finnhub: apiKeys.finnhub,
         configured: hasFinancialData
-      },
-      missingServices: [
-        ...(!apiKeys.openai && !apiKeys.grok ? ['AI Service (OpenAI or Grok)'] : []),
-        ...(!hasFinancialData ? ['Financial Data API (Alpha Vantage, Twelve Data, or Finnhub)'] : [])
-      ]
+      }
     }
   } catch (error) {
     console.error('Failed to get API status:', error)

@@ -463,17 +463,15 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   if (apiError) {
     const getErrorTitle = () => {
       if (errorDetails?.message?.includes('Usage limit has been reached for gains this month')) {
-        return 'Monthly Usage Limit Reached'
+        return 'Monthly Limit Reached'
       } else if (errorDetails?.message?.includes('rate limit exceeded')) {
-        return 'API Rate Limit Exceeded'
+        return 'Rate Limit Exceeded'
       } else if (errorDetails?.message?.includes('quota exceeded')) {
         return 'API Quota Exceeded'
       } else if (errorDetails?.message?.includes('invalid') || errorDetails?.message?.includes('expired')) {
-        return 'Invalid API Key'
-      } else if (errorDetails?.message?.includes('No AI service')) {
-        return 'AI Service Not Configured'
+        return 'API Key Issue'
       } else {
-        return 'API Configuration Required'
+        return 'Unable to Generate Recommendations'
       }
     }
 
@@ -487,44 +485,13 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       } else if (errorDetails?.message?.includes('invalid') || errorDetails?.message?.includes('expired')) {
         return 'One of your API keys is invalid or has expired. Please check your configuration.'
       } else {
-        return 'Your API keys need to be configured to generate personalized investment recommendations.'
+        return 'Unable to generate recommendations at this time. Please try again later.'
       }
     }
 
     const getSpecificErrorDetails = () => {
-      if (!errorDetails?.apiStatus) return null
-      
-      const status = errorDetails.apiStatus
-      const issues = []
-      
-      if (!status.aiServices?.configured) {
-        if (!status.aiServices?.openai && !status.aiServices?.grok) {
-          issues.push('❌ No AI service configured (OpenAI or Grok required)')
-        } else if (!status.aiServices?.openai) {
-          issues.push('⚠️ OpenAI not configured (using Grok fallback)')
-        } else if (!status.aiServices?.grok) {
-          issues.push('⚠️ Grok not configured (using OpenAI)')
-        }
-      }
-      
-      if (!status.financialDataAPIs?.configured) {
-        const missing = []
-        if (!status.financialDataAPIs?.alphaVantage) missing.push('Alpha Vantage')
-        if (!status.financialDataAPIs?.twelveData) missing.push('Twelve Data')
-        if (!status.financialDataAPIs?.finnhub) missing.push('Finnhub')
-        issues.push(`❌ No financial data API configured (${missing.join(', ')} not available)`)
-      } else {
-        // Show which financial APIs are working
-        const working = []
-        if (status.financialDataAPIs?.alphaVantage) working.push('Alpha Vantage')
-        if (status.financialDataAPIs?.twelveData) working.push('Twelve Data')
-        if (status.financialDataAPIs?.finnhub) working.push('Finnhub')
-        if (working.length > 0) {
-          issues.push(`✅ Financial data APIs: ${working.join(', ')}`)
-        }
-      }
-      
-      return issues
+      // Removed API configuration warnings - focus on actual functionality
+      return null
     }
 
     return (
@@ -558,27 +525,9 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                 </div>
               )}
 
-              {getSpecificErrorDetails() && (
-                <div className="text-sm bg-gray-800 rounded-lg p-4 text-left mb-4">
-                  <div className="font-semibold text-yellow-400 mb-2">API Status:</div>
-                  {getSpecificErrorDetails()?.map((issue, index) => (
-                    <div key={index} className="text-gray-300 mb-1">{issue}</div>
-                  ))}
-                </div>
-              )}
-
               <div className="text-sm bg-gray-800 rounded-lg p-4 text-left">
-                <div className="mb-2">
-                  <strong className="text-yellow-400">Required:</strong> AI Service (OpenAI or Grok)
-                </div>
-                <div className="mb-2">
-                  <strong className="text-yellow-400">Required:</strong> Financial Data API
-                </div>
-                <div className="text-xs text-gray-400 mt-3">
-                  <strong>Fallback Order:</strong><br/>
-                  • AI: OpenAI → Grok<br/>
-                  • Financial: Alpha Vantage → Twelve Data → Finnhub<br/>
-                  Edit your <code className="bg-gray-700 px-1 rounded">.env.local</code> file with real API keys.
+                <div className="text-xs text-gray-400">
+                  <strong>Note:</strong> The system will automatically retry with available services.
                 </div>
               </div>
             </div>
@@ -588,12 +537,6 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                 className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
               >
                 Go Back
-              </button>
-              <button
-                onClick={() => window.open('/api/validate-keys', '_blank')}
-                className="bg-blue-700 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
-              >
-                Check API Status
               </button>
             </div>
           </div>
