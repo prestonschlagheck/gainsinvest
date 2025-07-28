@@ -196,12 +196,15 @@ export default function LandingPage({
             </button>
           )}
           
-          <button
-            onClick={handleTryGains}
-            className={`bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors ${screenSize.isMobile ? 'hidden' : ''}`}
-          >
-            TRY G.AI.NS
-          </button>
+          {/* Only show TRY G.AI.NS button for non-logged-in users */}
+          {!session?.user && (
+            <button
+              onClick={handleTryGains}
+              className={`bg-white text-black px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors ${screenSize.isMobile ? 'hidden' : ''}`}
+            >
+              TRY G.AI.NS
+            </button>
+          )}
         </div>
       </nav>
 
@@ -375,19 +378,22 @@ export default function LandingPage({
                   Contact
                 </motion.button>
 
-                <div className="pt-3 border-t border-gray-700">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setShowMobileMenu(false)
-                      handleTryGains()
-                    }}
-                    className="w-full text-left p-3 rounded-lg border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white transition-all duration-200 font-medium"
-                  >
-                    TRY G.AI.NS
-                  </motion.button>
-                </div>
+                {/* Only show TRY G.AI.NS button for non-logged-in users */}
+                {!session?.user && (
+                  <div className="pt-3 border-t border-gray-700">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        setShowMobileMenu(false)
+                        handleTryGains()
+                      }}
+                      className="w-full text-left p-3 rounded-lg border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white transition-all duration-200 font-medium"
+                    >
+                      TRY G.AI.NS
+                    </motion.button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
