@@ -40,6 +40,7 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState(0)
   const [storedProfile, setStoredProfile] = useState<StoredUserProfile | null>(null)
   const [showRecommendationsInChat, setShowRecommendationsInChat] = useState(false)
+  const [isManualLogin, setIsManualLogin] = useState(false)
   
   // Debug logging
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function Home() {
 
   // Handle authentication state changes
   useEffect(() => {
-    console.log('Auth state changed:', { status, hasUser: !!session?.user, currentView })
+    console.log('Auth state changed:', { status, hasUser: !!session?.user, currentView, isManualLogin })
     
     if (status === 'authenticated' && session?.user) {
       // User is authenticated with Google
@@ -84,11 +85,19 @@ export default function Home() {
       setUserType('user')
       setShowAuthModal(false) // Close auth modal if open
       
-      // Always stay on landing page - don't auto-redirect
-      // Users will manually choose to start fresh or continue
-      console.log('User authenticated, staying on landing page')
+      // Check if this was a manual login or auto login
+      if (isManualLogin) {
+        // Manual login - start questionnaire immediately
+        console.log('Manual login detected, starting questionnaire')
+        setCurrentView('chat')
+        setHasStarted(true)
+        setIsManualLogin(false) // Reset for next time
+      } else {
+        // Auto login - stay on landing page
+        console.log('Auto login detected, staying on landing page')
+      }
     }
-  }, [session, status])
+  }, [session, status, isManualLogin])
 
   const handleStartChat = () => {
     setCurrentView('chat')
@@ -128,8 +137,8 @@ export default function Home() {
   const handleAuthSuccess = () => {
     setShowAuthModal(false)
     setUserType('user')
-    setCurrentView('chat')
-    setHasStarted(true)
+    setIsManualLogin(true) // Mark this as a manual login
+    // The useEffect will handle the redirect to chat
   }
 
   const handleGuestContinue = () => {
