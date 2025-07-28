@@ -4,9 +4,6 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "regions": ["iad1"],
-  "env": {
-    "NEXTAUTH_URL": "https://your-domain.vercel.app"
-  },
   "functions": {
     "app/api/auth/[...nextauth]/route.ts": {
       "maxDuration": 30
