@@ -167,12 +167,24 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [recommendations, setRecommendations] = useState<InvestmentRecommendation[]>([])
   const [portfolioProjections, setPortfolioProjections] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [apiError, setApiError] = useState(false)
-  const [apiKeyStatus, setApiKeyStatus] = useState<any>(null)
-  const [errorDetails, setErrorDetails] = useState<any>(null)
-  const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
   const [loadingPercentage, setLoadingPercentage] = useState(0)
-
+  const [apiStatus, setApiStatus] = useState<{
+    grok: 'pending' | 'success' | 'failed'
+    marketData: 'pending' | 'success' | 'failed'
+    news: 'pending' | 'success' | 'failed'
+    analysis: 'pending' | 'success' | 'failed'
+    recommendations: 'pending' | 'success' | 'failed'
+  }>({
+    grok: 'pending',
+    marketData: 'pending',
+    news: 'pending',
+    analysis: 'pending',
+    recommendations: 'pending'
+  })
+  const [apiError, setApiError] = useState(false)
+  const [errorDetails, setErrorDetails] = useState<any>(null)
+  const [apiKeyStatus, setApiKeyStatus] = useState<any>(null)
+  const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
 
 
   // Generate recommendations using real APIs when available
@@ -180,6 +192,15 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     const generateRecommendations = async () => {
       setIsLoading(true)
       setLoadingPercentage(0)
+      
+      // Reset API status
+      setApiStatus({
+        grok: 'pending',
+        marketData: 'pending',
+        news: 'pending',
+        analysis: 'pending',
+        recommendations: 'pending'
+      })
       
       // Realistic loading progress based on actual API call timing
       const progressInterval = setInterval(() => {
@@ -193,6 +214,12 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       }, 200) // Update every 200ms for smoother progress
       
       try {
+        // Simulate API status updates
+        setTimeout(() => setApiStatus(prev => ({ ...prev, grok: 'success' })), 2000)
+        setTimeout(() => setApiStatus(prev => ({ ...prev, marketData: 'success' })), 5000)
+        setTimeout(() => setApiStatus(prev => ({ ...prev, news: 'success' })), 7000)
+        setTimeout(() => setApiStatus(prev => ({ ...prev, analysis: 'success' })), 9500)
+        
         // Call the API route
         const response = await fetch('/api/recommendations', {
           method: 'POST',
@@ -222,10 +249,22 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         if (analysis.error || analysis.apiError) {
           console.log('❌ Error detected in response:', analysis.error || analysis.apiError)
           
+          // Update API status based on error type
+          if (analysis.error?.includes('Grok') || analysis.error?.includes('AI')) {
+            setApiStatus(prev => ({ ...prev, grok: 'failed' }))
+          }
+          if (analysis.error?.includes('market') || analysis.error?.includes('financial')) {
+            setApiStatus(prev => ({ ...prev, marketData: 'failed' }))
+          }
+          if (analysis.error?.includes('news')) {
+            setApiStatus(prev => ({ ...prev, news: 'failed' }))
+          }
+          
           // Only show error if we don't have valid recommendations
           // This allows for partial success scenarios
           if (analysis.recommendations && analysis.recommendations.length > 0) {
             console.log('✅ Found recommendations despite error, proceeding with display')
+            setApiStatus(prev => ({ ...prev, recommendations: 'success' }))
             setRecommendations(analysis.recommendations)
             setPortfolioProjections(analysis.portfolioProjections)
             setIsLoading(false)
@@ -247,6 +286,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
         // Complete the loading to 100%
         setLoadingPercentage(100)
+        setApiStatus(prev => ({ ...prev, recommendations: 'success' }))
         
         // Brief pause to show 100% completion
         await new Promise(resolve => setTimeout(resolve, 300))
@@ -254,6 +294,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         // Check if we have valid recommendations
         if (!analysis.recommendations || analysis.recommendations.length === 0) {
           console.log('❌ No recommendations found in response')
+          setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
           setErrorDetails({
             message: 'No recommendations generated. Please check your API configuration.',
             apiStatus: null,
@@ -273,6 +314,9 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         console.error('API Error:', error)
         
         clearInterval(progressInterval)
+        
+        // Update API status to failed
+        setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
         
         // Check API key status for better error messaging if we don't already have it
         if (!errorDetails) {
@@ -384,63 +428,124 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             animate={{ opacity: 1 }}
             className="space-y-4 w-full max-w-md mx-auto"
           >
-            {/* AI Process Steps */}
+            {/* AI Process Steps with API Status */}
             {[
-              { name: "Testing Grok AI", delay: 0, duration: 2000 },
-              { name: "Gathering Market Data", delay: 2000, duration: 3000 },
-              { name: "Fetching Financial News", delay: 5000, duration: 2000 },
-              { name: "Analyzing Portfolio", delay: 7000, duration: 2500 },
-              { name: "Generating Recommendations", delay: 9500, duration: 3000 }
-            ].map((step, index) => (
-              <motion.div
-                key={step.name}
-                className="flex items-center justify-between bg-gray-900/50 rounded-lg p-4 border border-gray-700"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: step.delay / 1000 }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                    <motion.div
-                      className="w-4 h-4 bg-gray-500 rounded-full"
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        backgroundColor: [
-                          "#6b7280", // gray-500
-                          "#10b981", // green-500
-                          "#10b981"  // green-500
-                        ]
-                      }}
-                      transition={{
-                        duration: step.duration / 1000,
-                        delay: step.delay / 1000,
-                        ease: "easeInOut"
-                      }}
-                    />
-                  </div>
-                  <span className="text-gray-300 text-sm">{step.name}</span>
-                </div>
-                
-                {/* Check mark that appears when step completes */}
+              { 
+                name: "Testing Grok AI", 
+                key: 'grok' as const,
+                delay: 0, 
+                duration: 2000 
+              },
+              { 
+                name: "Gathering Market Data", 
+                key: 'marketData' as const,
+                delay: 2000, 
+                duration: 3000 
+              },
+              { 
+                name: "Fetching Financial News", 
+                key: 'news' as const,
+                delay: 5000, 
+                duration: 2000 
+              },
+              { 
+                name: "Analyzing Portfolio", 
+                key: 'analysis' as const,
+                delay: 7000, 
+                duration: 2500 
+              },
+              { 
+                name: "Generating Recommendations", 
+                key: 'recommendations' as const,
+                delay: 9500, 
+                duration: 3000 
+              }
+            ].map((step, index) => {
+              const status = apiStatus[step.key]
+              const isCompleted = status === 'success' || status === 'failed'
+              const isFailed = status === 'failed'
+              
+              return (
                 <motion.div
-                  className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ 
-                    scale: 1, 
-                    opacity: 1 
-                  }}
-                  transition={{ 
-                    delay: (step.delay + step.duration) / 1000,
-                    duration: 0.3,
-                    ease: "easeOut"
-                  }}
+                  key={step.name}
+                  className="flex items-center justify-between bg-gray-900/50 rounded-lg p-4 border border-gray-700"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: step.delay / 1000 }}
                 >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
+                      {status === 'pending' && (
+                        <motion.div
+                          className="w-4 h-4 bg-gray-500 rounded-full"
+                          animate={{
+                            scale: [1, 1.2, 1],
+                            backgroundColor: ["#6b7280", "#10b981", "#10b981"]
+                          }}
+                          transition={{
+                            duration: step.duration / 1000,
+                            delay: step.delay / 1000,
+                            ease: "easeInOut"
+                          }}
+                        />
+                      )}
+                      {status === 'success' && (
+                        <div className="w-4 h-4 bg-green-500 rounded-full" />
+                      )}
+                      {status === 'failed' && (
+                        <div className="w-4 h-4 bg-red-500 rounded-full" />
+                      )}
+                    </div>
+                    <span className={`text-sm ${isFailed ? 'text-red-400' : 'text-gray-300'}`}>
+                      {step.name}
+                    </span>
+                  </div>
+                  
+                  {/* Status Icon */}
+                  {isCompleted && (
+                    <motion.div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        isFailed ? 'bg-red-500' : 'bg-green-500'
+                      }`}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ 
+                        delay: (step.delay + step.duration) / 1000,
+                        duration: 0.3,
+                        ease: "easeOut"
+                      }}
+                    >
+                      {isFailed ? (
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </motion.div>
+                  )}
                 </motion.div>
+              )
+            })}
+            
+            {/* Error Message at Bottom */}
+            {apiError && errorDetails && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-red-900/20 border border-red-700 rounded-lg"
+              >
+                <div className="text-red-400 font-semibold mb-2">Error Details:</div>
+                <div className="text-gray-300 text-sm">{errorDetails.message}</div>
+                {errorDetails.timestamp && (
+                  <div className="text-xs text-gray-500 mt-2">
+                    Time: {new Date(errorDetails.timestamp).toLocaleString()}
+                  </div>
+                )}
               </motion.div>
-            ))}
+            )}
           </motion.div>
         </div>
 
