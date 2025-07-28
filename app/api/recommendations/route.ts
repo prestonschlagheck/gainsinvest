@@ -9,8 +9,10 @@ export async function POST(request: NextRequest) {
     // Generate recommendations using server-side API
     const analysis = await generateInvestmentRecommendations(userProfile)
     console.log('Generated analysis:', JSON.stringify(analysis, null, 2))
+    console.log('Analysis has error:', !!analysis.error)
+    console.log('Analysis has recommendations:', analysis.recommendations?.length || 0)
     
-    // If the analysis includes an error field, it means we fell back to static recommendations
+    // If the analysis includes an error field, it means there was an API issue
     if (analysis.error) {
       // Get API status information for detailed error reporting
       const apiStatus = await getDetailedApiStatus()
@@ -24,6 +26,11 @@ export async function POST(request: NextRequest) {
           timestamp: new Date().toISOString()
         }
       })
+    }
+    
+    // If we have valid recommendations, return them without any error flags
+    if (analysis.recommendations && analysis.recommendations.length > 0) {
+      return NextResponse.json(analysis)
     }
     
     return NextResponse.json(analysis)
