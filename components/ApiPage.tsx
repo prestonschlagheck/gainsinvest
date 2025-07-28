@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion'
 import { ArrowLeft, Globe, Database, Shield, Zap, TrendingUp, BarChart } from 'lucide-react'
-import XaiUsage from './XaiUsage'
 
 interface ApiPageProps {
   onBack: () => void
@@ -153,15 +152,7 @@ export default function ApiPage({ onBack }: ApiPageProps) {
           </button>
         </motion.div>
 
-        {/* XAI Usage Component */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="max-w-md mx-auto"
-        >
-          <XaiUsage />
-        </motion.div>
+
       </div>
     </div>
   )
