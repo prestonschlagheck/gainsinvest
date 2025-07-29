@@ -159,7 +159,7 @@ const PortfolioStep: React.FC<PortfolioStepProps> = ({ onComplete, userProfile, 
             portfolio.map((item, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="p-2 bg-gray-800/20 rounded-lg border border-gray-700 relative flex items-center justify-between"
               >
