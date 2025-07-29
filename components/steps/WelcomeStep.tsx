@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import { User, UserCheck } from 'lucide-react'
 
@@ -8,14 +9,28 @@ interface WelcomeStepProps {
 }
 
 const WelcomeStep: React.FC<WelcomeStepProps> = ({ onComplete }) => {
-  return (
-    <div className="step-layout">
-      <div className="step-header">
-        <h2 className="text-2xl font-semibold text-white">How would you like to continue?</h2>
-      </div>
+  // Add class to body to prevent scrolling
+  React.useEffect(() => {
+    document.body.classList.add('questionnaire-active')
+    document.documentElement.classList.add('questionnaire-active')
+    
+    return () => {
+      document.body.classList.remove('questionnaire-active')
+      document.documentElement.classList.remove('questionnaire-active')
+    }
+  }, [])
 
-      <div className="step-body">
-        <div className="space-y-4 max-w-md mx-auto">
+  return (
+    <div className="fixed inset-0 flex flex-col justify-center items-center p-6 overflow-hidden questionnaire-page" style={{ overflow: 'hidden' }}>
+      {/* Main Content - Centered */}
+      <div className="flex flex-col items-center justify-center gap-6 max-w-2xl w-full">
+        {/* Title - Above content */}
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-white">How would you like to continue?</h2>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-4 w-full max-w-md">
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
@@ -48,8 +63,11 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({ onComplete }) => {
         </div>
       </div>
 
-      <div className="step-footer">
-        {/* Empty footer to maintain consistent spacing */}
+      {/* Footer - Fixed at bottom */}
+      <div className="absolute bottom-6 left-6 right-6">
+        <div className="flex gap-4 w-full max-w-2xl mx-auto">
+          {/* Empty footer to maintain consistent spacing */}
+        </div>
       </div>
     </div>
   )

@@ -14,7 +14,7 @@ export interface UserProfile {
 export interface PortfolioItem {
   symbol: string
   amount: number
-  type: 'stock' | 'crypto' | 'etf' | 'other'
+  type: 'stock' | 'crypto' | 'etf' | 'bond' | 'other'
 }
 
 export interface ChatMessage {

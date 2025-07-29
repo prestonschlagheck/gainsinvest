@@ -193,25 +193,65 @@ function getESGDescription(esgLevel: number): string {
 }
 
 async function gatherComprehensiveMarketData(userProfile: any): Promise<string> {
-  const marketData = []
-  
   try {
     // Key market indicators to analyze
     const keySymbols = ['SPY', 'QQQ', 'VTI', 'GLD', 'TLT', 'VIX']
     const stockDataPromises = keySymbols.map(symbol => getStockData(symbol))
     const stockResults = await Promise.allSettled(stockDataPromises)
     
-    let marketSummary = 'CURRENT MARKET INDICATORS:\n'
+    let marketSummary = 'REAL-TIME MARKET ANALYSIS (Use this data for accurate projections):\n'
+    
+    // Market indicators with trend analysis
+    marketSummary += '\nCURRENT MARKET INDICATORS:\n'
+    const marketTrends: string[] = []
+    
     stockResults.forEach((result, index) => {
       if (result.status === 'fulfilled' && result.value) {
         const stock = result.value
-        marketSummary += `• ${keySymbols[index]}: $${stock.price} (${stock.changePercent > 0 ? '+' : ''}${stock.changePercent.toFixed(2)}%) - ${stock.source}\n`
+        const symbol = keySymbols[index]
+        const changeDirection = stock.changePercent > 0 ? 'UP' : 'DOWN'
+        const magnitude = Math.abs(stock.changePercent) > 2 ? 'STRONG' : Math.abs(stock.changePercent) > 1 ? 'MODERATE' : 'SLIGHT'
+        
+        marketSummary += `• ${symbol}: $${stock.price} (${stock.changePercent > 0 ? '+' : ''}${stock.changePercent.toFixed(2)}%) - ${magnitude} ${changeDirection} trend\n`
+        
+        // Analyze market sentiment
+        if (symbol === 'SPY' && stock.changePercent > 1) marketTrends.push('Broad market bullish')
+        if (symbol === 'SPY' && stock.changePercent < -1) marketTrends.push('Broad market bearish')
+        if (symbol === 'QQQ' && stock.changePercent > 1) marketTrends.push('Tech sector strong')
+        if (symbol === 'QQQ' && stock.changePercent < -1) marketTrends.push('Tech sector weak')
+        if (symbol === 'VIX' && stock.price > 25) marketTrends.push('High volatility - risk-off sentiment')
+        if (symbol === 'VIX' && stock.price < 15) marketTrends.push('Low volatility - risk-on sentiment')
+        if (symbol === 'GLD' && stock.changePercent > 1) marketTrends.push('Flight to safety - gold rising')
+      }
+    })
+    
+    // Market sentiment analysis
+    if (marketTrends.length > 0) {
+      marketSummary += '\nMARKET SENTIMENT ANALYSIS:\n'
+      marketTrends.forEach(trend => {
+        marketSummary += `• ${trend}\n`
+      })
+    }
+    
+    // Cryptocurrency market analysis for context
+    marketSummary += '\nCRYPTOCURRENCY MARKET:\n'
+    const cryptoData = await Promise.allSettled([
+      getStockData('BTC'),
+      getStockData('ETH')
+    ])
+    
+    cryptoData.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value) {
+        const crypto = result.value
+        const symbol = index === 0 ? 'BTC' : 'ETH'
+        const trend = crypto.changePercent > 0 ? 'POSITIVE' : 'NEGATIVE'
+        marketSummary += `• ${symbol}: $${crypto.price.toLocaleString()} (${crypto.changePercent > 0 ? '+' : ''}${crypto.changePercent.toFixed(2)}%) - ${trend} momentum\n`
       }
     })
     
     // Add sector-specific data if user has preferences
     if (userProfile.sectors && userProfile.sectors.length > 0) {
-      marketSummary += '\nSECTOR-SPECIFIC ANALYSIS:\n'
+      marketSummary += '\nSECTOR-SPECIFIC PERFORMANCE:\n'
       const sectorETFs: { [key: string]: string } = {
         'Technology': 'XLK',
         'Healthcare': 'XLV', 
@@ -231,20 +271,28 @@ async function gatherComprehensiveMarketData(userProfile: any): Promise<string> 
         if (etfSymbol) {
           const sectorData = await getStockData(etfSymbol)
           if (sectorData) {
-            marketSummary += `• ${sector} (${etfSymbol}): $${sectorData.price} (${sectorData.changePercent > 0 ? '+' : ''}${sectorData.changePercent.toFixed(2)}%)\n`
+            const performance = sectorData.changePercent > 0 ? 'OUTPERFORMING' : 'UNDERPERFORMING'
+            marketSummary += `• ${sector} (${etfSymbol}): $${sectorData.price} (${sectorData.changePercent > 0 ? '+' : ''}${sectorData.changePercent.toFixed(2)}%) - ${performance}\n`
           }
         }
       }
     }
     
+    // Add investment guidance based on market conditions
+    marketSummary += '\nINVESTMENT GUIDANCE:\n'
+    marketSummary += '• Base ALL projections on current market prices and trends shown above\n'
+    marketSummary += '• Use historical performance ranges: Stocks 6-12%, ETFs 7-10%, Crypto 10-25% (positive only)\n'
+    marketSummary += '• Adjust expectations based on current market sentiment and volatility\n'
+    marketSummary += '• NEVER recommend assets with negative expected returns\n'
+    
     return marketSummary
   } catch (error) {
     console.error('Error gathering market data:', error)
-    return 'Market data temporarily unavailable - using fundamental analysis approach'
+    return 'Market data temporarily unavailable - using conservative fundamental analysis approach with positive return assumptions only'
   }
 }
 
-async function analyzeExistingPortfolio(existingPortfolio: any[]): Promise<string> {
+async function analyzeExistingPortfolio(existingPortfolio: any[], availableCapital: number): Promise<string> {
   if (!existingPortfolio || existingPortfolio.length === 0) {
     return ''
   }
@@ -252,24 +300,227 @@ async function analyzeExistingPortfolio(existingPortfolio: any[]): Promise<strin
   try {
     let analysis = 'EXISTING PORTFOLIO ANALYSIS:\n'
     const totalValue = existingPortfolio.reduce((sum, holding) => sum + (holding.amount || 0), 0)
+    const totalPortfolioValue = totalValue + availableCapital
     
-    analysis += `Total Portfolio Value: $${totalValue.toLocaleString()}\n`
-    analysis += 'Current Holdings:\n'
+    analysis += `Total Existing Holdings: $${totalValue.toLocaleString()}\n`
+    analysis += `Available Cash: $${availableCapital.toLocaleString()}\n`
+    analysis += `TOTAL PORTFOLIO VALUE: $${totalPortfolioValue.toLocaleString()}\n`
+    analysis += '\nCurrent Holdings Analysis:\n'
     
-    for (const holding of existingPortfolio.slice(0, 5)) { // Limit to avoid API limits
+    for (const holding of existingPortfolio.slice(0, 10)) { // Analyze all holdings
       if (holding.symbol) {
         const currentData = await getStockData(holding.symbol)
         if (currentData) {
           const allocation = ((holding.amount || 0) / totalValue * 100).toFixed(1)
-          analysis += `• ${holding.symbol}: $${holding.amount?.toLocaleString()} (${allocation}%) - Current: $${currentData.price} (${currentData.changePercent > 0 ? '+' : ''}${currentData.changePercent.toFixed(2)}%)\n`
+          const performance = currentData.changePercent > 0 ? 'GAINING' : 'LOSING'
+          analysis += `• ${holding.symbol}: $${holding.amount?.toLocaleString()} (${allocation}% of holdings) - Current: $${currentData.price} (${currentData.changePercent > 0 ? '+' : ''}${currentData.changePercent.toFixed(2)}%) - ${performance}\n`
         }
       }
+    }
+    
+    // Critical capital allocation guidance
+    analysis += `\n🚨 CRITICAL CAPITAL ALLOCATION RULES:\n`
+    analysis += `1. TOTAL INVESTMENT RECOMMENDATIONS MUST NEVER EXCEED $${totalPortfolioValue.toLocaleString()}\n`
+    analysis += `2. You have THREE categories to work with:\n`
+    analysis += `   - BUY: New investments using available capital ($${availableCapital.toLocaleString()}) + money from sales\n`
+    analysis += `   - HOLD: Existing positions to keep (reduce amount if needed for diversification)\n`
+    analysis += `   - SELL: Existing positions to liquidate (creates cash for new buys)\n`
+    analysis += `3. MATHEMATICAL CONSTRAINT: (Total BUY amount) + (Total HOLD amount) = $${totalPortfolioValue.toLocaleString()}\n`
+    analysis += `4. If existing holdings are worth more than available capital, you MUST sell some to rebalance\n`
+    analysis += `5. For each existing holding, decide: HOLD at optimal amount or SELL completely\n`
+    analysis += `6. Only recommend POSITIVE expected return investments - never negative returns\n`
+    
+    // Specific guidance for this portfolio
+    if (totalValue > availableCapital) {
+      analysis += `\n💡 REBALANCING REQUIRED:\n`
+      analysis += `Since existing holdings ($${totalValue.toLocaleString()}) exceed available capital ($${availableCapital.toLocaleString()}), you must:\n`
+      analysis += `- Analyze each holding's future prospects\n`
+      analysis += `- SELL underperforming or overweight positions\n`
+      analysis += `- HOLD only the best-performing positions at optimal allocation\n`
+      analysis += `- Use proceeds from sales + available capital for new BUY recommendations\n`
     }
     
     return analysis
   } catch (error) {
     console.error('Error analyzing existing portfolio:', error)
     return 'Existing portfolio data available - manual analysis recommended'
+  }
+}
+
+// ========================================
+// ASSET NAME CLEANUP
+// ========================================
+
+const ETF_NAME_MAPPING: { [key: string]: string } = {
+  'VTI': 'Vanguard Total Stock Market',
+  'VOO': 'Vanguard S&P 500',
+  'VEU': 'Vanguard International Stock',
+  'VWO': 'Vanguard Emerging Markets',
+  'BND': 'Vanguard Total Bond Market',
+  'QQQ': 'Invesco NASDAQ 100',
+  'SPY': 'SPDR S&P 500',
+  'IWM': 'iShares Russell 2000',
+  'EFA': 'iShares MSCI EAFE',
+  'EEM': 'iShares MSCI Emerging Markets',
+  'TLT': 'iShares 20+ Year Treasury',
+  'GLD': 'SPDR Gold Shares',
+  'SLV': 'iShares Silver Trust',
+  'VNQ': 'Vanguard Real Estate',
+  'XLK': 'Technology Select Sector',
+  'XLF': 'Financial Select Sector',
+  'XLV': 'Health Care Select Sector',
+  'XLI': 'Industrial Select Sector',
+  'XLE': 'Energy Select Sector',
+  'XLP': 'Consumer Staples Select',
+  'XLY': 'Consumer Discretionary Select',
+  'XLU': 'Utilities Select Sector',
+  'XLB': 'Materials Select Sector',
+  'XLRE': 'Real Estate Select Sector',
+  'XLC': 'Communication Services Select'
+}
+
+// Function to clean up and shorten asset names
+function cleanAssetName(symbol: string, originalName: string): string {
+  // Use mapping for ETFs
+  if (ETF_NAME_MAPPING[symbol.toUpperCase()]) {
+    return ETF_NAME_MAPPING[symbol.toUpperCase()]
+  }
+  
+  // For other assets, clean up common long phrases
+  let cleanName = originalName
+    .replace(/Corporation/g, '')
+    .replace(/Incorporated/g, '')
+    .replace(/Company/g, 'Co.')
+    .replace(/\s+ETF$/g, '')
+    .replace(/\s+Trust$/g, '')
+    .replace(/\s+Fund$/g, '')
+    .replace(/\s+Inc\.?$/g, '')
+    .replace(/\s+Ltd\.?$/g, '')
+    .replace(/\s+LLC$/g, '')
+    .replace(/\s+L\.P\.$/g, '')
+    .replace(/Vanguard\s+/g, 'Vanguard ')
+    .replace(/SPDR\s+/g, 'SPDR ')
+    .replace(/iShares\s+/g, 'iShares ')
+    .replace(/Invesco\s+/g, 'Invesco ')
+    .replace(/\s+Class\s+[A-Z]$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+  
+  // Limit length to reasonable size
+  if (cleanName.length > 25) {
+    const words = cleanName.split(' ')
+    if (words.length > 3) {
+      cleanName = words.slice(0, 3).join(' ')
+    } else {
+      cleanName = cleanName.substring(0, 22) + '...'
+    }
+  }
+  
+  return cleanName
+}
+
+// ========================================
+// CRYPTOCURRENCY DATA FUNCTIONS
+// ========================================
+
+const CRYPTO_SYMBOLS_MAP: { [key: string]: string } = {
+  'BTC': 'bitcoin',
+  'ETH': 'ethereum',
+  'ADA': 'cardano',
+  'SOL': 'solana',
+  'DOT': 'polkadot',
+  'MATIC': 'polygon',
+  'AVAX': 'avalanche-2',
+  'LUNA': 'terra-luna',
+  'ATOM': 'cosmos',
+  'LINK': 'chainlink',
+  'UNI': 'uniswap',
+  'LTC': 'litecoin',
+  'BCH': 'bitcoin-cash',
+  'XRP': 'ripple',
+  'DOGE': 'dogecoin',
+  'SHIB': 'shiba-inu'
+}
+
+// Check if a symbol is a cryptocurrency
+function isCryptocurrency(symbol: string): boolean {
+  return CRYPTO_SYMBOLS_MAP.hasOwnProperty(symbol.toUpperCase())
+}
+
+// Fetch cryptocurrency data from CoinGecko (free API, no key required)
+async function getCryptocurrencyData(symbol: string): Promise<StockData | null> {
+  const cryptoId = CRYPTO_SYMBOLS_MAP[symbol.toUpperCase()]
+  
+  if (!cryptoId) {
+    console.log(`❌ Cryptocurrency ${symbol} not supported`)
+    return null
+  }
+
+  try {
+    console.log(`🪙 Fetching crypto data for ${symbol} (${cryptoId})...`)
+    
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=usd&include_24hr_change=true`,
+      { 
+        headers: { 
+          'User-Agent': 'G.AI.NS/1.0',
+          'Accept': 'application/json'
+        },
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    const cryptoData = data[cryptoId]
+
+    if (!cryptoData || !cryptoData.usd) {
+      throw new Error('No valid crypto data received from CoinGecko')
+    }
+
+    // Validate price data
+    const price = cryptoData.usd
+    if (typeof price !== 'number' || price <= 0) {
+      throw new Error(`Invalid price data for ${symbol}: ${price}`)
+    }
+
+    console.log(`✅ Successfully fetched crypto data for ${symbol}:`, {
+      price: price,
+      change: cryptoData.usd_24h_change || 0
+    })
+
+    return {
+      symbol: symbol.toUpperCase(),
+      name: symbol.toUpperCase(),
+      price: price,
+      change: 0, // CoinGecko doesn't provide absolute change
+      changePercent: cryptoData.usd_24h_change || 0,
+      volume: 0, // Would need different API call for volume
+      source: 'CoinGecko'
+    }
+
+  } catch (error) {
+    console.error(`❌ Error fetching crypto data for ${symbol}:`, error)
+    
+    // Return fallback data for known cryptocurrencies
+    if (symbol.toUpperCase() === 'BTC') {
+      console.log(`🔄 Using fallback BTC price: $118,000`)
+      return {
+        symbol: 'BTC',
+        name: 'Bitcoin',
+        price: 118000,
+        change: 0,
+        changePercent: 0,
+        volume: 0,
+        source: 'Fallback'
+      }
+    }
+    
+    return null
   }
 }
 
@@ -452,6 +703,11 @@ async function getStockDataFinnhub(symbol: string): Promise<ApiResponse<StockDat
 export async function getStockData(symbol: string): Promise<StockData | null> {
   console.log(`🔍 Fetching stock data for ${symbol}...`)
   
+  // Check if it's a cryptocurrency
+  if (isCryptocurrency(symbol)) {
+    return await getCryptocurrencyData(symbol)
+  }
+
   // Get active providers sorted by priority
   const activeProviders = API_PROVIDERS
     .filter(p => p.active)
@@ -717,7 +973,8 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
   // Step 4: Analyze existing portfolio if any
   let portfolioAnalysis = ''
   if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
-    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
+    const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
+    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
   }
 
   // Step 4: Create comprehensive prompt for OpenAI
@@ -740,21 +997,44 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
 
   ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
 
-  CRITICAL RULES TO FOLLOW:
-  1. If risk tolerance is 5/10 or greater, include individual stocks and cryptocurrencies in addition to ETFs to maximize returns
-  2. NEVER allocate more than 20% of the total portfolio to any single asset
-  3. NEVER allocate less than 5% of the total portfolio to any single asset
-  4. The portfolio must be diversified and aligned with the user's stated goals and time horizon
-  5. Include specific ticker suggestions (e.g., AAPL, NVDA, BTC, VOO, VTI, QQQ)
-  6. Provide allocation percentages for each recommendation
-  7. Include a short explanation for each pick based on risk tolerance, investment goals, and time horizon
-  8. CRITICAL: If user has existing holdings, analyze them and recommend selling some to make room for new investments
-  9. NEVER exceed the total available capital - if user has $10,000 total and $10,000 in existing holdings, recommend selling $5,000 worth to buy $5,000 of new investments
-  10. Provide realistic expected annual returns (typically 5-15% for most assets, 20-50% for high-risk crypto/tech)
-  11. CRITICAL: Use ONLY current real-time market prices for targetPrice and stopLoss calculations
-  12. CRITICAL: Ensure targetPrice and stopLoss reflect current market conditions and analyst consensus
-  13. CRITICAL: For cryptocurrencies like BTC, use current market prices (BTC is currently ~$110,000, not $70,000)
-  14. CRITICAL: All price targets must be based on current market analysis, not outdated estimates
+  🚨 CRITICAL CAPITAL ALLOCATION RULES (MUST FOLLOW EXACTLY):
+  1. MATHEMATICAL CONSTRAINT: Total BUY amounts + Total HOLD amounts = Available Capital
+  2. THREE TYPES of recommendations required:
+     - BUY: New investments using available cash + proceeds from sales
+     - HOLD: Existing positions to keep at specified reduced amounts
+     - SELL: Existing positions to liquidate (creates cash for new investments)
+  3. NEVER EXCEED TOTAL PORTFOLIO VALUE: Your recommendations cannot exceed available capital
+  4. EXISTING HOLDINGS LOGIC:
+     - Analyze each existing holding for future prospects
+     - If positive outlook: HOLD at optimal allocation (may be less than current amount)
+     - If negative outlook or overweight: SELL completely
+     - Use proceeds from SELL recommendations for BUY recommendations
+  5. MANDATORY EXISTING HOLDINGS PROCESSING:
+     - EVERY existing holding MUST be included in your recommendations
+     - If user has existing holdings, you MUST create "sell" or "hold" recommendations for ALL of them
+     - NO existing holdings should be ignored or omitted
+     - Each existing holding must be analyzed and categorized as either "sell" or "hold"
+  
+  QUALITY & PERFORMANCE RULES:
+  6. ZERO TOLERANCE for negative expected returns - NEVER recommend any asset with negative 1-year prospects
+  7. If any analysis shows negative returns, immediately exclude that asset and find alternatives
+  8. Provide realistic expected annual returns based on current market data:
+      - Large-cap stocks: 6-12% annually
+      - Growth stocks: 8-15% annually  
+      - ETFs/Index funds: 7-10% annually
+      - Bonds: 2-6% annually
+      - Cryptocurrency: 10-25% annually (ONLY if positive prospects)
+  9. CRITICAL: Use current real-time market prices for all calculations
+  10. For BTC at ~$118,000: Only recommend if showing positive growth prospects
+  11. Quality check: Review each recommendation to ensure positive expected returns
+  
+  PORTFOLIO STRUCTURE RULES:
+  12. Maximum 20% allocation to any single asset
+  13. Minimum 5% allocation for any recommended position
+  14. Diversification across sectors based on user preferences
+  15. Include reasoning for each BUY/HOLD/SELL decision
+  16. Provide confidence scores based on analysis quality
+  17. VALIDATION: Ensure every existing holding appears in recommendations as either "sell" or "hold"
 
   OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
   {
@@ -841,15 +1121,76 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
         ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
         : (typeof rec.amount === 'number' ? rec.amount : 0)
       
+      // Cap expected returns to realistic levels and eliminate negatives
+      const cappedReturn = Math.max(0.02, Math.min(rec.expectedAnnualReturn || 0.07, 0.25)) // 2% to 25% max
+      
       return {
         ...rec,
+        name: cleanAssetName(rec.symbol, rec.name), // Clean up long ETF names
         amount: Math.round(cleanAmount),
         confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
         targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
         stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
-        expectedAnnualReturn: typeof rec.expectedAnnualReturn === 'number' ? rec.expectedAnnualReturn : 0.07
+        expectedAnnualReturn: cappedReturn
       }
-    }).filter((rec: any) => rec.amount > 0)
+    }).filter((rec: any) => rec.amount > 0 && rec.expectedAnnualReturn > 0) // Remove negative returns
+    
+    // CRITICAL VALIDATION: Ensure total doesn't exceed available capital
+    const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
+    const existingHoldings = userProfile.existingPortfolio ? 
+      userProfile.existingPortfolio.reduce((sum: number, holding: any) => sum + (holding.amount || 0), 0) : 0
+    const totalPortfolioValue = availableCapital + existingHoldings
+    
+    const totalRecommendedAmount = analysis.recommendations.reduce((sum, rec) => sum + rec.amount, 0)
+    
+    if (totalRecommendedAmount > totalPortfolioValue) {
+      console.warn(`🚨 CAPITAL VALIDATION FAILED: Recommended ${totalRecommendedAmount} exceeds total portfolio ${totalPortfolioValue}`)
+      
+      // Scale down all recommendations proportionally
+      const scaleFactor = totalPortfolioValue / totalRecommendedAmount
+      analysis.recommendations = analysis.recommendations.map(rec => ({
+        ...rec,
+        amount: Math.round(rec.amount * scaleFactor)
+      })).filter(rec => rec.amount > 0)
+      
+      console.log(`✅ SCALED DOWN: Total now ${analysis.recommendations.reduce((sum, rec) => sum + rec.amount, 0)}`)
+    }
+    
+    // CRITICAL VALIDATION: Ensure all existing holdings are categorized
+    if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+      const existingSymbols = userProfile.existingPortfolio.map((holding: any) => holding.symbol.toUpperCase())
+      const recommendedSymbols = analysis.recommendations.map((rec: any) => rec.symbol.toUpperCase())
+      
+      // Find missing existing holdings
+      const missingHoldings = existingSymbols.filter((symbol: string) => 
+        !recommendedSymbols.includes(symbol)
+      )
+      
+      if (missingHoldings.length > 0) {
+        console.warn(`🚨 MISSING EXISTING HOLDINGS: ${missingHoldings.join(', ')} not categorized`)
+        
+        // Add missing holdings as "hold" recommendations (conservative approach)
+        for (const missingSymbol of missingHoldings) {
+          const existingHolding = userProfile.existingPortfolio.find((h: any) => 
+            h.symbol.toUpperCase() === missingSymbol
+          )
+          
+          if (existingHolding) {
+            analysis.recommendations.push({
+              symbol: existingHolding.symbol,
+              name: existingHolding.symbol,
+              type: 'hold',
+              amount: existingHolding.amount,
+              confidence: 70,
+              reasoning: `Existing holding - maintaining position for portfolio stability`,
+              sector: 'Existing Holdings',
+              expectedAnnualReturn: 0.05 // Conservative estimate
+            })
+            console.log(`✅ Added missing holding: ${missingSymbol} as HOLD`)
+          }
+        }
+      }
+    }
     
     // Add portfolio projections
     analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
@@ -906,7 +1247,8 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
   // Step 4: Analyze existing portfolio if any
   let portfolioAnalysis = ''
   if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
-    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio)
+    const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
+    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
   }
 
   // Create comprehensive prompt for Grok
@@ -929,17 +1271,44 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
 
   ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
 
-  CRITICAL RULES TO FOLLOW:
-  1. If risk tolerance is 5/10 or greater, include individual stocks and cryptocurrencies in addition to ETFs to maximize returns
-  2. NEVER allocate more than 20% of the total portfolio to any single asset
-  3. NEVER allocate less than 5% of the total portfolio to any single asset
-  4. The portfolio must be diversified and aligned with the user's stated goals and time horizon
-  5. Include specific ticker suggestions (e.g., AAPL, NVDA, BTC, VOO, VTI, QQQ)
-  6. Provide allocation percentages for each recommendation
-  7. Include a short explanation for each pick based on risk tolerance, investment goals, and time horizon
-  8. CRITICAL: If user has existing holdings, analyze them and recommend selling some to make room for new investments
-  9. NEVER exceed the total available capital - if user has $10,000 total and $10,000 in existing holdings, recommend selling $5,000 worth to buy $5,000 of new investments
-  10. Provide realistic expected annual returns (typically 5-15% for most assets, 20-50% for high-risk crypto/tech)
+  🚨 CRITICAL CAPITAL ALLOCATION RULES (MUST FOLLOW EXACTLY):
+  1. MATHEMATICAL CONSTRAINT: Total BUY amounts + Total HOLD amounts = Available Capital
+  2. THREE TYPES of recommendations required:
+     - BUY: New investments using available cash + proceeds from sales
+     - HOLD: Existing positions to keep at specified reduced amounts
+     - SELL: Existing positions to liquidate (creates cash for new investments)
+  3. NEVER EXCEED TOTAL PORTFOLIO VALUE: Your recommendations cannot exceed available capital
+  4. EXISTING HOLDINGS LOGIC:
+     - Analyze each existing holding for future prospects
+     - If positive outlook: HOLD at optimal allocation (may be less than current amount)
+     - If negative outlook or overweight: SELL completely
+     - Use proceeds from SELL recommendations for BUY recommendations
+  5. MANDATORY EXISTING HOLDINGS PROCESSING:
+     - EVERY existing holding MUST be included in your recommendations
+     - If user has existing holdings, you MUST create "sell" or "hold" recommendations for ALL of them
+     - NO existing holdings should be ignored or omitted
+     - Each existing holding must be analyzed and categorized as either "sell" or "hold"
+  
+  QUALITY & PERFORMANCE RULES:
+  6. ZERO TOLERANCE for negative expected returns - NEVER recommend any asset with negative 1-year prospects
+  7. If any analysis shows negative returns, immediately exclude that asset and find alternatives
+  8. Provide realistic expected annual returns based on current market data:
+      - Large-cap stocks: 6-12% annually
+      - Growth stocks: 8-15% annually  
+      - ETFs/Index funds: 7-10% annually
+      - Bonds: 2-6% annually
+      - Cryptocurrency: 10-25% annually (ONLY if positive prospects)
+  9. CRITICAL: Use current real-time market prices for all calculations
+  10. For BTC at ~$118,000: Only recommend if showing positive growth prospects
+  11. Quality check: Review each recommendation to ensure positive expected returns
+  
+  PORTFOLIO STRUCTURE RULES:
+  12. Maximum 20% allocation to any single asset
+  13. Minimum 5% allocation for any recommended position
+  14. Diversification across sectors based on user preferences
+  15. Include reasoning for each BUY/HOLD/SELL decision
+  16. Provide confidence scores based on analysis quality
+  17. VALIDATION: Ensure every existing holding appears in recommendations as either "sell" or "hold"
 
   OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
   {
@@ -1025,15 +1394,76 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
         ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
         : (typeof rec.amount === 'number' ? rec.amount : 0)
       
+      // Cap expected returns to realistic levels and eliminate negatives
+      const cappedReturn = Math.max(0.02, Math.min(rec.expectedAnnualReturn || 0.07, 0.25)) // 2% to 25% max
+      
       return {
         ...rec,
+        name: cleanAssetName(rec.symbol, rec.name), // Clean up long ETF names
         amount: Math.round(cleanAmount),
         confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
         targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
         stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
-        expectedAnnualReturn: typeof rec.expectedAnnualReturn === 'number' ? rec.expectedAnnualReturn : 0.07
+        expectedAnnualReturn: cappedReturn
       }
-    }).filter((rec: any) => rec.amount > 0)
+    }).filter((rec: any) => rec.amount > 0 && rec.expectedAnnualReturn > 0) // Remove negative returns
+    
+    // CRITICAL VALIDATION: Ensure total doesn't exceed available capital
+    const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
+    const existingHoldings = userProfile.existingPortfolio ? 
+      userProfile.existingPortfolio.reduce((sum: number, holding: any) => sum + (holding.amount || 0), 0) : 0
+    const totalPortfolioValue = availableCapital + existingHoldings
+    
+    const totalRecommendedAmount = analysis.recommendations.reduce((sum, rec) => sum + rec.amount, 0)
+    
+    if (totalRecommendedAmount > totalPortfolioValue) {
+      console.warn(`🚨 CAPITAL VALIDATION FAILED: Recommended ${totalRecommendedAmount} exceeds total portfolio ${totalPortfolioValue}`)
+      
+      // Scale down all recommendations proportionally
+      const scaleFactor = totalPortfolioValue / totalRecommendedAmount
+      analysis.recommendations = analysis.recommendations.map(rec => ({
+        ...rec,
+        amount: Math.round(rec.amount * scaleFactor)
+      })).filter(rec => rec.amount > 0)
+      
+      console.log(`✅ SCALED DOWN: Total now ${analysis.recommendations.reduce((sum, rec) => sum + rec.amount, 0)}`)
+    }
+    
+    // CRITICAL VALIDATION: Ensure all existing holdings are categorized
+    if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+      const existingSymbols = userProfile.existingPortfolio.map((holding: any) => holding.symbol.toUpperCase())
+      const recommendedSymbols = analysis.recommendations.map((rec: any) => rec.symbol.toUpperCase())
+      
+      // Find missing existing holdings
+      const missingHoldings = existingSymbols.filter((symbol: string) => 
+        !recommendedSymbols.includes(symbol)
+      )
+      
+      if (missingHoldings.length > 0) {
+        console.warn(`🚨 MISSING EXISTING HOLDINGS: ${missingHoldings.join(', ')} not categorized`)
+        
+        // Add missing holdings as "hold" recommendations (conservative approach)
+        for (const missingSymbol of missingHoldings) {
+          const existingHolding = userProfile.existingPortfolio.find((h: any) => 
+            h.symbol.toUpperCase() === missingSymbol
+          )
+          
+          if (existingHolding) {
+            analysis.recommendations.push({
+              symbol: existingHolding.symbol,
+              name: existingHolding.symbol,
+              type: 'hold',
+              amount: existingHolding.amount,
+              confidence: 70,
+              reasoning: `Existing holding - maintaining position for portfolio stability`,
+              sector: 'Existing Holdings',
+              expectedAnnualReturn: 0.05 // Conservative estimate
+            })
+            console.log(`✅ Added missing holding: ${missingSymbol} as HOLD`)
+          }
+        }
+      }
+    }
     
     // Add portfolio projections
     analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
@@ -1047,7 +1477,8 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
 }
 
 function calculatePortfolioProjections(recommendations: InvestmentRecommendation[], userProfile: any): PortfolioProjection {
-  const totalInvestment = userProfile.capitalAvailable || userProfile.capital || 0
+  // Calculate actual total investment from recommendations (BUY + HOLD amounts)
+  const totalInvestment = recommendations.reduce((sum, rec) => sum + rec.amount, 0)
   const riskMultiplier = (userProfile.riskTolerance || 5) / 10
   
   // Validate inputs
@@ -1085,13 +1516,49 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
   
   const expectedAnnualReturn = totalAmount > 0 ? totalWeightedReturn / totalAmount : 0.08
   
-  // Generate monthly projections for 5 years
+  // Generate realistic market-cycle-based projections for 5 years
   const monthlyProjections = []
-  const monthlyReturn = expectedAnnualReturn / 12
   let currentValue = totalInvestment
   
+  // Cap expected returns to realistic levels
+  const cappedAnnualReturn = Math.min(expectedAnnualReturn, 0.18) // Max 18% annual
+  const baseMonthlyReturn = cappedAnnualReturn / 12
+  
   for (let month = 1; month <= 60; month++) {
-    currentValue *= (1 + monthlyReturn)
+    // Create market cycle volatility instead of linear growth
+    const cyclePosition = (month % 36) / 36 // 3-year market cycles
+    const yearProgress = month / 12
+    
+    // Market volatility factors
+    const cyclicVariation = Math.sin(cyclePosition * Math.PI * 2) * 0.15 // +/- 15% variation
+    const randomVolatility = (Math.sin(month * 0.5) * 0.08) // Smaller random movements
+    
+    // Economic downturn simulation (10% chance each year)
+    let downturnFactor = 1
+    if (month === 18 || month === 42) { // Market corrections at 1.5 and 3.5 years
+      downturnFactor = 0.85 // 15% temporary decline
+    }
+    
+    // Recovery patterns after downturns
+    let recoveryBonus = 0
+    if (month > 18 && month <= 24) { // Recovery after first correction
+      recoveryBonus = 0.03 * (month - 18) / 6 // Gradual recovery
+    }
+    if (month > 42 && month <= 48) { // Recovery after second correction
+      recoveryBonus = 0.025 * (month - 42) / 6 // Gradual recovery
+    }
+    
+    // Calculate realistic monthly return with volatility
+    const adjustedReturn = baseMonthlyReturn * (1 + cyclicVariation + randomVolatility + recoveryBonus) * downturnFactor
+    
+    // Compound growth with realistic market behavior
+    currentValue *= (1 + adjustedReturn)
+    
+    // Ensure we don't go below initial investment due to volatility in early months
+    if (month <= 6 && currentValue < totalInvestment * 0.95) {
+      currentValue = totalInvestment * (0.95 + (month * 0.008)) // Gradual early growth
+    }
+    
     const date = new Date()
     date.setMonth(date.getMonth() + month)
     
@@ -1131,7 +1598,7 @@ function calculatePortfolioProjections(recommendations: InvestmentRecommendation
       threeYear: monthlyProjections[35]?.value || totalInvestment,
       fiveYear: monthlyProjections[59]?.value || totalInvestment,
     },
-    expectedAnnualReturn: Math.round(expectedAnnualReturn * 100 * 10) / 10, // Round to 1 decimal
+    expectedAnnualReturn: Math.round(cappedAnnualReturn * 100 * 10) / 10, // Round to 1 decimal, use capped value
     riskLevel: (userProfile.riskTolerance || 5) <= 3 ? 'low' : (userProfile.riskTolerance || 5) <= 7 ? 'medium' : 'high',
     diversificationScore: Math.min(Object.keys(sectorBreakdown).length * 20, 100),
     sectorBreakdown
@@ -1356,6 +1823,11 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
       }
     )
   }
+
+  // Clean up asset names in fallback recommendations
+  recommendations.forEach(rec => {
+    rec.name = cleanAssetName(rec.symbol, rec.name)
+  })
 
   // Calculate portfolio projections
   const avgReturn = recommendations.reduce((sum, rec) => sum + rec.expectedAnnualReturn, 0) / recommendations.length

@@ -1,20 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateInvestmentRecommendations, generateFallbackRecommendations } from '@/lib/api'
-
-// In-memory job storage (in production, use Redis or database)
-const jobs = new Map<string, {
-  id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  result?: any
-  error?: string
-  createdAt: Date
-  updatedAt: Date
-}>()
-
-// Generate unique job ID
-function generateJobId(): string {
-  return `job_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
-}
+import { getJobQueue } from '@/lib/jobQueue'
 
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route Called:', {
@@ -54,37 +39,20 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
     
-    // Create job entry
-    const jobId = generateJobId()
-    const job = {
-      id: jobId,
-      status: 'pending' as const,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
+    // Get job queue instance
+    const jobQueue = getJobQueue()
     
-    jobs.set(jobId, job)
-    console.log('💼 Created job:', jobId)
+    // Add job to queue and get job ID
+    const requestId = await jobQueue.addJob(userProfile)
+    console.log('💼 Created job with requestId:', requestId)
     
-    // Start background processing (don't await)
-    processRecommendationJob(jobId, userProfile).catch(error => {
-      console.error('❌ Background job failed:', error)
-      const failedJob = jobs.get(jobId)
-      if (failedJob) {
-        failedJob.status = 'failed'
-        failedJob.error = error.message
-        failedJob.updatedAt = new Date()
-        jobs.set(jobId, failedJob)
-      }
-    })
-    
-    // Return immediately with job ID
+    // Return 202 Accepted immediately with requestId
     return NextResponse.json({
-      jobId,
+      requestId,
       status: 'pending',
-      message: 'Recommendation generation started. Use /api/recommendations/status to check progress.',
+      message: 'Recommendation generation started. Use /api/results/{requestId} to check progress.',
       estimatedTime: '30-60 seconds'
-    })
+    }, { status: 202 })
     
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -110,78 +78,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-// Background processing function
-async function processRecommendationJob(jobId: string, userProfile: any) {
-  console.log('🔄 Starting background processing for job:', jobId)
-  
-  const job = jobs.get(jobId)
-  if (!job) {
-    throw new Error('Job not found')
-  }
-  
-  // Update job status
-  job.status = 'processing'
-  job.updatedAt = new Date()
-  jobs.set(jobId, job)
-  
-  try {
-    // This can take as long as needed - no timeout limits
-    console.log('🤖 Generating AI recommendations...')
-    const analysis = await generateInvestmentRecommendations(userProfile)
-    
-    console.log('✅ AI generation completed for job:', jobId)
-    
-    // Update job with results
-    job.status = 'completed'
-    job.result = analysis
-    job.updatedAt = new Date()
-    jobs.set(jobId, job)
-    
-    console.log('💾 Job completed and saved:', jobId)
-    
-  } catch (error) {
-    console.error('❌ Job processing failed:', error)
-    job.status = 'failed'
-    job.error = error instanceof Error ? error.message : 'Unknown error'
-    job.updatedAt = new Date()
-    jobs.set(jobId, job)
-    throw error
-  }
-}
-
-// GET endpoint to check job status
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const jobId = searchParams.get('jobId')
-  
-  if (!jobId) {
-    return NextResponse.json({ error: 'Job ID required' }, { status: 400 })
-  }
-  
-  const job = jobs.get(jobId)
-  if (!job) {
-    return NextResponse.json({ error: 'Job not found' }, { status: 404 })
-  }
-  
-  // Clean response based on status
-  const response: any = {
-    jobId: job.id,
-    status: job.status,
-    createdAt: job.createdAt,
-    updatedAt: job.updatedAt
-  }
-  
-  if (job.status === 'completed' && job.result) {
-    response.result = job.result
-    // Clean up completed job after retrieval
-    jobs.delete(jobId)
-  } else if (job.status === 'failed' && job.error) {
-    response.error = job.error
-    // Clean up failed job after retrieval
-    jobs.delete(jobId)
-  }
-  
-  return NextResponse.json(response)
 } 

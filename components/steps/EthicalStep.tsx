@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Leaf, Heart, Globe, ArrowLeft } from 'lucide-react'
 import { useScreenSize } from '@/lib/useScreenSize'
@@ -15,6 +15,17 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
   const screenSize = useScreenSize()
   const [ethicalLevel, setEthicalLevel] = useState(userProfile?.ethicalInvesting || 5)
 
+  // Add class to body to prevent scrolling
+  React.useEffect(() => {
+    document.body.classList.add('questionnaire-active')
+    document.documentElement.classList.add('questionnaire-active')
+    
+    return () => {
+      document.body.classList.remove('questionnaire-active')
+      document.documentElement.classList.remove('questionnaire-active')
+    }
+  }, [])
+
   const getSelectedOption = () => {
     if (ethicalLevel <= 3) return 'low'
     if (ethicalLevel <= 7) return 'moderate'
@@ -22,13 +33,16 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
   }
 
   return (
-    <div className="step-layout">
-      <div className="step-header">
-        <h2 className="text-2xl font-semibold text-white">Ethical Investing Preference</h2>
-      </div>
+    <div className="fixed inset-0 flex flex-col justify-center items-center p-6 overflow-hidden questionnaire-page" style={{ overflow: 'hidden' }}>
+      {/* Main Content - Centered */}
+      <div className="flex flex-col items-center justify-center gap-6 max-w-4xl w-full">
+        {/* Title - Above content */}
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-white">Ethical Investing Preference</h2>
+        </div>
 
-      <div className="step-body">
-        <div className="space-y-6">
+        {/* Content */}
+        <div className="space-y-6 w-full">
         {/* ESG Information - simplified on mobile */}
         {!screenSize.isMobile && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -127,14 +141,15 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
         </div>
       </div>
 
-      <div className="step-footer">
-        <div className="flex gap-3 w-full">
+      {/* Footer - Fixed at bottom */}
+      <div className="absolute bottom-6 left-6 right-6">
+        <div className="flex gap-4 w-full max-w-2xl mx-auto">
           {onBack && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
+              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-4 px-6 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
@@ -143,7 +158,7 @@ const EthicalStep: React.FC<EthicalStepProps> = ({ onComplete, userProfile, onBa
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onComplete({ ethicalInvesting: ethicalLevel })}
-            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
+            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-4 px-6 rounded-lg text-lg font-medium transition-all duration-200"
           >
             Continue
           </motion.button>

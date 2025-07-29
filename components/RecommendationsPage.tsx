@@ -240,11 +240,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         const jobResponse = await response.json()
         console.log('💼 Job started:', jobResponse)
         
-        if (jobResponse.jobId) {
-          // Poll for job completion
-          await pollJobStatus(jobResponse.jobId)
+        if (jobResponse.requestId) {
+          // Poll for job completion using new endpoint
+          await pollJobStatus(jobResponse.requestId)
         } else {
-          throw new Error('No job ID received')
+          throw new Error('No request ID received')
         }
         
       } catch (error) {
@@ -264,10 +264,10 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       }
     }
     
-    const pollJobStatus = async (jobId: string) => {
-      console.log('🔄 Polling job status:', jobId)
+    const pollJobStatus = async (requestId: string) => {
+      console.log('🔄 Polling job status:', requestId)
       let attempts = 0
-      const maxAttempts = 120 // 2 minutes max (2 second intervals)
+      const maxAttempts = 120 // 4 minutes max (2 second intervals)
       
       // Update API status as we progress
       setTimeout(() => setApiStatus(prev => ({ ...prev, grok: 'success' })), 2000)
@@ -279,17 +279,27 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         attempts++
         
         try {
-          const statusResponse = await fetch(`${window.location.origin}/api/recommendations?jobId=${jobId}`)
+          const statusResponse = await fetch(`${window.location.origin}/api/results/${requestId}`)
           
           if (!statusResponse.ok) {
+            if (statusResponse.status === 404) {
+              throw new Error(`Job not found: ${requestId}`)
+            }
             throw new Error(`Status check failed: ${statusResponse.status}`)
           }
           
           const statusData = await statusResponse.json()
           console.log('📊 Job status:', statusData.status)
           
-          // Update loading percentage based on time elapsed
-          const progressPercentage = Math.min((attempts / maxAttempts) * 90, 90)
+          // Update loading percentage based on time elapsed and status
+          let progressPercentage: number
+          if (statusData.status === 'pending') {
+            progressPercentage = Math.min((attempts / maxAttempts) * 20, 20)
+          } else if (statusData.status === 'processing') {
+            progressPercentage = Math.min(20 + ((attempts / maxAttempts) * 70), 90)
+          } else {
+            progressPercentage = Math.min((attempts / maxAttempts) * 90, 90)
+          }
           setLoadingPercentage(progressPercentage)
           
           if (statusData.status === 'completed') {
@@ -342,7 +352,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           
         } catch (error) {
           console.error('❌ Polling error:', error)
-          attempts++ // Count errors against max attempts
+          
+          // Don't increment attempts for network errors, but do for 404s
+          if (error instanceof Error && error.message.includes('Job not found')) {
+            attempts += 10 // Fast-track to failure for missing jobs
+          }
         }
         
       }, 2000) // Poll every 2 seconds

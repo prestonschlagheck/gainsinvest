@@ -231,28 +231,56 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
           <div className="text-center">
             <div className="text-sm text-gray-400 mb-1">Total Gain</div>
             <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold ${
-              portfolioProjections.projectedValues.fiveYear > portfolioProjections.totalInvestment ? 'text-green-400' : 'text-red-400'
+              (() => {
+                const selectedValue = timeframe === '1Y' ? portfolioProjections.projectedValues.oneYear :
+                                    timeframe === '3Y' ? portfolioProjections.projectedValues.threeYear :
+                                    portfolioProjections.projectedValues.fiveYear
+                return selectedValue > portfolioProjections.totalInvestment ? 'text-green-400' : 'text-red-400'
+              })()
             }`}>
-              {formatCurrency(portfolioProjections.projectedValues.fiveYear - portfolioProjections.totalInvestment)}
+              {(() => {
+                const selectedValue = timeframe === '1Y' ? portfolioProjections.projectedValues.oneYear :
+                                    timeframe === '3Y' ? portfolioProjections.projectedValues.threeYear :
+                                    portfolioProjections.projectedValues.fiveYear
+                return formatCurrency(selectedValue - portfolioProjections.totalInvestment)
+              })()}
             </div>
           </div>
           <div className="text-center">
             <div className="text-sm text-gray-400 mb-1">Projected Value</div>
             <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold text-white`}>
-              {formatCurrency(portfolioProjections.projectedValues.fiveYear)}
+              {(() => {
+                const selectedValue = timeframe === '1Y' ? portfolioProjections.projectedValues.oneYear :
+                                    timeframe === '3Y' ? portfolioProjections.projectedValues.threeYear :
+                                    portfolioProjections.projectedValues.fiveYear
+                return formatCurrency(selectedValue)
+              })()}
             </div>
           </div>
           <div className="text-center">
             <div className="text-sm text-gray-400 mb-1">Return Percentage</div>
             <div className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-semibold ${
-              portfolioProjections.totalInvestment > 0 ? 
-                `${(((portfolioProjections.projectedValues.fiveYear - portfolioProjections.totalInvestment) / portfolioProjections.totalInvestment) * 100).toFixed(1)}%` :
-                '0.0%'
-              }`}>
-              {portfolioProjections.totalInvestment > 0 ? 
-                `${(((portfolioProjections.projectedValues.fiveYear - portfolioProjections.totalInvestment) / portfolioProjections.totalInvestment) * 100).toFixed(1)}%` :
-                '0.0%'
-              }
+              (() => {
+                if (portfolioProjections.totalInvestment > 0) {
+                  const selectedValue = timeframe === '1Y' ? portfolioProjections.projectedValues.oneYear :
+                                      timeframe === '3Y' ? portfolioProjections.projectedValues.threeYear :
+                                      portfolioProjections.projectedValues.fiveYear
+                  const returnPercentage = ((selectedValue - portfolioProjections.totalInvestment) / portfolioProjections.totalInvestment) * 100
+                  return returnPercentage >= 0 ? 'text-green-400' : 'text-red-400'
+                }
+                return 'text-gray-400'
+              })()
+            }`}>
+              {(() => {
+                if (portfolioProjections.totalInvestment > 0) {
+                  const selectedValue = timeframe === '1Y' ? portfolioProjections.projectedValues.oneYear :
+                                      timeframe === '3Y' ? portfolioProjections.projectedValues.threeYear :
+                                      portfolioProjections.projectedValues.fiveYear
+                  const returnPercentage = ((selectedValue - portfolioProjections.totalInvestment) / portfolioProjections.totalInvestment) * 100
+                  return `${returnPercentage >= 0 ? '+' : ''}${returnPercentage.toFixed(1)}%`
+                }
+                return '0.0%'
+              })()}
             </div>
           </div>
         </div>
@@ -399,75 +427,141 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ recommendations, initia
         )}
       </div>
 
-      {/* Portfolio Composition */}
+      {/* Enhanced Portfolio Composition - Shows clear price progression and portfolio value impact */}
       {recommendations.length > 0 && (
         <div className="mt-6">
-          <h4 className="text-sm font-medium text-gray-300 mb-3">Portfolio Composition</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-sm font-medium text-gray-300">Portfolio Composition</h4>
+            <div className="text-xs text-gray-500">
+              {(() => {
+                const lastUpdatedTimes = Object.values(stockPrices).map(price => price.lastUpdated).filter(Boolean)
+                if (lastUpdatedTimes.length > 0) {
+                  const mostRecent = lastUpdatedTimes.reduce((latest, current) => {
+                    return new Date(current) > new Date(latest) ? current : latest
+                  })
+                  return `Last updated: ${new Date(mostRecent).toLocaleTimeString()}`
+                }
+                return 'Prices updating...'
+              })()}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
             {recommendations.filter(r => r.type === 'buy').map((rec, index) => {
               // Calculate expected return for the selected timeframe
               const annualReturn = rec.expectedAnnualReturn || 0.08
-              let timeframeReturn = 0
+              let timeMultiplier = 1
               
               if (timeframe === '1Y') {
-                timeframeReturn = annualReturn * 100
+                timeMultiplier = 1
               } else if (timeframe === '3Y') {
-                timeframeReturn = (Math.pow(1 + annualReturn, 3) - 1) * 100
+                timeMultiplier = 3
               } else if (timeframe === '5Y') {
-                timeframeReturn = (Math.pow(1 + annualReturn, 5) - 1) * 100
+                timeMultiplier = 5
               }
               
               // Use real-time current price or fallback to estimated
               const realTimePrice = stockPrices[rec.symbol]?.currentPrice
-              const currentPrice = realTimePrice || (rec.targetPrice + rec.stopLoss) / 2
+              const fallbackPrice = ((rec.targetPrice || 100) + (rec.stopLoss || 80)) / 2
+              const currentPrice = realTimePrice || fallbackPrice
               const sharesOwned = rec.amount / currentPrice
               
-              // Calculate target and stop loss prices
-              const targetPrice = rec.targetPrice || 120
-              const stopLoss = rec.stopLoss || 100
+              // Calculate price estimates based on timeframe
+              const baseTargetPrice = rec.targetPrice || currentPrice * 1.2
+              const baseStopLoss = rec.stopLoss || currentPrice * 0.8
               
-              // Calculate most likely price (weighted average of target and stop loss)
-              const mostLikelyPrice = (targetPrice * 0.6) + (stopLoss * 0.4)
+              // Project prices for the timeframe
+              const highPrice = baseTargetPrice * Math.pow(1 + annualReturn, timeMultiplier - 1)
+              const lowPrice = baseStopLoss * Math.pow(1 + (annualReturn * 0.3), timeMultiplier - 1) // Conservative low estimate
+              const mostLikelyPrice = (highPrice * 0.65) + (lowPrice * 0.35) // Weighted toward optimistic but realistic
               
-              let highPrice = targetPrice
-              let lowPrice = stopLoss
-              let mostLikelyValue = sharesOwned * mostLikelyPrice
+              // ENSURE LOGICAL PRICE RELATIONSHIPS:
+              // High estimate should always be above current price
+              // Low estimate should typically be below current price (but can be above in strong bull markets)
+              const adjustedHighPrice = Math.max(highPrice, currentPrice * 1.05) // At least 5% above current
+              const adjustedLowPrice = Math.min(lowPrice, currentPrice * 0.95) // At most 5% below current, but can be higher
+              const adjustedMostLikelyPrice = Math.max(mostLikelyPrice, currentPrice * 1.02) // At least 2% above current for positive outlook
               
-              if (timeframe === '3Y') {
-                highPrice = targetPrice * Math.pow(1 + annualReturn, 2)
-                lowPrice = stopLoss * Math.pow(1 + annualReturn * 0.5, 2)
-                mostLikelyValue = sharesOwned * (mostLikelyPrice * Math.pow(1 + annualReturn, 2))
-              } else if (timeframe === '5Y') {
-                highPrice = targetPrice * Math.pow(1 + annualReturn, 4)
-                lowPrice = stopLoss * Math.pow(1 + annualReturn * 0.5, 4)
-                mostLikelyValue = sharesOwned * (mostLikelyPrice * Math.pow(1 + annualReturn, 4))
+              // Calculate portfolio values
+              const currentPortfolioValue = rec.amount
+              const mostLikelyPortfolioValue = sharesOwned * adjustedMostLikelyPrice
+              const potentialGain = mostLikelyPortfolioValue - currentPortfolioValue
+              const gainPercentage = ((mostLikelyPortfolioValue - currentPortfolioValue) / currentPortfolioValue) * 100
+              
+              // Format price function for different ranges
+              const formatPrice = (price: number) => {
+                if (price >= 1000) {
+                  return price.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })
+                } else if (price >= 1) {
+                  return price.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                } else {
+                  return price.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 4, maximumFractionDigits: 4 })
+                }
               }
               
-              const highValue = sharesOwned * highPrice
-              const lowValue = sharesOwned * lowPrice
-              
               return (
-                <div key={index} className="p-3 bg-gray-700 border border-gray-600 rounded text-gray-300">
-                  <div className="font-semibold text-sm mb-2">{rec.symbol}</div>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Current Price:</span>
-                      <span className="text-white">
-                        ${currentPrice.toFixed(2)}
-                        {realTimePrice && <span className="text-green-400 ml-1">●</span>}
+                <div key={index} className="p-4 bg-gray-700 border border-gray-600 rounded-lg text-gray-300">
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="font-semibold text-sm text-white">{rec.symbol}</div>
+                    <div className="text-xs text-gray-400">
+                      {sharesOwned.toFixed(sharesOwned < 1 ? 4 : 2)} shares
+                    </div>
+                  </div>
+                  
+                  {/* Current Price */}
+                  <div className="mb-3 p-2 bg-gray-800 rounded">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-xs">Current Price:</span>
+                      <span className="text-white font-medium">
+                        {formatPrice(currentPrice)}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-green-400">High ({timeframe}):</span>
-                      <span className="text-green-400">{formatCurrency(highValue)}</span>
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>Portfolio Value:</span>
+                      <span>{formatCurrency(currentPortfolioValue)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-red-400">Low ({timeframe}):</span>
-                      <span className="text-red-400">{formatCurrency(lowValue)}</span>
+                  </div>
+                  
+                  {/* Price Estimates */}
+                  <div className="space-y-2 mb-3">
+                    <div className="text-xs font-medium text-gray-300 mb-1">{timeframe} Price Estimates:</div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-red-400">Low Estimate:</span>
+                      <span className="text-red-400">{formatPrice(adjustedLowPrice)}</span>
                     </div>
-                    <div className="flex justify-between border-t border-gray-600 pt-1 mt-1">
+                    
+                    <div className="flex justify-between items-center">
                       <span className="text-blue-400 font-medium">Most Likely:</span>
-                      <span className="text-blue-400 font-medium">{formatCurrency(mostLikelyValue)}</span>
+                      <span className="text-blue-400 font-medium">{formatPrice(adjustedMostLikelyPrice)}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-green-400">High Estimate:</span>
+                      <span className="text-green-400">{formatPrice(adjustedHighPrice)}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Portfolio Impact */}
+                  <div className="border-t border-gray-600 pt-3">
+                    <div className="text-xs font-medium text-gray-300 mb-2">If Most Likely Price Hits:</div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Portfolio Value:</span>
+                        <span className="text-white font-medium">{formatCurrency(mostLikelyPortfolioValue)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Potential Gain:</span>
+                        <span className={potentialGain >= 0 ? 'text-green-400' : 'text-red-400'}>
+                          {potentialGain >= 0 ? '+' : ''}{formatCurrency(potentialGain)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Return:</span>
+                        <span className={gainPercentage >= 0 ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
+                          {gainPercentage >= 0 ? '+' : ''}{gainPercentage.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

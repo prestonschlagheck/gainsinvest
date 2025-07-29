@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "setup": "node setup-env.js",
-    "test-apis": "node test-apis.js"
+    "test-apis": "node test-apis.js",
+    "worker": "tsx scripts/background-worker.ts",
+    "worker:dev": "tsx watch scripts/background-worker.ts"
   },
   "dependencies": {
     "@types/js-cookie": "^3.0.6",
@@ -17,6 +19,7 @@
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
     "axios": "^1.6.2",
+    "dotenv": "^17.2.1",
     "framer-motion": "^10.16.5",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.294.0",
@@ -26,6 +29,7 @@
     "react": "^18",
     "react-dom": "^18",
     "tailwindcss": "^3.3.0",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   },
   "devDependencies": {

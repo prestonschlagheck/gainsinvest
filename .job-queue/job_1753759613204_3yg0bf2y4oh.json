@@ -1,0 +1,22 @@
+{
+  "id": "job_1753759613204_3yg0bf2y4oh",
+  "status": "pending",
+  "userProfile": {
+    "isGuest": true,
+    "riskTolerance": 5,
+    "timeHorizon": "medium",
+    "growthType": "balanced",
+    "sectors": [
+      "all",
+      "consumer"
+    ],
+    "ethicalInvesting": 5,
+    "capitalAvailable": 10000,
+    "existingPortfolio": [],
+    "hasCompletedQuestionnaire": false,
+    "lastUpdated": "2025-07-29T02:48:59.863Z",
+    "portfolio": []
+  },
+  "createdAt": "2025-07-29T03:26:53.204Z",
+  "updatedAt": "2025-07-29T03:26:53.204Z"
+}

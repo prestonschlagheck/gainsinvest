@@ -86,73 +86,75 @@ export default function ApiPage({ onBack }: ApiPageProps) {
       </nav>
 
       {/* Main content - Scrollable layout */}
-      <div className="relative z-10 flex flex-col px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
-        <motion.div
-          className="text-center mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <h2 className="text-3xl md:text-4xl font-light text-white mb-2">
-            Powered by APIs
-          </h2>
-          <p className="text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Leveraging cutting-edge APIs and data sources for comprehensive investment advice.
-          </p>
-        </motion.div>
+      <div className="relative z-10 flex flex-col justify-center items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+        <div className="w-full max-w-6xl">
+          <motion.div
+            className="text-center mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-light text-white mb-2">
+              Powered by APIs
+            </h2>
+            <p className="text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Leveraging cutting-edge APIs and data sources for comprehensive investment advice.
+            </p>
+          </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto mb-4">
-          {apis.map((api, index) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto mb-4">
+            {apis.map((api, index) => (
+              <motion.div
+                key={index}
+                className="bg-gray-900/50 border border-gray-800 rounded-xl p-3 hover:border-gray-700 transition-colors"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: index * 0.1 }}
+              >
+                <div className="flex items-start space-x-3 mb-2">
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
+                    {api.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-white mb-1 truncate">
+                      {api.name}
+                    </h3>
+                    <p className="text-blue-400 text-xs font-medium mb-1">
+                      {api.provider}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-gray-300 text-xs leading-relaxed">
+                  {api.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="max-w-6xl mx-auto">
             <motion.div
-              key={index}
-              className="bg-gray-900/50 border border-gray-800 rounded-xl p-3 hover:border-gray-700 transition-colors"
+              className="text-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: index * 0.1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
             >
-              <div className="flex items-start space-x-3 mb-2">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
-                  {api.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-white mb-1 truncate">
-                    {api.name}
-                  </h3>
-                  <p className="text-blue-400 text-xs font-medium mb-1">
-                    {api.provider}
-                  </p>
-                </div>
-              </div>
-              <p className="text-gray-300 text-xs leading-relaxed">
-                {api.description}
+              <h3 className="text-xl font-light text-white mb-3">
+                Integration & Security
+              </h3>
+              <p className="text-gray-300 max-w-4xl mx-auto leading-relaxed mb-4 text-sm">
+                All APIs are integrated through secure, encrypted connections with proper rate limiting 
+                and error handling. Your data privacy and security are our top priorities, with no personal 
+                financial information stored on external servers.
               </p>
+              <button
+                onClick={onBack}
+                className="px-8 py-3 bg-white text-black rounded-full font-medium hover:bg-gray-200 transition-colors"
+              >
+                Start Using G.AI.NS
+              </button>
             </motion.div>
-          ))}
+          </div>
         </div>
-
-        <motion.div
-          className="bg-gray-900/30 border border-gray-800 rounded-2xl p-4 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.7 }}
-        >
-          <h3 className="text-xl font-light text-white mb-2">
-            Integration & Security
-          </h3>
-          <p className="text-gray-300 max-w-3xl mx-auto leading-relaxed mb-3 text-xs">
-            All APIs are integrated through secure, encrypted connections with proper rate limiting 
-            and error handling. Your data privacy and security are our top priorities, with no personal 
-            financial information stored on external servers.
-          </p>
-          <button
-            onClick={onBack}
-            className="px-6 py-2 bg-white text-black rounded-full font-medium hover:bg-gray-200 transition-colors text-sm"
-          >
-            Start Using G.AI.NS
-          </button>
-        </motion.div>
-
-
       </div>
     </div>
   )

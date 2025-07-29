@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { useScreenSize } from '@/lib/useScreenSize'
@@ -28,6 +28,17 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
   const [selectedSectors, setSelectedSectors] = useState<string[]>(
     userProfile?.sectors || []
   )
+
+  // Add class to body to prevent scrolling
+  React.useEffect(() => {
+    document.body.classList.add('questionnaire-active')
+    document.documentElement.classList.add('questionnaire-active')
+    
+    return () => {
+      document.body.classList.remove('questionnaire-active')
+      document.documentElement.classList.remove('questionnaire-active')
+    }
+  }, [])
 
   // Dynamic grid columns based on screen size
   const getGridColumns = () => {
@@ -60,13 +71,16 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
   }
 
   return (
-    <div className="step-layout">
-      <div className="step-header">
-        <h2 className="text-2xl font-semibold text-white">Sectors of Interest</h2>
-      </div>
+    <div className="fixed inset-0 flex flex-col justify-center items-center p-6 overflow-hidden questionnaire-page" style={{ overflow: 'hidden' }}>
+      {/* Main Content - Centered */}
+      <div className="flex flex-col items-center justify-center gap-6 max-w-4xl w-full">
+        {/* Title - Above content */}
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-white">Sectors of Interest</h2>
+        </div>
 
-      <div className={`step-body ${screenSize.isMobile ? 'overflow-y-auto max-h-[calc(100vh-280px)]' : ''}`}>
-        <div className={`grid ${getGridColumns()} gap-3`}>
+        {/* Content */}
+        <div className={`grid ${getGridColumns()} gap-3 w-full`}>
         {SECTORS.map((sector) => {
           const isSelected = selectedSectors.includes(sector.id)
           
@@ -100,14 +114,15 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
         </div>
       </div>
 
-      <div className="step-footer">
-        <div className="flex gap-3 w-full">
+      {/* Footer - Fixed at bottom */}
+      <div className="absolute bottom-6 left-6 right-6">
+        <div className="flex gap-4 w-full max-w-2xl mx-auto">
           {onBack && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBack}
-              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
+              className="flex-[1] border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 py-4 px-6 rounded-lg text-lg font-medium transition-all duration-200 flex items-center justify-center"
             >
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
@@ -116,7 +131,7 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onComplete({ sectors: selectedSectors })}
-            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-3 px-4 rounded-lg text-lg font-medium transition-all duration-200"
+            className="flex-[2] border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white py-4 px-6 rounded-lg text-lg font-medium transition-all duration-200"
             disabled={selectedSectors.length === 0}
           >
             Continue
