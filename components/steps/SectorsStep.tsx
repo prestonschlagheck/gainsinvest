@@ -91,19 +91,19 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => toggleSector(sector.id)}
-                className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 ${screenSize.isMobile ? 'h-auto min-h-[120px]' : 'h-[90px]'} w-full ${
+                className={`group relative ${screenSize.isMobile ? 'p-3' : 'p-6'} rounded-xl text-center transition-all duration-300 border-2 w-full ${
                   isSelected 
                     ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
                     : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
                 }`}
               >
-                <div className="flex flex-col h-full justify-center">
-                  <h3 className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} font-semibold mb-2 leading-tight px-2 ${
+                <div className="flex flex-col justify-center">
+                  <h3 className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-medium mb-2 leading-tight ${
                     isSelected ? 'text-white' : 'text-gray-200'
                   }`}>
                     {sector.name}
                   </h3>
-                  <p className={`${screenSize.isMobile ? 'text-xs' : 'text-xs'} leading-relaxed px-2 ${
+                  <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} leading-relaxed ${
                     isSelected ? 'text-gray-300' : 'text-gray-400'
                   }`}>
                     {sector.examples}
