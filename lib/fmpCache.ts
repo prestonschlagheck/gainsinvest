@@ -47,44 +47,9 @@ class FMPCache {
   private baseUrl = 'https://financialmodelingprep.com/api/v3'
   private dailyCallCount = 0
   private lastResetDate = new Date().toDateString()
-  private counterFile = 'fmp-counter.json'
-
   constructor(apiKey: string) {
     this.apiKey = apiKey
-    this.loadCounterFromFile()
     this.resetDailyCountIfNeeded()
-  }
-
-  private loadCounterFromFile() {
-    try {
-      if (typeof window === 'undefined') { // Server-side only
-        const fs = require('fs')
-        if (fs.existsSync(this.counterFile)) {
-          const data = JSON.parse(fs.readFileSync(this.counterFile, 'utf8'))
-          this.dailyCallCount = data.dailyCallCount || 0
-          this.lastResetDate = data.lastResetDate || new Date().toDateString()
-          console.log(`📊 Loaded FMP counter: ${this.dailyCallCount} calls on ${this.lastResetDate}`)
-        }
-      }
-    } catch (error) {
-      console.warn('⚠️ Failed to load FMP counter from file:', error)
-    }
-  }
-
-  private saveCounterToFile() {
-    try {
-      if (typeof window === 'undefined') { // Server-side only
-        const fs = require('fs')
-        const data = {
-          dailyCallCount: this.dailyCallCount,
-          lastResetDate: this.lastResetDate,
-          updatedAt: new Date().toISOString()
-        }
-        fs.writeFileSync(this.counterFile, JSON.stringify(data, null, 2))
-      }
-    } catch (error) {
-      console.warn('⚠️ Failed to save FMP counter to file:', error)
-    }
   }
 
   private resetDailyCountIfNeeded() {
@@ -92,7 +57,6 @@ class FMPCache {
     if (this.lastResetDate !== today) {
       this.dailyCallCount = 0
       this.lastResetDate = today
-      this.saveCounterToFile()
       console.log('🔄 FMP daily call count reset')
     }
   }
@@ -150,7 +114,6 @@ class FMPCache {
     }
 
     this.dailyCallCount++
-    this.saveCounterToFile()
     console.log(`✅ FMP API call successful. Daily count: ${this.dailyCallCount}/250`)
 
     return response.json()

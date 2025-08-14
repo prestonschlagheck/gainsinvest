@@ -45,4 +45,8 @@ yarn-error.log*
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Cache files
+fmp-counter.json
+.job-queue/ 
