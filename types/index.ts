@@ -15,6 +15,8 @@ export interface PortfolioItem {
   symbol: string
   amount: number
   type: 'stock' | 'crypto' | 'etf' | 'bond' | 'other'
+  currentPrice?: number
+  currentValue?: number
 }
 
 export interface ChatMessage {
@@ -45,6 +47,25 @@ export interface InvestmentRecommendation {
   expectedAnnualReturn: number
   volatility?: number
   targetPrice?: number
+  stopLoss?: number
+  currentPrice?: number
+  currentValue?: number
+  isExistingHolding?: boolean
+  originalAmount?: number
+  allocationPercentage?: number
+}
+
+export interface PortfolioAllocation {
+  buy: InvestmentRecommendation[]
+  sell: InvestmentRecommendation[]
+  hold: InvestmentRecommendation[]
+  totalBuyAmount: number
+  totalSellAmount: number
+  totalHoldAmount: number
+  availableCash: number
+  totalPortfolioValue: number
+  isMathematicallyConsistent: boolean
+  rebalancingRequired: boolean
 }
 
 export interface MarketData {

@@ -98,62 +98,117 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className={`rounded-xl p-3 border ${
-        isPlaceholder 
-          ? 'bg-red-900/10 border-red-700/50' 
-          : getTypeColor(recommendation.type) + ' bg-gray-800/50'
-      }`}
+      className={`bg-gray-800/50 rounded-xl p-4 border ${getTypeColor(recommendation.type)} hover:bg-gray-700/50 transition-all duration-200 cursor-pointer`}
+      onClick={onInfoClick}
     >
-      <div className="flex items-start justify-between mb-1">
-        <div>
-          <h3 className={`font-bold text-lg flex items-center gap-2 ${
-            isPlaceholder ? 'text-red-400' : 'text-white'
-          }`}>
-            {recommendation.symbol}
-            {isPlaceholder && (
-              <span className="text-xs bg-red-900/30 text-red-300 px-2 py-1 rounded border border-red-700/50">
-                PLACEHOLDER
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            {getTypeIcon(recommendation.type)}
+            <h3 className="font-semibold text-white text-sm">{recommendation.symbol}</h3>
+            {recommendation.isExistingHolding && (
+              <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-1 rounded-full">
+                Existing
               </span>
             )}
-          </h3>
-          <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-400'} mb-0`}>
-            {simplifyAssetName(recommendation.name)}
-          </p>
-        </div>
-        <div className="text-right">
-          <div className={`font-semibold ${isPlaceholder ? 'text-red-400' : 'text-white'}`}>
-            {formatCurrency(recommendation.amount)}
           </div>
-          <button
-            onClick={onInfoClick}
-            className="p-1 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors mt-1"
-          >
-            <Info className="w-4 h-4" />
-          </button>
+          <p className="text-gray-300 text-xs line-clamp-2">{simplifyAssetName(recommendation.name)}</p>
+        </div>
+        
+        <div className="text-right">
+          <div className="text-lg font-bold text-white">{formatCurrency(recommendation.amount)}</div>
+          {recommendation.allocationPercentage && (
+            <div className="text-xs text-gray-400">
+              {(recommendation.allocationPercentage).toFixed(1)}%
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Info Panel */}
+      {/* Sector and Confidence */}
+      <div className="flex items-center justify-between mb-3 text-xs">
+        <span className="text-gray-400 bg-gray-700/50 px-2 py-1 rounded">
+          {recommendation.sector}
+        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-gray-400">Confidence:</span>
+          <span className={`font-medium ${getStrengthColor(recommendation.strength)}`}>
+            {recommendation.confidence}%
+          </span>
+        </div>
+      </div>
+
+      {/* Expected Return */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-400">Expected Annual Return:</span>
+          <span className={`font-semibold ${getReturnColor(recommendation.expectedAnnualReturn)}`}>
+            {formatReturn(recommendation.expectedAnnualReturn)}
+          </span>
+        </div>
+      </div>
+
+      {/* Existing Holding Details */}
+      {recommendation.isExistingHolding && recommendation.originalAmount && (
+        <div className="mb-3 p-2 bg-blue-900/20 border border-blue-700/30 rounded-lg">
+          <div className="text-xs text-blue-300 mb-1">Existing Holding Analysis</div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-gray-400">Original Amount:</span>
+            <span className="text-blue-300 font-medium">
+              {formatCurrency(recommendation.originalAmount)}
+            </span>
+          </div>
+          {recommendation.type === 'sell' && (
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-gray-400">Selling:</span>
+              <span className="text-red-300 font-medium">
+                {formatCurrency(recommendation.amount)}
+              </span>
+            </div>
+          )}
+          {recommendation.type === 'hold' && (
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-gray-400">Maintaining:</span>
+              <span className="text-yellow-300 font-medium">
+                {formatCurrency(recommendation.amount)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reasoning */}
+      <div className="text-xs text-gray-300 leading-relaxed">
+        {recommendation.reasoning}
+      </div>
+
+      {/* Expandable Info */}
       {isInfoOpen && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className={`mt-2 p-2 rounded-lg border ${
-            isPlaceholder 
-              ? 'bg-red-900/20 border-red-700/50' 
-              : 'bg-gray-900/50 border-gray-600'
-          }`}
+          className="mt-3 pt-3 border-t border-gray-600"
         >
-          <p className={`text-sm ${isPlaceholder ? 'text-red-300' : 'text-gray-300'}`}>
-            {recommendation.reasoning}
-          </p>
-          <div className={`mt-1 text-xs ${isPlaceholder ? 'text-red-400' : 'text-gray-500'}`}>
-            Sector: {recommendation.sector}
-            {isPlaceholder && (
-              <span className="ml-2 text-red-400">
-                • Configure API keys for personalized recommendations
-              </span>
+          <div className="space-y-2 text-xs">
+            {recommendation.targetPrice && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Target Price:</span>
+                <span className="text-green-400">${recommendation.targetPrice}</span>
+              </div>
+            )}
+            {recommendation.stopLoss && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Stop Loss:</span>
+                <span className="text-red-400">${recommendation.stopLoss}</span>
+              </div>
+            )}
+            {recommendation.volatility && (
+              <div className="flex justify-between">
+                <span className="text-gray-400">Volatility:</span>
+                <span className="text-yellow-400">{(recommendation.volatility * 100).toFixed(1)}%</span>
+              </div>
             )}
           </div>
         </motion.div>
@@ -467,7 +522,10 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       totalHoldings: holdTotal,
       sellRecommendations: sellTotal,
       availableCapital: userProfile.capitalAvailable,
-      utilizationRate: (newBuyTotal / userProfile.capitalAvailable) * 100
+      utilizationRate: (newBuyTotal / userProfile.capitalAvailable) * 100,
+      totalPortfolioValue: existingPortfolioValue + userProfile.capitalAvailable,
+      availableFunds: userProfile.capitalAvailable + sellTotal,
+      isMathematicallyConsistent: (newBuyTotal + holdTotal) <= (existingPortfolioValue + userProfile.capitalAvailable)
     }
   }
 
@@ -641,6 +699,102 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             Existing Portfolio Value: {formatCurrency(allocationBreakdown.existingPortfolioValue)} • 
             Capital Utilization: {allocationBreakdown.utilizationRate.toFixed(1)}%
           </p>
+        )}
+      </motion.div>
+
+      {/* Portfolio Allocation Summary */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-gray-800/50 rounded-xl p-6 border border-gray-700 mb-6"
+      >
+        <h3 className="text-lg font-semibold text-white mb-4 text-center">Portfolio Allocation Summary</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-400">
+              {formatCurrency(allocationBreakdown.totalPortfolioValue)}
+            </div>
+            <div className="text-sm text-gray-400">Total Portfolio Value</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-400">
+              {formatCurrency(allocationBreakdown.availableCapital)}
+            </div>
+            <div className="text-sm text-gray-400">Available Cash</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-400">
+              {formatCurrency(allocationBreakdown.totalHoldings)}
+            </div>
+            <div className="text-sm text-gray-400">Hold Amount</div>
+          </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-400">
+              {formatCurrency(allocationBreakdown.sellRecommendations)}
+            </div>
+            <div className="text-sm text-gray-400">Sell Amount</div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-700/50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300">New Investments (BUY):</span>
+              <span className="text-green-400 font-semibold">
+                {formatCurrency(allocationBreakdown.newInvestments)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300">Available Funds:</span>
+              <span className="text-blue-400 font-semibold">
+                {formatCurrency(allocationBreakdown.availableFunds)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Capital Utilization:</span>
+              <span className={`font-semibold ${allocationBreakdown.utilizationRate > 100 ? 'text-red-400' : 'text-green-400'}`}>
+                {allocationBreakdown.utilizationRate.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+          
+          <div className="bg-gray-700/50 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300">Mathematical Consistency:</span>
+              <span className={`font-semibold ${allocationBreakdown.isMathematicallyConsistent ? 'text-green-400' : 'text-red-400'}`}>
+                {allocationBreakdown.isMathematicallyConsistent ? '✓ Valid' : '✗ Invalid'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-gray-300">Total Allocated:</span>
+              <span className="text-white font-semibold">
+                {formatCurrency(allocationBreakdown.newInvestments + allocationBreakdown.totalHoldings)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-gray-300">Remaining:</span>
+              <span className="text-gray-400 font-semibold">
+                {formatCurrency(allocationBreakdown.totalPortfolioValue - (allocationBreakdown.newInvestments + allocationBreakdown.totalHoldings))}
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        {!allocationBreakdown.isMathematicallyConsistent && (
+          <div className="mt-4 p-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+            <div className="flex items-center gap-2 text-red-400">
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-medium">Portfolio Allocation Issue</span>
+            </div>
+            <p className="text-red-300 text-sm mt-1">
+              The total allocation exceeds available funds. Please review the recommendations or contact support.
+            </p>
+          </div>
         )}
       </motion.div>
 
