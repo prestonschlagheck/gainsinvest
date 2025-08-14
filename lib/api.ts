@@ -1,6 +1,8 @@
 // API Configuration for G.AI.NS Investment Platform
 // Multi-Provider Fallback System: Alpha Vantage → Twelve Data → Finnhub
 
+import { InvestmentRecommendation, InvestmentAnalysis, PortfolioProjection } from '@/types'
+
 // ========================================
 // API KEYS CONFIGURATION
 // ========================================
@@ -258,15 +260,9 @@ async function gatherComprehensiveMarketData(userProfile: any): Promise<string> 
           
           // Get additional fundamental data if available
           let fundamentalData = ''
-          try {
-            const ratios = await fmpCache.getRatios(etfSymbol)
-            if (ratios && ratios.length > 0) {
-              const latest = ratios[0]
-              fundamentalData = ` | P/E: ${latest.peRatio?.toFixed(2) || 'N/A'} | P/B: ${latest.pbRatio?.toFixed(2) || 'N/A'} | ROE: ${latest.roe?.toFixed(2) || 'N/A'}%`
-            }
-          } catch (ratioError) {
-            // Ratios not available, continue with quote data
-          }
+          // Note: FMP quote endpoint doesn't include financial ratios
+          // For now, we'll use the available quote data
+          // TODO: Add getRatios method to FMPCache for comprehensive fundamental data
           
           const performance = quote.changesPercentage > 0 ? 'OUTPERFORMING' : 'UNDERPERFORMING'
           marketSummary += `• ${sector} (${etfSymbol}): $${quote.price} (${quote.changesPercentage > 0 ? '+' : ''}${quote.changesPercentage.toFixed(2)}%) - ${performance}${fundamentalData}\n`
@@ -323,15 +319,9 @@ async function gatherComprehensiveMarketData(userProfile: any): Promise<string> 
             
             // Get additional fundamental data
             let fundamentalData = ''
-            try {
-              const ratios = await fmpCache.getRatios(etfSymbol)
-              if (ratios && ratios.length > 0) {
-                const latest = ratios[0]
-                fundamentalData = ` | P/E: ${latest.peRatio?.toFixed(2) || 'N/A'} | P/B: ${latest.pbRatio?.toFixed(2) || 'N/A'} | ROE: ${latest.roe?.toFixed(2) || 'N/A'}%`
-              }
-            } catch (ratioError) {
-              // Ratios not available
-            }
+            // Note: FMP quote endpoint doesn't include financial ratios
+            // For now, we'll use the available quote data
+            // TODO: Add getRatios method to FMPCache for comprehensive fundamental data
             
             const performance = quote.changesPercentage > 0 ? 'OUTPERFORMING' : 'UNDERPERFORMING'
             const recommendation = quote.changesPercentage > 1 ? 'FAVORABLE' : quote.changesPercentage < -1 ? 'CAUTION' : 'NEUTRAL'
@@ -402,15 +392,9 @@ async function analyzeExistingPortfolio(existingPortfolio: any[], availableCapit
           
           // Get additional fundamental data if available
           let fundamentalData = ''
-          try {
-            const ratios = await fmpCache.getRatios(holding.symbol)
-            if (ratios && ratios.length > 0) {
-              const latest = ratios[0]
-              fundamentalData = ` | P/E: ${latest.peRatio?.toFixed(2) || 'N/A'} | P/B: ${latest.pbRatio?.toFixed(2) || 'N/A'} | ROE: ${latest.roe?.toFixed(2) || 'N/A'}%`
-            }
-          } catch (ratioError) {
-            // Ratios not available, continue with quote data
-          }
+          // Note: FMP quote endpoint doesn't include financial ratios
+          // For now, we'll use the available quote data
+          // TODO: Add getRatios method to FMPCache for comprehensive fundamental data
           
           analysis += `• ${holding.symbol}: $${holding.amount?.toLocaleString()} (${allocation}% of holdings) - Current: $${quote.price} (${quote.changesPercentage > 0 ? '+' : ''}${quote.changesPercentage.toFixed(2)}%) - ${performance}${fundamentalData}\n`
           
@@ -959,41 +943,9 @@ export async function getHistoricalData(symbol: string, period: string = '1year'
 // AI ANALYSIS FUNCTIONS
 // ========================================
 
-export interface InvestmentAnalysis {
-  recommendations: InvestmentRecommendation[]
-  reasoning: string
-  riskAssessment: string
-  marketOutlook: string
-  portfolioProjections?: PortfolioProjection
-  error?: string
-}
 
-export interface PortfolioProjection {
-  totalInvestment: number
-  monthlyProjections: { month: number; value: number; date: string }[]
-  projectedValues: {
-    oneYear: number
-    threeYear: number
-    fiveYear: number
-  }
-  expectedAnnualReturn: number
-  riskLevel: 'low' | 'medium' | 'high'
-  diversificationScore: number
-  sectorBreakdown: { [sector: string]: number }
-}
 
-export interface InvestmentRecommendation {
-  symbol: string
-  name: string
-  type: 'buy' | 'sell' | 'hold'
-  amount: number
-  confidence: number
-  reasoning: string
-  sector: string
-  targetPrice?: number
-  stopLoss?: number
-  expectedAnnualReturn: number
-}
+
 
 export async function generateInvestmentRecommendations(
   userProfile: any,
@@ -1329,6 +1281,7 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
               name: existingHolding.symbol,
               type: 'hold',
               amount: existingHolding.amount,
+              strength: 'moderate',
               confidence: 70,
               reasoning: `Existing holding - maintaining position for portfolio stability`,
               sector: 'Existing Holdings',
@@ -1614,6 +1567,7 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
               name: existingHolding.symbol,
               type: 'hold',
               amount: existingHolding.amount,
+              strength: 'moderate',
               confidence: 70,
               reasoning: `Existing holding - maintaining position for portfolio stability`,
               sector: 'Existing Holdings',
@@ -1798,6 +1752,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Vanguard Total Bond Market ETF',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.4),
+        strength: 'strong',
         confidence: 95,
         reasoning: 'Stable bond ETF for conservative portfolio foundation',
         sector: 'Fixed Income',
@@ -1810,6 +1765,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Vanguard Total Stock Market ETF',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.35),
+        strength: 'strong',
         confidence: 90,
         reasoning: 'Broad market diversification for steady growth',
         sector: 'Broad Market',
@@ -1822,6 +1778,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Johnson & Johnson',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.25),
+        strength: 'moderate',
         confidence: 88,
         reasoning: 'Defensive healthcare stock for stability',
         sector: 'Healthcare',
@@ -1838,6 +1795,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Vanguard Total Stock Market ETF',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.25),
+        strength: 'strong',
         confidence: 92,
         reasoning: 'Core holding for balanced diversification',
         sector: 'Broad Market',
@@ -1850,6 +1808,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Invesco QQQ Trust',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.2),
+        strength: 'strong',
         confidence: 87,
         reasoning: 'Technology growth exposure for moderate risk profile',
         sector: 'Technology',
@@ -1862,6 +1821,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Apple Inc',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.15),
+        strength: 'moderate',
         confidence: 85,
         reasoning: 'Quality growth stock with strong fundamentals',
         sector: 'Technology',
@@ -1874,6 +1834,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Vanguard Total Bond Market ETF',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.2),
+        strength: 'strong',
         confidence: 93,
         reasoning: 'Stability component for balanced portfolio',
         sector: 'Fixed Income',
@@ -1886,6 +1847,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'SPDR Gold Shares',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.1),
+        strength: 'moderate',
         confidence: 80,
         reasoning: 'Inflation hedge and portfolio diversifier',
         sector: 'Commodities',
@@ -1898,6 +1860,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Microsoft Corporation',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.1),
+        strength: 'strong',
         confidence: 88,
         reasoning: 'AI and cloud computing leader',
         sector: 'Technology',
@@ -1914,6 +1877,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Invesco QQQ Trust',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.25),
+        strength: 'strong',
         confidence: 85,
         reasoning: 'High-growth tech exposure for aggressive portfolio',
         sector: 'Technology',
@@ -1926,6 +1890,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'NVIDIA Corporation',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.2),
+        strength: 'strong',
         confidence: 80,
         reasoning: 'AI leader with high growth potential',
         sector: 'Technology',
@@ -1938,6 +1903,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Vanguard Total Stock Market ETF',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.15),
+        strength: 'strong',
         confidence: 90,
         reasoning: 'Core diversification for growth portfolio',
         sector: 'Broad Market',
@@ -1950,6 +1916,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Tesla Inc',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.15),
+        strength: 'moderate',
         confidence: 75,
         reasoning: 'Electric vehicle and energy innovation leader',
         sector: 'Technology',
@@ -1962,6 +1929,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Bitcoin',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.15),
+        strength: 'weak',
         confidence: 70,
         reasoning: 'Cryptocurrency exposure for high-risk, high-reward potential',
         sector: 'Cryptocurrency',
@@ -1974,6 +1942,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
         name: 'Vanguard Total Bond Market ETF',
         type: 'buy',
         amount: Math.round(capitalAvailable * 0.1),
+        strength: 'strong',
         confidence: 85,
         reasoning: 'Small stability component for risk management',
         sector: 'Fixed Income',
@@ -2303,7 +2272,7 @@ async function generateOptimizedRecommendations(userProfile: any, totalPortfolio
         amount,
         strength: asset.expectedReturn >= 0.15 ? 'strong' : asset.expectedReturn >= 0.10 ? 'moderate' : 'weak',
         confidence: Math.round(asset.expectedReturn * 100),
-        reasoning: `High-return ${asset.category.toLowerCase()} asset with ${(asset.expectedReturn * 100).toFixed(1)}% expected annual return. Selected for optimal risk-adjusted returns based on your ${riskTolerance}/10 risk tolerance and ${growthType} growth preferences.`,
+        reasoning: `High-return ${category.toLowerCase()} asset with ${(asset.expectedReturn * 100).toFixed(1)}% expected annual return. Selected for optimal risk-adjusted returns based on your ${riskTolerance}/10 risk tolerance and ${growthType} growth preferences.`,
         sector: asset.sector,
         expectedAnnualReturn: asset.expectedReturn,
         targetPrice: 0, // Will be set by market data
