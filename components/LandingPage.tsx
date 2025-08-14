@@ -492,97 +492,81 @@ export default function LandingPage({
         </motion.button>
       </div>
 
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Navigation Menu Popup */}
       <AnimatePresence>
         {showMobileMenu && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 z-30 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-            onClick={() => {
-              setShowMobileMenu(false)
-              // If we're not already on landing page, this will effectively refresh/reset to landing
-            }}
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            className="md:hidden fixed bottom-20 right-4 z-30 bg-gray-900 rounded-lg border border-gray-700 shadow-2xl min-w-[200px]"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-gray-900 rounded-2xl p-6 border border-gray-700 shadow-2xl max-w-sm w-full mx-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-center items-center mb-6">
-                <h2 className="text-xl font-semibold text-white uppercase tracking-wide">Explore</h2>
-              </div>
+            <div className="p-3 space-y-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  onNavigateToHowToUse()
+                }}
+                className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200 text-sm"
+              >
+                How to Use
+              </motion.button>
 
-              <div className="space-y-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setShowMobileMenu(false)
-                    onNavigateToHowToUse()
-                  }}
-                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
-                >
-                  How to Use
-                </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  onNavigateToHowItWorks()
+                }}
+                className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200 text-sm"
+              >
+                How it Works
+              </motion.button>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setShowMobileMenu(false)
-                    onNavigateToHowItWorks()
-                  }}
-                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
-                >
-                  How it Works
-                </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  onNavigateToApis()
+                }}
+                className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200 text-sm"
+              >
+                Utilized APIs
+              </motion.button>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setShowMobileMenu(false)
-                    onNavigateToApis()
-                  }}
-                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
-                >
-                  Utilized APIs
-                </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setShowMobileMenu(false)
+                  onNavigateToContact()
+                }}
+                className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200 text-sm"
+              >
+                Contact
+              </motion.button>
 
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setShowMobileMenu(false)
-                    onNavigateToContact()
-                  }}
-                  className="w-full text-left p-3 rounded-lg border border-gray-700 hover:border-gray-600 hover:bg-gray-800/30 text-gray-300 hover:text-white transition-all duration-200"
-                >
-                  Contact
-                </motion.button>
-
-                {/* Only show TRY G.AI.NS button for non-logged-in users */}
-                {!session?.user && (
-                  <div className="pt-3 border-t border-gray-700">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setShowMobileMenu(false)
-                        handleTryGains()
-                      }}
-                      className="w-full text-left p-3 rounded-lg border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white transition-all duration-200 font-medium"
-                    >
-                      TRY G.AI.NS
-                    </motion.button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
+              {/* Only show TRY G.AI.NS button for non-logged-in users */}
+              {!session?.user && (
+                <div className="pt-2 border-t border-gray-700">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      setShowMobileMenu(false)
+                      handleTryGains()
+                    }}
+                    className="w-full text-left p-3 rounded-lg border border-gray-600 hover:border-gray-500 hover:bg-gray-800/30 text-white transition-all duration-200 font-medium text-sm"
+                  >
+                    TRY G.AI.NS
+                  </motion.button>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

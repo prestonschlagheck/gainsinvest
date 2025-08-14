@@ -87,22 +87,22 @@ export default function ApiPage({ onBack }: ApiPageProps) {
 
       {/* Main content - Scrollable layout */}
       <div className="relative z-10 flex flex-col justify-center items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-2xl mx-auto">
           <motion.div
             className="text-center mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-3xl md:text-4xl font-light text-white mb-2">
+            <h2 className="text-2xl md:text-4xl font-light text-white mb-2">
               Powered by APIs
             </h2>
-            <p className="text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
               Leveraging cutting-edge APIs and data sources for comprehensive investment advice.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto mb-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-2xl mx-auto mb-4">
             {apis.map((api, index) => (
               <motion.div
                 key={index}
@@ -131,7 +131,7 @@ export default function ApiPage({ onBack }: ApiPageProps) {
             ))}
           </div>
 
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-2xl mx-auto">
             <motion.div
               className="text-center"
               initial={{ opacity: 0, y: 20 }}
@@ -141,7 +141,7 @@ export default function ApiPage({ onBack }: ApiPageProps) {
               <h3 className="text-xl font-light text-white mb-3">
                 Integration & Security
               </h3>
-              <p className="text-gray-300 max-w-4xl mx-auto leading-relaxed mb-4 text-sm">
+              <p className="text-gray-300 max-w-2xl mx-auto leading-relaxed mb-4 text-sm">
                 All APIs are integrated through secure, encrypted connections with proper rate limiting 
                 and error handling. Your data privacy and security are our top priorities, with no personal 
                 financial information stored on external servers.

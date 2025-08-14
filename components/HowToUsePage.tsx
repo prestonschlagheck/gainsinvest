@@ -71,22 +71,22 @@ export default function HowToUsePage({ onBack }: HowToUsePageProps) {
 
       {/* Main content - Scrollable layout */}
       <div className="relative z-10 flex flex-col justify-center items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-2xl mx-auto">
           <motion.div
             className="text-center mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-4xl md:text-5xl font-light text-white mb-2">
+            <h2 className="text-3xl md:text-5xl font-light text-white mb-2">
               Getting Started
             </h2>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto">
               Follow these simple steps to start your investment journey with G.AI.NS
             </p>
           </motion.div>
 
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-6xl mx-auto">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
             {steps.map((step, index) => (
               <motion.div
                 key={index}

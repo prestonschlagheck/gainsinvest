@@ -81,23 +81,23 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
 
       {/* Main content - Updated layout to allow scrolling */}
       <div className="relative z-10 flex flex-col justify-center items-center px-6 py-6 pb-8 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
-        <div className="w-full max-w-6xl">
+        <div className="w-full max-w-2xl mx-auto">
           <motion.div
             className="text-center mb-6 flex-shrink-0"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-3xl md:text-4xl font-light text-white mb-2">
+            <h2 className="text-2xl md:text-4xl font-light text-white mb-2">
               Powered by AI
             </h2>
-            <p className="text-base text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-sm md:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
               AI-powered investment guidance combining market data with personalized recommendations.
             </p>
           </motion.div>
 
           <div className="flex flex-col">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-6xl mx-auto mb-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-2xl mx-auto mb-6">
               {features.map((feature, index) => (
                 <motion.div
                   key={index}
@@ -121,7 +121,7 @@ export default function HowItWorksPage({ onBack }: HowItWorksPageProps) {
 
             {/* Process Flow - Updated to match grid width */}
             <motion.div
-              className="max-w-6xl mx-auto"
+              className="max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.7 }}
