@@ -9,19 +9,27 @@ export async function GET(request: NextRequest) {
     // Clean up expired cache entries
     fmpCache.cleanupCache()
     
-    // For serverless environment, show a more realistic representation
-    // Since the counter resets on each function call, we'll show a simulated count
-    const simulatedDailyCalls = Math.min(stats.dailyCallCount + Math.floor(Math.random() * 50), 200)
-    const remainingCalls = 250 - simulatedDailyCalls
+    // Get real API usage data
+    const dailyApiCalls = stats.dailyCallCount
+    const remainingCalls = Math.max(0, 250 - dailyApiCalls)
+    const usagePercentage = ((dailyApiCalls / 250) * 100).toFixed(1)
+    
+    // Determine status based on remaining calls
+    let status = 'healthy'
+    if (remainingCalls <= 10) {
+      status = 'critical'
+    } else if (remainingCalls <= 50) {
+      status = 'warning'
+    }
     
     return NextResponse.json({
       success: true,
       stats: {
         cacheSize: stats.size,
-        dailyApiCalls: simulatedDailyCalls,
+        dailyApiCalls: dailyApiCalls,
         remainingCalls: remainingCalls,
-        usagePercentage: ((simulatedDailyCalls / 250) * 100).toFixed(1),
-        status: remainingCalls > 50 ? 'healthy' : remainingCalls > 10 ? 'warning' : 'critical'
+        usagePercentage: usagePercentage,
+        status: status
       },
       limits: {
         dailyLimit: 250,
@@ -34,7 +42,7 @@ export async function GET(request: NextRequest) {
         batchingActive: true,
         failoverEnabled: true
       },
-      note: 'Counter simulated for serverless environment'
+      note: 'Real-time API usage tracking'
     })
   } catch (error) {
     console.error('FMP Stats Error:', error)

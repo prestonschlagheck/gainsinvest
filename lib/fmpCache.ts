@@ -1,6 +1,9 @@
 // FMP API Caching System
 // Optimized for Financial Modeling Prep API with batching and intelligent caching
 
+import { writeFileSync, readFileSync, existsSync } from 'fs'
+import { join } from 'path'
+
 interface CacheItem<T> {
   data: T
   timestamp: number
@@ -40,6 +43,12 @@ interface FMPNewsItem {
   publishedDate: string
 }
 
+interface DailyCountData {
+  dailyCallCount: number
+  lastResetDate: string
+  updatedAt: string
+}
+
 class FMPCache {
   private cache: Map<string, CacheItem<any>> = new Map()
   private pendingRequests: Map<string, Promise<any>> = new Map()
@@ -47,17 +56,78 @@ class FMPCache {
   private baseUrl = 'https://financialmodelingprep.com/api/v3'
   private dailyCallCount = 0
   private lastResetDate = new Date().toDateString()
+  private dailyCountFile: string
+  
   constructor(apiKey: string) {
     this.apiKey = apiKey
+    // Use the existing fmp-counter.json file for persistence
+    this.dailyCountFile = join(process.cwd(), 'fmp-counter.json')
+    this.loadDailyCount()
     this.resetDailyCountIfNeeded()
+  }
+
+  private loadDailyCount() {
+    try {
+      // Try to load from file first (server-side persistence)
+      if (existsSync(this.dailyCountFile)) {
+        const fileContent = readFileSync(this.dailyCountFile, 'utf8')
+        const data: DailyCountData = JSON.parse(fileContent)
+        
+        this.dailyCallCount = data.dailyCallCount || 0
+        this.lastResetDate = data.lastResetDate || new Date().toDateString()
+        
+        console.log(`📊 Loaded FMP daily count from file: ${this.dailyCallCount} from ${this.lastResetDate}`)
+      } else {
+        // Fallback to localStorage if available (client-side)
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const stored = localStorage.getItem('fmp_daily_count')
+          const storedDate = localStorage.getItem('fmp_last_reset')
+          
+          if (stored && storedDate) {
+            this.dailyCallCount = parseInt(stored, 10)
+            this.lastResetDate = storedDate
+            console.log(`📊 Loaded FMP daily count from localStorage: ${this.dailyCallCount} from ${storedDate}`)
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Could not load FMP daily count from storage:', error)
+    }
+  }
+
+  private saveDailyCount() {
+    try {
+      // Save to file for server-side persistence
+      const data: DailyCountData = {
+        dailyCallCount: this.dailyCallCount,
+        lastResetDate: this.lastResetDate,
+        updatedAt: new Date().toISOString()
+      }
+      writeFileSync(this.dailyCountFile, JSON.stringify(data, null, 2))
+      
+      // Also try to save to localStorage if available (client-side backup)
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('fmp_daily_count', this.dailyCallCount.toString())
+        localStorage.setItem('fmp_last_reset', this.lastResetDate)
+      }
+      
+      console.log(`💾 Saved FMP daily count: ${this.dailyCallCount} to file and localStorage`)
+    } catch (error) {
+      console.warn('Could not save FMP daily count to storage:', error)
+    }
   }
 
   private resetDailyCountIfNeeded() {
     const today = new Date().toDateString()
+    console.log(`🔍 FMP reset check - Last reset: ${this.lastResetDate}, Today: ${today}, Current count: ${this.dailyCallCount}`)
+    
     if (this.lastResetDate !== today) {
       this.dailyCallCount = 0
       this.lastResetDate = today
-      console.log('🔄 FMP daily call count reset')
+      this.saveDailyCount()
+      console.log('🔄 FMP daily call count reset to 0')
+    } else {
+      console.log(`✅ FMP daily count maintained: ${this.dailyCallCount}/250`)
     }
   }
 
@@ -95,6 +165,8 @@ class FMPCache {
   private async makeApiCall(url: string): Promise<any> {
     this.resetDailyCountIfNeeded()
     
+    console.log(`🔍 Before API call - Daily count: ${this.dailyCallCount}/250`)
+    
     if (this.dailyCallCount >= 250) {
       throw new Error('Daily API limit reached (250 calls)')
     }
@@ -114,6 +186,7 @@ class FMPCache {
     }
 
     this.dailyCallCount++
+    this.saveDailyCount() // Save count after successful call
     console.log(`✅ FMP API call successful. Daily count: ${this.dailyCallCount}/250`)
 
     return response.json()

@@ -86,7 +86,7 @@ export default function ApiPage({ onBack }: ApiPageProps) {
       </nav>
 
       {/* Main content - Scrollable layout */}
-      <div className="relative z-10 flex flex-col justify-center items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+      <div className="relative z-10 flex flex-col justify-start items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
         <div className="w-full max-w-2xl mx-auto">
           <motion.div
             className="text-center mb-4"

@@ -70,7 +70,7 @@ export default function HowToUsePage({ onBack }: HowToUsePageProps) {
       </nav>
 
       {/* Main content - Scrollable layout */}
-      <div className="relative z-10 flex flex-col justify-center items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
+      <div className="relative z-10 flex flex-col justify-start items-center px-6 py-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)' }}>
         <div className="w-full max-w-2xl mx-auto">
           <motion.div
             className="text-center mb-4"
@@ -97,14 +97,17 @@ export default function HowToUsePage({ onBack }: HowToUsePageProps) {
               >
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400">
-                    {step.icon}
+                    {/* Show numbers on mobile, icons on desktop */}
+                    <span className="md:hidden text-lg font-bold text-blue-400">
+                      {index + 1}
+                    </span>
+                    <div className="hidden md:flex">
+                      {step.icon}
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-lg font-bold text-blue-400">
-                      {(index + 1).toString().padStart(2, '0')}
-                    </span>
                     <h3 className="text-base font-semibold text-white">
                       {step.title}
                     </h3>
