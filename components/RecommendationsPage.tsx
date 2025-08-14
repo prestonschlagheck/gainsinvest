@@ -323,6 +323,9 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               setRecommendations(analysis.recommendations)
               setPortfolioProjections(analysis.portfolioProjections)
               setIsLoading(false)
+              
+              // Trigger API stats refresh after successful recommendation generation
+              window.dispatchEvent(new CustomEvent('refreshApiStats'))
             } else {
               throw new Error('No recommendations in completed job')
             }

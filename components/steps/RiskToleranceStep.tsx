@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface RiskToleranceStepProps {
   onComplete: (data: { riskTolerance: number }) => void
@@ -11,6 +12,7 @@ interface RiskToleranceStepProps {
 }
 
 const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userProfile, onBack }) => {
+  const screenSize = useScreenSize()
   const [riskLevel, setRiskLevel] = useState(userProfile?.riskTolerance || 5)
 
   // Add class to body to prevent scrolling
@@ -62,20 +64,35 @@ const RiskToleranceStep: React.FC<RiskToleranceStepProps> = ({ onComplete, userP
           </div>
         </div>
 
-        {/* Risk Level Examples */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm w-full">
-          <div className={`p-4 rounded-lg border ${riskLevel <= 3 ? 'bg-green-900/20 border-green-700' : 'border-gray-700'}`}>
-            <h4 className="font-medium text-green-400 mb-2">Conservative (1-3)</h4>
-            <p className="text-gray-400">Bonds, CDs, dividend stocks</p>
-          </div>
-          <div className={`p-4 rounded-lg border ${riskLevel >= 4 && riskLevel <= 7 ? 'bg-yellow-900/20 border-yellow-700' : 'border-gray-700'}`}>
-            <h4 className="font-medium text-yellow-400 mb-2">Moderate (4-7)</h4>
-            <p className="text-gray-400">Mixed portfolio, ETFs, blue chips</p>
-          </div>
-          <div className={`p-4 rounded-lg border ${riskLevel >= 8 ? 'bg-red-900/20 border-red-700' : 'border-gray-700'}`}>
-            <h4 className="font-medium text-red-400 mb-2">Aggressive (8-10)</h4>
-            <p className="text-gray-400">Growth stocks, crypto, options</p>
-          </div>
+        {/* Risk Level Examples - Clickable */}
+        <div className={`grid ${screenSize.isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'} w-full`}>
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setRiskLevel(2)}
+            className={`${screenSize.isMobile ? 'p-3' : 'p-4'} rounded-lg border cursor-pointer transition-all duration-200 ${riskLevel <= 3 ? 'bg-green-900/20 border-green-700' : 'border-gray-700 hover:border-green-600'}`}
+          >
+            <h4 className={`font-medium text-green-400 mb-2 ${screenSize.isMobile ? 'text-base' : 'text-lg'}`}>Conservative (1-3)</h4>
+            <p className={`text-gray-400 ${screenSize.isMobile ? 'text-xs' : 'text-sm'}`}>Bonds, CDs, dividend stocks</p>
+          </motion.div>
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setRiskLevel(5)}
+            className={`${screenSize.isMobile ? 'p-3' : 'p-4'} rounded-lg border cursor-pointer transition-all duration-200 ${riskLevel >= 4 && riskLevel <= 7 ? 'bg-yellow-900/20 border-yellow-700' : 'border-gray-700 hover:border-yellow-600'}`}
+          >
+            <h4 className={`font-medium text-yellow-400 mb-2 ${screenSize.isMobile ? 'text-base' : 'text-lg'}`}>Moderate (4-7)</h4>
+            <p className={`text-gray-400 ${screenSize.isMobile ? 'text-xs' : 'text-sm'}`}>Mixed portfolio, ETFs, blue chips</p>
+          </motion.div>
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setRiskLevel(9)}
+            className={`${screenSize.isMobile ? 'p-3' : 'p-4'} rounded-lg border cursor-pointer transition-all duration-200 ${riskLevel >= 8 ? 'bg-red-900/20 border-red-700' : 'border-gray-700 hover:border-red-600'}`}
+          >
+            <h4 className={`font-medium text-red-400 mb-2 ${screenSize.isMobile ? 'text-base' : 'text-lg'}`}>Aggressive (8-10)</h4>
+            <p className={`text-gray-400 ${screenSize.isMobile ? 'text-xs' : 'text-sm'}`}>Growth stocks, crypto, options</p>
+          </motion.div>
         </div>
       </div>
 

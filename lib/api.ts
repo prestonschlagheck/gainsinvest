@@ -137,6 +137,7 @@ export interface StockData {
   peRatio?: number
   dividend?: number
   source: string // Which API provided the data
+  expired?: boolean // Indicates if data is from expired cache
 }
 
 export interface HistoricalData {
@@ -699,7 +700,7 @@ async function getStockDataFinnhub(symbol: string): Promise<ApiResponse<StockDat
   }
 }
 
-// Main function with fallback logic
+// Main function with FMP cache + fallback logic
 export async function getStockData(symbol: string): Promise<StockData | null> {
   console.log(`🔍 Fetching stock data for ${symbol}...`)
   
@@ -708,7 +709,30 @@ export async function getStockData(symbol: string): Promise<StockData | null> {
     return await getCryptocurrencyData(symbol)
   }
 
-  // Get active providers sorted by priority
+  // First try FMP cache system
+  try {
+    const { getFMPCache } = await import('./fmpCache')
+    const fmpCache = getFMPCache()
+    const quote = await fmpCache.getQuote(symbol)
+    
+    return {
+      symbol: quote.symbol,
+      name: quote.name || quote.symbol,
+      price: quote.price,
+      change: quote.change,
+      changePercent: quote.changesPercentage,
+      volume: quote.volume,
+      marketCap: quote.marketCap,
+      peRatio: undefined, // Not available in basic quote
+      dividend: undefined,
+      source: 'Financial Modeling Prep',
+      expired: quote.expired
+    }
+  } catch (fmpError) {
+    console.log(`⚠️ FMP failed: ${fmpError}, trying fallback APIs...`)
+  }
+
+  // Fallback to existing API providers
   const activeProviders = API_PROVIDERS
     .filter(p => p.active)
     .sort((a, b) => a.priority - b.priority)

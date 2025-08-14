@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Clock, Zap, Calendar, ArrowLeft } from 'lucide-react'
+import { useScreenSize } from '@/lib/useScreenSize'
 
 interface TimeHorizonStepProps {
   onComplete: (data: { timeHorizon: 'short' | 'medium' | 'long' }) => void
@@ -11,6 +12,7 @@ interface TimeHorizonStepProps {
 }
 
 const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfile, onBack }) => {
+  const screenSize = useScreenSize()
   const [selectedHorizon, setSelectedHorizon] = useState<'short' | 'medium' | 'long'>(
     userProfile?.timeHorizon || 'medium'
   )
@@ -60,7 +62,7 @@ const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfi
         </div>
 
         {/* Content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+        <div className={`grid ${screenSize.isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 md:grid-cols-3 gap-4'} w-full`}>
         {horizons.map((horizon) => {
           const Icon = horizon.icon
           const isSelected = selectedHorizon === horizon.id
@@ -71,24 +73,24 @@ const TimeHorizonStep: React.FC<TimeHorizonStepProps> = ({ onComplete, userProfi
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedHorizon(horizon.id)}
-              className={`group relative p-6 rounded-xl text-left transition-all duration-300 border-2 ${
+              className={`group relative ${screenSize.isMobile ? 'p-3' : 'p-6'} rounded-xl text-left transition-all duration-300 border-2 ${
                 isSelected 
                   ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
                   : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
               }`}
             >
-              <div className="flex items-center mb-4">
-                <Icon className={`w-8 h-8 ${isSelected ? 'text-white' : 'text-gray-400'}`} />
-                <div className="ml-3">
-                  <h3 className={`text-lg font-medium ${isSelected ? 'text-white' : 'text-gray-200'}`}>
+              <div className={`flex items-center ${screenSize.isMobile ? 'mb-2' : 'mb-4'}`}>
+                <Icon className={`${screenSize.isMobile ? 'w-6 h-6' : 'w-8 h-8'} ${isSelected ? 'text-white' : 'text-gray-400'}`} />
+                <div className={`${screenSize.isMobile ? 'ml-2' : 'ml-3'}`}>
+                  <h3 className={`${screenSize.isMobile ? 'text-base' : 'text-lg'} font-medium ${isSelected ? 'text-white' : 'text-gray-200'}`}>
                     {horizon.title}
                   </h3>
-                  <p className={`text-sm ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                  <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
                     {horizon.subtitle}
                   </p>
                 </div>
               </div>
-              <p className={`text-sm ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+              <p className={`${screenSize.isMobile ? 'text-xs' : 'text-sm'} ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
                 {horizon.description}
               </p>
             </motion.button>

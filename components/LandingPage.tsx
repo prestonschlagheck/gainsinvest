@@ -23,6 +23,7 @@ interface LandingPageProps {
   onGuestContinue: () => void
   onEditResponses?: () => void
   onViewRecommendations?: () => void
+  onApiStatsRefresh?: () => void
 }
 
 export default function LandingPage({ 
@@ -37,7 +38,8 @@ export default function LandingPage({
   onStartFresh,
   onGuestContinue,
   onEditResponses,
-  onViewRecommendations
+  onViewRecommendations,
+  onApiStatsRefresh
 }: LandingPageProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -45,9 +47,50 @@ export default function LandingPage({
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   const [typedText, setTypedText] = useState('')
   const [showCursor, setShowCursor] = useState(true)
+  const [apiStats, setApiStats] = useState<{ remainingCalls: number; usagePercentage: string } | null>(null)
   const screenSize = useScreenSize()
 
   const fullText = "Try it for yourself"
+
+  // Fetch API stats
+  const fetchApiStats = async () => {
+    try {
+      const response = await fetch('/api/fmp-stats')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setApiStats({
+            remainingCalls: data.stats.remainingCalls,
+            usagePercentage: data.stats.usagePercentage
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch API stats:', error)
+    }
+  }
+
+  // Load API stats on mount and when callback is triggered
+  useEffect(() => {
+    fetchApiStats()
+  }, [])
+
+  // Listen for refresh requests from parent
+  useEffect(() => {
+    if (onApiStatsRefresh) {
+      // We'll set up a refresh mechanism
+      const refreshStats = () => {
+        fetchApiStats()
+      }
+      
+      // This is a bit of a workaround - we'll use a window event
+      window.addEventListener('refreshApiStats', refreshStats)
+      
+      return () => {
+        window.removeEventListener('refreshApiStats', refreshStats)
+      }
+    }
+  }, [onApiStatsRefresh])
 
   // Typewriter effect
   useEffect(() => {
@@ -167,7 +210,7 @@ export default function LandingPage({
       <nav className={`relative z-20 flex items-center justify-between ${screenSize.isMobile ? 'px-4' : 'px-6'} py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm`}>
         {/* Left section - Logo */}
         <div className="flex items-center space-x-2">
-          <span className="text-white text-xl font-light tracking-tight">G.AI.NS</span>
+          <span className={`text-white font-light tracking-tight ${screenSize.isMobile ? 'text-lg whitespace-nowrap' : 'text-xl'}`}>G.AI.NS</span>
         </div>
         
         {/* Center section - Navigation menu */}
@@ -354,12 +397,12 @@ export default function LandingPage({
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-120px)] px-6 text-center">
         {/* Main heading - moved up by 16 pixels (20-4) */}
         <motion.div
-          className={`mb-3 -mt-3 ${screenSize.isMobile ? 'flex justify-center' : ''}`}
+          className={`mb-3 ${screenSize.isMobile ? '-mt-8 flex justify-center' : '-mt-3'}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className={`${screenSize.isMobile ? 'text-[108px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight ${screenSize.isMobile ? 'text-center' : ''}`}>
+          <h1 className={`${screenSize.isMobile ? 'text-[95px]' : 'text-[120px]'} md:text-[180px] lg:text-[240px] font-light text-white leading-none tracking-tight ${screenSize.isMobile ? 'text-center' : ''}`}>
             G.<motion.div
               className="inline-block relative"
               animate={{
@@ -389,7 +432,7 @@ export default function LandingPage({
 
         {/* Search input - positioned below title with frosted glass effect */}
         <motion.div
-          className={`w-full mb-8 relative ${screenSize.isMobile ? '-mt-8 flex justify-center' : '-mt-12'}`}
+          className={`w-full mb-8 relative ${screenSize.isMobile ? '-mt-7 flex justify-center' : '-mt-12'}`}
           initial={{ y: 20 }}
           animate={{ y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
@@ -438,13 +481,15 @@ export default function LandingPage({
       </div>
 
       {/* Mobile menu toggle */}
-      <div className="md:hidden fixed bottom-6 right-6 z-20">
-        <button
+      <div className="md:hidden fixed bottom-4 right-4 z-20">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleMobileMenuToggle}
-          className="bg-white text-black p-3 rounded-full shadow-lg hover:bg-gray-200 transition-colors"
+          className="bg-gray-900/70 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-300 border-0"
         >
-          <ArrowUp className="w-6 h-6" />
-        </button>
+          <span className="text-white font-medium">MENU</span>
+        </motion.button>
       </div>
 
       {/* Mobile Navigation Menu */}
@@ -553,6 +598,52 @@ export default function LandingPage({
           />
         )}
       </AnimatePresence>
+
+      {/* API Usage Counter */}
+      {screenSize.isMobile ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-4 left-4 bg-gray-900/70 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-300 z-40"
+        >
+          <div className="flex items-center gap-2">
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              !apiStats ? 'bg-gray-500' :
+              apiStats.remainingCalls > 100 ? 'bg-green-500' : 
+              apiStats.remainingCalls > 50 ? 'bg-yellow-500' : 'bg-red-500'
+            }`} />
+            <span>
+              API calls remaining: <span className="text-white font-medium">
+                {apiStats ? apiStats.remainingCalls : '...'}
+              </span>/250
+            </span>
+          </div>
+        </motion.div>
+      ) : (
+        <div className="fixed inset-0 pointer-events-none z-40">
+          <div className="grid h-full w-full grid-rows-[1fr_auto] place-items-center">
+            <div></div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gray-900/70 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-300 pointer-events-auto mb-6"
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  !apiStats ? 'bg-gray-500' :
+                  apiStats.remainingCalls > 100 ? 'bg-green-500' : 
+                  apiStats.remainingCalls > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                }`} />
+                <span>
+                  API calls remaining: <span className="text-white font-medium">
+                    {apiStats ? apiStats.remainingCalls : '...'}
+                  </span>/250
+                </span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 
