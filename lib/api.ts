@@ -725,8 +725,7 @@ export async function getStockData(symbol: string): Promise<StockData | null> {
       marketCap: quote.marketCap,
       peRatio: undefined, // Not available in basic quote
       dividend: undefined,
-      source: 'Financial Modeling Prep',
-      expired: quote.expired
+      source: 'Financial Modeling Prep'
     }
   } catch (fmpError) {
     console.log(`⚠️ FMP failed: ${fmpError}, trying fallback APIs...`)

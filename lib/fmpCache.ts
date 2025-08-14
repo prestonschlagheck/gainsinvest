@@ -377,7 +377,7 @@ class FMPCache {
     const now = Date.now()
     let removed = 0
     
-    for (const [key, item] of this.cache.entries()) {
+    for (const [key, item] of Array.from(this.cache.entries())) {
       if (now - item.timestamp > item.ttl) {
         this.cache.delete(key)
         removed++
