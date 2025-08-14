@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getJobQueue } from '@/lib/jobQueue'
+import { getJobQueue, ensureJobProcessorStarted } from '@/lib/jobQueue'
 
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route Called:', {
@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 500 })
     }
+    
+    // Ensure the background processor is running (dev/prod safe)
+    ensureJobProcessorStarted()
     
     // Get job queue instance
     const jobQueue = getJobQueue()

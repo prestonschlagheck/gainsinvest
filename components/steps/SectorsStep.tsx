@@ -73,44 +73,46 @@ const SectorsStep: React.FC<SectorsStepProps> = ({ onComplete, userProfile, onBa
   return (
     <div className="fixed inset-0 flex flex-col justify-center items-center p-6 overflow-hidden questionnaire-page" style={{ overflow: 'hidden' }}>
       {/* Main Content - Centered */}
-      <div className="flex flex-col items-center justify-center gap-6 max-w-4xl w-full">
+      <div className={`flex flex-col ${screenSize.isMobile ? 'items-center justify-start pt-2 mb-24' : 'items-center justify-center'} gap-6 max-w-4xl w-full`}>
         {/* Title - Above content */}
         <div className="text-center">
           <h2 className="text-2xl font-semibold text-white">Sectors of Interest</h2>
         </div>
 
         {/* Content */}
-        <div className={`grid ${getGridColumns()} gap-3 w-full`}>
-        {SECTORS.map((sector) => {
-          const isSelected = selectedSectors.includes(sector.id)
-          
-          return (
-            <motion.button
-              key={sector.id}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => toggleSector(sector.id)}
-              className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 ${screenSize.isMobile ? 'h-auto min-h-[120px]' : 'h-[90px]'} w-full ${
-                isSelected 
-                  ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
-                  : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
-              }`}
-            >
-              <div className="flex flex-col h-full justify-center">
-                <h3 className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} font-semibold mb-2 leading-tight px-2 ${
-                  isSelected ? 'text-white' : 'text-gray-200'
-                }`}>
-                  {sector.name}
-                </h3>
-                <p className={`${screenSize.isMobile ? 'text-xs' : 'text-xs'} leading-relaxed px-2 ${
-                  isSelected ? 'text-gray-300' : 'text-gray-400'
-                }`}>
-                  {sector.examples}
-                </p>
-              </div>
-            </motion.button>
-          )
-        })}
+        <div className={`w-full ${screenSize.isMobile ? 'overflow-y-auto pb-28 max-h-[calc(100vh-200px)]' : ''}`}>
+          <div className={`grid ${getGridColumns()} gap-3 w-full`}>
+          {SECTORS.map((sector) => {
+            const isSelected = selectedSectors.includes(sector.id)
+            
+            return (
+              <motion.button
+                key={sector.id}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => toggleSector(sector.id)}
+                className={`group relative px-3 py-4 rounded-xl text-center transition-all duration-300 border-2 ${screenSize.isMobile ? 'h-auto min-h-[120px]' : 'h-[90px]'} w-full ${
+                  isSelected 
+                    ? 'bg-gray-800/40 border-gray-500 shadow-lg' 
+                    : 'border-gray-700 hover:border-gray-600 hover:bg-gray-800/20'
+                }`}
+              >
+                <div className="flex flex-col h-full justify-center">
+                  <h3 className={`${screenSize.isMobile ? 'text-sm' : 'text-base'} font-semibold mb-2 leading-tight px-2 ${
+                    isSelected ? 'text-white' : 'text-gray-200'
+                  }`}>
+                    {sector.name}
+                  </h3>
+                  <p className={`${screenSize.isMobile ? 'text-xs' : 'text-xs'} leading-relaxed px-2 ${
+                    isSelected ? 'text-gray-300' : 'text-gray-400'
+                  }`}>
+                    {sector.examples}
+                  </p>
+                </div>
+              </motion.button>
+            )
+          })}
+          </div>
         </div>
       </div>
 

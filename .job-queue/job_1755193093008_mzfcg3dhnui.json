@@ -1,0 +1,37 @@
+{
+  "id": "job_1755193093008_mzfcg3dhnui",
+  "status": "completed",
+  "userProfile": {
+    "isGuest": true,
+    "riskTolerance": 5,
+    "timeHorizon": "medium",
+    "growthType": "balanced",
+    "sectors": [],
+    "ethicalInvesting": 5,
+    "capitalAvailable": 0,
+    "existingPortfolio": [],
+    "hasCompletedQuestionnaire": false,
+    "lastUpdated": "2025-08-14T17:38:08.325Z"
+  },
+  "createdAt": "2025-08-14T17:38:13.008Z",
+  "updatedAt": "2025-08-14T17:49:14.054Z",
+  "result": {
+    "recommendations": [],
+    "reasoning": "Based on the user profile, the available investment amount is $0 with no current holdings. Per the capital allocation rules, total BUY and HOLD amounts must equal available capital, which is $0. Therefore, no new BUY recommendations can be made, and there are no existing holdings to HOLD or SELL. The user's medium time horizon, balanced growth goals, moderate risk tolerance (5/10), and openness to all sectors with moderate ESG priority (5/10) suggest a diversified portfolio focused on stable growth assets like broad-market ETFs and large-cap stocks once funds are available. However, current market conditions show slight downtrends in major indicators (SPY, VTI, GLD, TLT) and negative momentum in BTC, indicating a cautious approach. Recommendations are withheld until capital is added, ensuring no exceedance of available funds. If funds become available, a balanced allocation (e.g., 50% equities, 30% bonds/ETFs, 20% alternatives) with positive expected returns (7-12% annually) would align with the profile.",
+    "riskAssessment": "With $0 available and current market downtrends, risk is minimal as no positions are recommended. The user's 5/10 risk tolerance supports a moderate portfolio once funded, balancing growth potential with downside protection. Volatility in crypto (negative BTC momentum) would be avoided to prevent negative expected returns.",
+    "marketOutlook": "Current real-time data indicates slight downtrends across SPY ($644.56, -0.05%), VTI ($316.95, -0.22%), GLD ($307.13, -0.67%), and TLT ($86.995, -0.77%), with BTC at $118,000 showing negative momentum. Overall sentiment is bearish short-term, suggesting delayed investments in assets with positive historical ranges (stocks 6-12%, ETFs 7-10%). No assets with negative prospects are considered.",
+    "portfolioProjections": {
+      "totalInvestment": 0,
+      "monthlyProjections": [],
+      "projectedValues": {
+        "oneYear": 0,
+        "threeYear": 0,
+        "fiveYear": 0
+      },
+      "expectedAnnualReturn": 0,
+      "riskLevel": "medium",
+      "diversificationScore": 0,
+      "sectorBreakdown": {}
+    }
+  }
+}

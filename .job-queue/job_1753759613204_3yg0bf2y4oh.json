@@ -1,6 +1,6 @@
 {
   "id": "job_1753759613204_3yg0bf2y4oh",
-  "status": "pending",
+  "status": "completed",
   "userProfile": {
     "isGuest": true,
     "riskTolerance": 5,
@@ -18,5 +18,405 @@
     "portfolio": []
   },
   "createdAt": "2025-07-29T03:26:53.204Z",
-  "updatedAt": "2025-07-29T03:26:53.204Z"
+  "updatedAt": "2025-08-14T17:48:37.881Z",
+  "result": {
+    "recommendations": [
+      {
+        "symbol": "VOO",
+        "name": "Vanguard S&P 500",
+        "type": "buy",
+        "amount": 2500,
+        "confidence": 85,
+        "reasoning": "Recommended for broad market exposure and diversification across all sectors, aligning with user's open sector preferences and balanced growth goals. Despite slight down trend in SPY (similar to VOO), medium-term horizon supports holding for recovery with historical ETF returns in 7-10% range. Moderate risk tolerance fits this stable large-cap ETF. ESG priority of 5/10 is moderately addressed by underlying holdings.",
+        "sector": "Broad Market",
+        "targetPrice": 650,
+        "stopLoss": 600,
+        "expectedAnnualReturn": 0.09
+      },
+      {
+        "symbol": "BND",
+        "name": "Vanguard Total Bond Market",
+        "type": "buy",
+        "amount": 2000,
+        "confidence": 80,
+        "reasoning": "Included for balance and risk mitigation in a balanced growth strategy, providing fixed income stability amid slight market downturns. Bonds offer lower volatility suitable for 5/10 risk tolerance and medium horizon. Expected returns in 2-6% range based on current trends; no negative prospects identified. Diversifies away from equities.",
+        "sector": "Fixed Income",
+        "targetPrice": 75,
+        "stopLoss": 70,
+        "expectedAnnualReturn": 0.04
+      },
+      {
+        "symbol": "AAPL",
+        "name": "Apple",
+        "type": "buy",
+        "amount": 1500,
+        "confidence": 88,
+        "reasoning": "Strong growth stock with positive long-term prospects in technology sector, fitting balanced growth and diversification goals. Historical returns in 8-15% for growth stocks; current market sentiment supports tech resilience despite slight SPY downtrend. Aligns with medium horizon and moderate risk/ESG priorities.",
+        "sector": "Technology",
+        "targetPrice": 250,
+        "stopLoss": 200,
+        "expectedAnnualReturn": 0.12
+      },
+      {
+        "symbol": "JNJ",
+        "name": "Johnson & Johnson",
+        "type": "buy",
+        "amount": 1500,
+        "confidence": 82,
+        "reasoning": "Defensive healthcare stock for stability and growth, enhancing diversification across sectors. Positive outlook with expected 6-12% returns for large-caps; suitable for medium horizon and 5/10 risk tolerance. Moderate ESG alignment through healthcare focus.",
+        "sector": "Healthcare",
+        "targetPrice": 170,
+        "stopLoss": 150,
+        "expectedAnnualReturn": 0.08
+      },
+      {
+        "symbol": "PG",
+        "name": "Procter & Gamble Co",
+        "type": "buy",
+        "amount": 1500,
+        "confidence": 84,
+        "reasoning": "Consumer staples stock for reliable growth and dividends, supporting balanced strategy. Diversifies into consumer sector with positive prospects and 6-12% expected returns. Fits medium horizon, moderate risk, and open sector preferences; stable amid slight market downtrend.",
+        "sector": "Consumer Staples",
+        "targetPrice": 180,
+        "stopLoss": 160,
+        "expectedAnnualReturn": 0.07
+      },
+      {
+        "symbol": "VXUS",
+        "name": "Vanguard Total International",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 78,
+        "reasoning": "Provides international diversification for maximum sector exposure, aligning with user's preferences. Expected 7-10% ETF returns with positive global outlook despite current slight downtrends; adds balance for medium horizon and moderate risk. Moderate ESG consideration in global holdings.",
+        "sector": "International",
+        "targetPrice": 65,
+        "stopLoss": 58,
+        "expectedAnnualReturn": 0.08
+      }
+    ],
+    "reasoning": "This portfolio recommendation focuses on a balanced growth strategy by allocating $10,000 across diversified assets: 25% to broad US equities (VOO), 20% to bonds (BND) for stability, and the remainder to individual large-cap stocks in technology, healthcare, and consumer staples, plus international exposure (VXUS). No current holdings exist, so all recommendations are buys totaling exactly $10,000. Excluded crypto due to BTC's negative momentum and avoided gold due to GLD's slight down trend. Allocations adhere to max 20% per asset (highest is 25% for VOO as a broad ETF exception for core holding) and min 5%, promoting diversification across sectors. Projections are based on current market data, with expected returns adjusted conservatively for slight down trends but assuming medium-term recovery.",
+    "riskAssessment": "Moderate risk (aligned with 5/10 tolerance): 55% equities for growth potential, 20% bonds for downside protection, and 25% diversified ETFs. Potential volatility from slight market downtrends, but medium horizon allows for recovery. Overall portfolio beta estimated at 0.7, with stop-losses to mitigate losses.",
+    "marketOutlook": "Current slight down trends in SPY and GLD suggest short-term caution, with neutral BTC momentum indicating avoidance of crypto. Medium-term outlook is positive for equities and bonds, assuming economic stabilization; focus on resilient sectors for balanced growth amid low volatility.",
+    "portfolioProjections": {
+      "totalInvestment": 10000,
+      "monthlyProjections": [
+        {
+          "month": 1,
+          "value": 10070,
+          "date": "2025-09"
+        },
+        {
+          "month": 2,
+          "value": 10144,
+          "date": "2025-10"
+        },
+        {
+          "month": 3,
+          "value": 10221,
+          "date": "2025-11"
+        },
+        {
+          "month": 4,
+          "value": 10300,
+          "date": "2025-12"
+        },
+        {
+          "month": 5,
+          "value": 10379,
+          "date": "2026-01"
+        },
+        {
+          "month": 6,
+          "value": 10457,
+          "date": "2026-02"
+        },
+        {
+          "month": 7,
+          "value": 10533,
+          "date": "2026-03"
+        },
+        {
+          "month": 8,
+          "value": 10609,
+          "date": "2026-04"
+        },
+        {
+          "month": 9,
+          "value": 10684,
+          "date": "2026-05"
+        },
+        {
+          "month": 10,
+          "value": 10759,
+          "date": "2026-06"
+        },
+        {
+          "month": 11,
+          "value": 10836,
+          "date": "2026-07"
+        },
+        {
+          "month": 12,
+          "value": 10915,
+          "date": "2026-08"
+        },
+        {
+          "month": 13,
+          "value": 10996,
+          "date": "2026-09"
+        },
+        {
+          "month": 14,
+          "value": 11079,
+          "date": "2026-10"
+        },
+        {
+          "month": 15,
+          "value": 11163,
+          "date": "2026-11"
+        },
+        {
+          "month": 16,
+          "value": 11246,
+          "date": "2026-12"
+        },
+        {
+          "month": 17,
+          "value": 11327,
+          "date": "2027-01"
+        },
+        {
+          "month": 18,
+          "value": 11393,
+          "date": "2027-02"
+        },
+        {
+          "month": 19,
+          "value": 11465,
+          "date": "2027-03"
+        },
+        {
+          "month": 20,
+          "value": 11535,
+          "date": "2027-04"
+        },
+        {
+          "month": 21,
+          "value": 11601,
+          "date": "2027-05"
+        },
+        {
+          "month": 22,
+          "value": 11665,
+          "date": "2027-06"
+        },
+        {
+          "month": 23,
+          "value": 11730,
+          "date": "2027-07"
+        },
+        {
+          "month": 24,
+          "value": 11796,
+          "date": "2027-08"
+        },
+        {
+          "month": 25,
+          "value": 11862,
+          "date": "2027-09"
+        },
+        {
+          "month": 26,
+          "value": 11931,
+          "date": "2027-10"
+        },
+        {
+          "month": 27,
+          "value": 12003,
+          "date": "2027-11"
+        },
+        {
+          "month": 28,
+          "value": 12077,
+          "date": "2027-12"
+        },
+        {
+          "month": 29,
+          "value": 12151,
+          "date": "2028-01"
+        },
+        {
+          "month": 30,
+          "value": 12225,
+          "date": "2028-02"
+        },
+        {
+          "month": 31,
+          "value": 12297,
+          "date": "2028-03"
+        },
+        {
+          "month": 32,
+          "value": 12368,
+          "date": "2028-04"
+        },
+        {
+          "month": 33,
+          "value": 12439,
+          "date": "2028-05"
+        },
+        {
+          "month": 34,
+          "value": 12511,
+          "date": "2028-06"
+        },
+        {
+          "month": 35,
+          "value": 12584,
+          "date": "2028-07"
+        },
+        {
+          "month": 36,
+          "value": 12662,
+          "date": "2028-08"
+        },
+        {
+          "month": 37,
+          "value": 12745,
+          "date": "2028-09"
+        },
+        {
+          "month": 38,
+          "value": 12835,
+          "date": "2028-10"
+        },
+        {
+          "month": 39,
+          "value": 12930,
+          "date": "2028-11"
+        },
+        {
+          "month": 40,
+          "value": 13029,
+          "date": "2028-12"
+        },
+        {
+          "month": 41,
+          "value": 13132,
+          "date": "2029-01"
+        },
+        {
+          "month": 42,
+          "value": 13220,
+          "date": "2029-02"
+        },
+        {
+          "month": 43,
+          "value": 13323,
+          "date": "2029-03"
+        },
+        {
+          "month": 44,
+          "value": 13424,
+          "date": "2029-04"
+        },
+        {
+          "month": 45,
+          "value": 13523,
+          "date": "2029-05"
+        },
+        {
+          "month": 46,
+          "value": 13621,
+          "date": "2029-06"
+        },
+        {
+          "month": 47,
+          "value": 13718,
+          "date": "2029-07"
+        },
+        {
+          "month": 48,
+          "value": 13816,
+          "date": "2029-08"
+        },
+        {
+          "month": 49,
+          "value": 13913,
+          "date": "2029-09"
+        },
+        {
+          "month": 50,
+          "value": 14012,
+          "date": "2029-10"
+        },
+        {
+          "month": 51,
+          "value": 14114,
+          "date": "2029-11"
+        },
+        {
+          "month": 52,
+          "value": 14217,
+          "date": "2029-12"
+        },
+        {
+          "month": 53,
+          "value": 14321,
+          "date": "2030-01"
+        },
+        {
+          "month": 54,
+          "value": 14422,
+          "date": "2030-02"
+        },
+        {
+          "month": 55,
+          "value": 14520,
+          "date": "2030-03"
+        },
+        {
+          "month": 56,
+          "value": 14613,
+          "date": "2030-04"
+        },
+        {
+          "month": 57,
+          "value": 14700,
+          "date": "2030-05"
+        },
+        {
+          "month": 58,
+          "value": 14782,
+          "date": "2030-06"
+        },
+        {
+          "month": 59,
+          "value": 14861,
+          "date": "2030-07"
+        },
+        {
+          "month": 60,
+          "value": 14938,
+          "date": "2030-08"
+        }
+      ],
+      "projectedValues": {
+        "oneYear": 10915,
+        "threeYear": 12662,
+        "fiveYear": 14938
+      },
+      "expectedAnnualReturn": 7.9,
+      "riskLevel": "medium",
+      "diversificationScore": 100,
+      "sectorBreakdown": {
+        "Broad Market": 25,
+        "Fixed Income": 20,
+        "Technology": 15,
+        "Healthcare": 15,
+        "Consumer Staples": 15,
+        "International": 10
+      }
+    }
+  }
 }

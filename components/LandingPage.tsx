@@ -105,7 +105,12 @@ export default function LandingPage({
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false)
-    onStartChat()
+    // If the user has not completed the questionnaire yet, send them to the first page
+    if (!storedProfile || !storedProfile.hasCompletedQuestionnaire) {
+      onStartFresh()
+    } else {
+      // Returning users stay on the landing and can use the profile menu actions
+    }
   }
 
   const handleGuestContinue = () => {
@@ -159,7 +164,7 @@ export default function LandingPage({
       </div>
 
       {/* Navigation */}
-      <nav className={`relative z-20 flex items-center ${screenSize.isMobile ? 'px-4' : 'px-6'} py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm`}>
+      <nav className={`relative z-20 flex items-center justify-between ${screenSize.isMobile ? 'px-4' : 'px-6'} py-4 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm`}>
         {/* Left section - Logo */}
         <div className="flex items-center space-x-2">
           <span className="text-white text-xl font-light tracking-tight">G.AI.NS</span>
@@ -174,7 +179,7 @@ export default function LandingPage({
         </div>
 
         {/* Right section - Profile/Login */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 ml-auto">
           {/* Profile component for logged-in users, guest button for others */}
           {session?.user ? (
             <div className="relative">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Info, TrendingUp, TrendingDown, Minus, ArrowRight, AlertCircle } from 'lucide-react'
+import { Info, TrendingUp, TrendingDown, Minus, ArrowRight, AlertCircle, Loader2, CheckCircle2, Clock } from 'lucide-react'
 import { UserProfile, InvestmentRecommendation } from '@/types'
 import PortfolioChart from './PortfolioChart'
 import { useScreenSize } from '@/lib/useScreenSize'
@@ -185,6 +185,8 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [errorDetails, setErrorDetails] = useState<any>(null)
   const [apiKeyStatus, setApiKeyStatus] = useState<any>(null)
   const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
+  const [etaSeconds, setEtaSeconds] = useState<number>(180)
+  const [etaTotalSeconds, setEtaTotalSeconds] = useState<number>(180)
 
 
   // Generate recommendations using real APIs when available
@@ -192,6 +194,10 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     const generateRecommendations = async () => {
       setIsLoading(true)
       setLoadingPercentage(0)
+      // initialize ETA (average completion ~3 minutes)
+      const initialEta = 180
+      setEtaTotalSeconds(initialEta)
+      setEtaSeconds(initialEta)
       
       // Reset API status
       setApiStatus({
@@ -365,6 +371,28 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     generateRecommendations()
   }, [userProfile])
 
+  // ETA countdown synchronized with progress
+  useEffect(() => {
+    if (!isLoading) return
+    const initial = etaTotalSeconds || 180
+    const timer = setInterval(() => {
+      setEtaSeconds(prev => {
+        const nextTick = Math.max(prev - 1, 0)
+        const progressBased = Math.max(0, Math.ceil((1 - (loadingPercentage / 100)) * initial))
+        return Math.min(nextTick, progressBased)
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [isLoading, loadingPercentage, etaTotalSeconds])
+
+  // format ETA as Xm Ys
+  const formatEta = (totalSeconds: number) => {
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    if (minutes > 0) return `${minutes}m ${seconds}s`
+    return `${seconds}s`
+  }
+
   const getTypeIcon = (type: 'buy' | 'sell' | 'hold') => {
     switch (type) {
       case 'buy': return <TrendingUp className="w-5 h-5 text-green-400" />
@@ -444,149 +472,62 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
 
   if (isLoading) {
     return (
-      <div className="step-layout">
-        <div className="step-header">
-          <h2 className="text-2xl font-semibold text-white">Creating Your Portfolio</h2>
-        </div>
+      <div className="fixed inset-0 flex flex-col items-center justify-center p-6">
+        <h2 className="text-2xl font-semibold text-white mb-4 text-center">Creating Your Portfolio</h2>
 
-        <div className="step-body">
+        <div className="w-full max-w-md">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="space-y-4 w-full max-w-md mx-auto"
+            className="space-y-4 w-full"
           >
-            {/* AI Process Steps with API Status */}
+            {/* AI Process Steps with visual status */}
             {[
-              { 
-                name: "Testing Grok AI", 
-                key: 'grok' as const,
-                delay: 0, 
-                duration: 2000 
-              },
-              { 
-                name: "Gathering Market Data", 
-                key: 'marketData' as const,
-                delay: 2000, 
-                duration: 3000 
-              },
-              { 
-                name: "Fetching Financial News", 
-                key: 'news' as const,
-                delay: 5000, 
-                duration: 2000 
-              },
-              { 
-                name: "Analyzing Portfolio", 
-                key: 'analysis' as const,
-                delay: 7000, 
-                duration: 2500 
-              },
-              { 
-                name: "Generating Recommendations", 
-                key: 'recommendations' as const,
-                delay: 9500, 
-                duration: 3000 
-              }
-            ].map((step, index) => {
+              { name: "Testing Grok AI", key: 'grok' as const },
+              { name: "Gathering Market Data", key: 'marketData' as const },
+              { name: "Fetching Financial News", key: 'news' as const },
+              { name: "Analyzing Portfolio", key: 'analysis' as const },
+              { name: "Generating Recommendations", key: 'recommendations' as const }
+            ].map((step) => {
               const status = apiStatus[step.key]
-              const isCompleted = status === 'success' || status === 'failed'
+              const isPending = status === 'pending'
+              const isSuccess = status === 'success'
               const isFailed = status === 'failed'
-              
               return (
-                <motion.div
-                  key={step.name}
-                  className="flex items-center justify-between bg-gray-900/50 rounded-lg p-4 border border-gray-700"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: step.delay / 1000 }}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center">
-                      {status === 'pending' && (
-                        <motion.div
-                          className="w-4 h-4 bg-gray-500 rounded-full"
-                          animate={{
-                            scale: [1, 1.2, 1],
-                            backgroundColor: ["#6b7280", "#10b981", "#10b981"]
-                          }}
-                          transition={{
-                            duration: step.duration / 1000,
-                            delay: step.delay / 1000,
-                            ease: "easeInOut"
-                          }}
-                        />
+                <div key={step.key} className="p-3 rounded-lg border border-gray-700 bg-gray-800/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 text-sm">{step.name}</span>
+                    <div className="flex items-center gap-2">
+                      {isPending && (
+                        <>
+                          <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+                          <span className="text-xs text-blue-300">Working…</span>
+                        </>
                       )}
-                      {status === 'success' && (
-                        <div className="w-4 h-4 bg-green-500 rounded-full" />
+                      {isSuccess && (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-green-400" />
+                          <span className="text-xs text-green-300">Done</span>
+                        </>
                       )}
-                      {status === 'failed' && (
-                        <div className="w-4 h-4 bg-red-500 rounded-full" />
+                      {isFailed && (
+                        <>
+                          <AlertCircle className="w-4 h-4 text-red-400" />
+                          <span className="text-xs text-red-300">Failed</span>
+                        </>
                       )}
                     </div>
-                    <span className={`text-sm ${isFailed ? 'text-red-400' : 'text-gray-300'}`}>
-                      {step.name}
-                    </span>
                   </div>
-                  
-                  {/* Status Icon */}
-                  {isCompleted && (
-                    <motion.div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                        isFailed ? 'bg-red-500' : 'bg-green-500'
-                      }`}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ 
-                        delay: (step.delay + step.duration) / 1000,
-                        duration: 0.3,
-                        ease: "easeOut"
-                      }}
-                    >
-                      {isFailed ? (
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </motion.div>
+                  {step.key === 'recommendations' && (
+                    <div className="mt-2 text-xs text-gray-400 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-blue-400" />
+                      <span>Estimated time remaining: {formatEta(etaSeconds)}</span>
+                    </div>
                   )}
-                </motion.div>
+                </div>
               )
             })}
-            
-            {/* Error Message at Bottom */}
-            {apiError && errorDetails && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 bg-red-900/20 border border-red-700 rounded-lg"
-              >
-                <div className="text-red-400 font-semibold mb-2">Error Details:</div>
-                <div className="text-gray-300 text-sm">{errorDetails.message}</div>
-                {errorDetails.timestamp && (
-                  <div className="text-xs text-gray-500 mt-2">
-                    Time: {new Date(errorDetails.timestamp).toLocaleString()}
-                  </div>
-                )}
-              </motion.div>
-            )}
           </motion.div>
-        </div>
-
-        <div className="step-footer">
-          <div className="w-full max-w-md mx-auto">
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <motion.div
-                className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${loadingPercentage}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-          </div>
         </div>
       </div>
     )

@@ -1,0 +1,418 @@
+{
+  "id": "job_1755193937715_mc91od2jn4",
+  "status": "completed",
+  "userProfile": {
+    "isGuest": true,
+    "riskTolerance": 5,
+    "timeHorizon": "medium",
+    "growthType": "balanced",
+    "sectors": [
+      "energy",
+      "technology"
+    ],
+    "ethicalInvesting": 2,
+    "capitalAvailable": 5000,
+    "existingPortfolio": [],
+    "hasCompletedQuestionnaire": false,
+    "lastUpdated": "2025-08-14T17:38:18.922Z",
+    "portfolio": []
+  },
+  "createdAt": "2025-08-14T17:52:17.715Z",
+  "updatedAt": "2025-08-14T17:54:46.783Z",
+  "result": {
+    "recommendations": [
+      {
+        "symbol": "QQQ",
+        "name": "Invesco NASDAQ 100",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 85,
+        "reasoning": "QQQ tracks the Nasdaq-100, focusing on technology stocks, aligning with user's sector preference for technology. Current slight up trend (+0.01%) indicates positive momentum in tech amid overall market slight downs. For medium time horizon and balanced growth, this ETF provides diversified exposure to growth-oriented tech with historical returns in 8-15% range, adjusted to 10% expected based on current sentiment. Risk tolerance of 5/10 supports this moderate volatility asset. Low ESG priority allows inclusion without adjustments.",
+        "sector": "Technology",
+        "targetPrice": 600,
+        "stopLoss": 550,
+        "expectedAnnualReturn": 0.1
+      },
+      {
+        "symbol": "AAPL",
+        "name": "Apple",
+        "type": "buy",
+        "amount": 750,
+        "confidence": 88,
+        "reasoning": "AAPL is a leading technology stock with strong fundamentals in innovation and consumer products. Aligns with technology preference and balanced growth goal. Based on QQQ's slight up trend, AAPL is projected for positive growth. Historical large-cap returns of 6-12% adjusted to 11% expected annually given current market. Medium horizon fits well, and moderate risk tolerance is matched by AAPL's stability. No negative prospects identified.",
+        "sector": "Technology",
+        "targetPrice": 250,
+        "stopLoss": 220,
+        "expectedAnnualReturn": 0.11
+      },
+      {
+        "symbol": "MSFT",
+        "name": "Microsoft",
+        "type": "buy",
+        "amount": 750,
+        "confidence": 87,
+        "reasoning": "MSFT offers exposure to cloud computing and AI in technology sector, supporting user's preference. Positive tech sentiment from QQQ uptrend supports inclusion. Expected returns based on growth stock historicals (8-15%), projected at 12% annually. Balances growth with medium horizon and 5/10 risk by diversifying within tech. ESG low priority not a factor.",
+        "sector": "Technology",
+        "targetPrice": 480,
+        "stopLoss": 420,
+        "expectedAnnualReturn": 0.12
+      },
+      {
+        "symbol": "XLE",
+        "name": "Energy Select Sector",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 80,
+        "reasoning": "XLE provides diversified exposure to energy sector, matching user's preference. Despite overall market slight down, energy has stable long-term prospects with no negative indicators in provided data. ETF historical returns 7-10%, projected at 8% annually for balanced growth. Medium horizon and moderate risk tolerance suit this allocation. Low ESG allows focus on traditional energy.",
+        "sector": "Energy",
+        "targetPrice": 95,
+        "stopLoss": 85,
+        "expectedAnnualReturn": 0.08
+      },
+      {
+        "symbol": "XOM",
+        "name": "Exxon Mobil",
+        "type": "buy",
+        "amount": 750,
+        "confidence": 82,
+        "reasoning": "XOM is a major energy stock with global operations, aligning with sector preference. Positive outlook based on energy demand trends, no negative prospects. Large-cap historical returns 6-12%, projected at 9% annually. Supports balanced growth strategy for medium horizon, with moderate risk fitting 5/10 tolerance.",
+        "sector": "Energy",
+        "targetPrice": 130,
+        "stopLoss": 110,
+        "expectedAnnualReturn": 0.09
+      },
+      {
+        "symbol": "CVX",
+        "name": "Chevron",
+        "type": "buy",
+        "amount": 750,
+        "confidence": 81,
+        "reasoning": "CVX offers integrated energy exposure, complementing user's energy preference. Stable prospects amid slight market down, with historical 6-12% returns projected at 9%. Diversifies energy holdings for balanced growth, suitable for medium horizon and 5/10 risk. Low ESG priority permits inclusion.",
+        "sector": "Energy",
+        "targetPrice": 170,
+        "stopLoss": 150,
+        "expectedAnnualReturn": 0.09
+      }
+    ],
+    "reasoning": "This portfolio recommendation allocates the full $5,000 across technology and energy sectors to achieve a balanced growth strategy, with approximately 50% in each sector for diversification. No existing holdings mean all recommendations are buys, totaling exactly $5,000. Selections focus on ETFs and large-cap stocks with positive projected returns based on current trends (e.g., QQQ slight up for tech) and historical ranges, avoiding any assets with negative momentum like crypto. Allocations adhere to max 20% ($1,000) per asset and min 5% ($250), promoting moderate risk alignment with 5/10 tolerance and medium horizon. ESG is deprioritized as per user profile.",
+    "riskAssessment": "Moderate risk (aligned with 5/10 tolerance): Tech allocations carry higher volatility but growth potential, balanced by more stable energy picks. Overall portfolio beta estimated at 1.0-1.2, with stop-losses to mitigate downsides in a slight down market. Diversification reduces single-asset risk.",
+    "marketOutlook": "Slightly mixed with SPY and VTI down, but QQQ up suggests tech resilience. Energy outlook stable based on sector needs. Projections assume recovery to historical averages, with no negative returns expected in recommended assets.",
+    "portfolioProjections": {
+      "totalInvestment": 5000,
+      "monthlyProjections": [
+        {
+          "month": 1,
+          "value": 5043,
+          "date": "2025-09"
+        },
+        {
+          "month": 2,
+          "value": 5089,
+          "date": "2025-10"
+        },
+        {
+          "month": 3,
+          "value": 5137,
+          "date": "2025-11"
+        },
+        {
+          "month": 4,
+          "value": 5186,
+          "date": "2025-12"
+        },
+        {
+          "month": 5,
+          "value": 5235,
+          "date": "2026-01"
+        },
+        {
+          "month": 6,
+          "value": 5283,
+          "date": "2026-02"
+        },
+        {
+          "month": 7,
+          "value": 5331,
+          "date": "2026-03"
+        },
+        {
+          "month": 8,
+          "value": 5378,
+          "date": "2026-04"
+        },
+        {
+          "month": 9,
+          "value": 5425,
+          "date": "2026-05"
+        },
+        {
+          "month": 10,
+          "value": 5472,
+          "date": "2026-06"
+        },
+        {
+          "month": 11,
+          "value": 5520,
+          "date": "2026-07"
+        },
+        {
+          "month": 12,
+          "value": 5570,
+          "date": "2026-08"
+        },
+        {
+          "month": 13,
+          "value": 5621,
+          "date": "2026-09"
+        },
+        {
+          "month": 14,
+          "value": 5674,
+          "date": "2026-10"
+        },
+        {
+          "month": 15,
+          "value": 5727,
+          "date": "2026-11"
+        },
+        {
+          "month": 16,
+          "value": 5779,
+          "date": "2026-12"
+        },
+        {
+          "month": 17,
+          "value": 5830,
+          "date": "2027-01"
+        },
+        {
+          "month": 18,
+          "value": 5872,
+          "date": "2027-02"
+        },
+        {
+          "month": 19,
+          "value": 5918,
+          "date": "2027-03"
+        },
+        {
+          "month": 20,
+          "value": 5962,
+          "date": "2027-04"
+        },
+        {
+          "month": 21,
+          "value": 6005,
+          "date": "2027-05"
+        },
+        {
+          "month": 22,
+          "value": 6046,
+          "date": "2027-06"
+        },
+        {
+          "month": 23,
+          "value": 6087,
+          "date": "2027-07"
+        },
+        {
+          "month": 24,
+          "value": 6129,
+          "date": "2027-08"
+        },
+        {
+          "month": 25,
+          "value": 6172,
+          "date": "2027-09"
+        },
+        {
+          "month": 26,
+          "value": 6216,
+          "date": "2027-10"
+        },
+        {
+          "month": 27,
+          "value": 6263,
+          "date": "2027-11"
+        },
+        {
+          "month": 28,
+          "value": 6310,
+          "date": "2027-12"
+        },
+        {
+          "month": 29,
+          "value": 6358,
+          "date": "2028-01"
+        },
+        {
+          "month": 30,
+          "value": 6405,
+          "date": "2028-02"
+        },
+        {
+          "month": 31,
+          "value": 6452,
+          "date": "2028-03"
+        },
+        {
+          "month": 32,
+          "value": 6499,
+          "date": "2028-04"
+        },
+        {
+          "month": 33,
+          "value": 6544,
+          "date": "2028-05"
+        },
+        {
+          "month": 34,
+          "value": 6591,
+          "date": "2028-06"
+        },
+        {
+          "month": 35,
+          "value": 6639,
+          "date": "2028-07"
+        },
+        {
+          "month": 36,
+          "value": 6689,
+          "date": "2028-08"
+        },
+        {
+          "month": 37,
+          "value": 6744,
+          "date": "2028-09"
+        },
+        {
+          "month": 38,
+          "value": 6802,
+          "date": "2028-10"
+        },
+        {
+          "month": 39,
+          "value": 6864,
+          "date": "2028-11"
+        },
+        {
+          "month": 40,
+          "value": 6929,
+          "date": "2028-12"
+        },
+        {
+          "month": 41,
+          "value": 6997,
+          "date": "2029-01"
+        },
+        {
+          "month": 42,
+          "value": 7054,
+          "date": "2029-02"
+        },
+        {
+          "month": 43,
+          "value": 7122,
+          "date": "2029-03"
+        },
+        {
+          "month": 44,
+          "value": 7189,
+          "date": "2029-04"
+        },
+        {
+          "month": 45,
+          "value": 7255,
+          "date": "2029-05"
+        },
+        {
+          "month": 46,
+          "value": 7319,
+          "date": "2029-06"
+        },
+        {
+          "month": 47,
+          "value": 7384,
+          "date": "2029-07"
+        },
+        {
+          "month": 48,
+          "value": 7449,
+          "date": "2029-08"
+        },
+        {
+          "month": 49,
+          "value": 7513,
+          "date": "2029-09"
+        },
+        {
+          "month": 50,
+          "value": 7579,
+          "date": "2029-10"
+        },
+        {
+          "month": 51,
+          "value": 7647,
+          "date": "2029-11"
+        },
+        {
+          "month": 52,
+          "value": 7717,
+          "date": "2029-12"
+        },
+        {
+          "month": 53,
+          "value": 7786,
+          "date": "2030-01"
+        },
+        {
+          "month": 54,
+          "value": 7854,
+          "date": "2030-02"
+        },
+        {
+          "month": 55,
+          "value": 7920,
+          "date": "2030-03"
+        },
+        {
+          "month": 56,
+          "value": 7982,
+          "date": "2030-04"
+        },
+        {
+          "month": 57,
+          "value": 8041,
+          "date": "2030-05"
+        },
+        {
+          "month": 58,
+          "value": 8096,
+          "date": "2030-06"
+        },
+        {
+          "month": 59,
+          "value": 8150,
+          "date": "2030-07"
+        },
+        {
+          "month": 60,
+          "value": 8202,
+          "date": "2030-08"
+        }
+      ],
+      "projectedValues": {
+        "oneYear": 5570,
+        "threeYear": 6689,
+        "fiveYear": 8202
+      },
+      "expectedAnnualReturn": 9.8,
+      "riskLevel": "medium",
+      "diversificationScore": 40,
+      "sectorBreakdown": {
+        "Technology": 50,
+        "Energy": 50
+      }
+    }
+  }
+}

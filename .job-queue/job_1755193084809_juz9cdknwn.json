@@ -1,0 +1,37 @@
+{
+  "id": "job_1755193084809_juz9cdknwn",
+  "status": "completed",
+  "userProfile": {
+    "isGuest": true,
+    "riskTolerance": 5,
+    "timeHorizon": "medium",
+    "growthType": "balanced",
+    "sectors": [],
+    "ethicalInvesting": 5,
+    "capitalAvailable": 0,
+    "existingPortfolio": [],
+    "hasCompletedQuestionnaire": false,
+    "lastUpdated": "2025-08-14T17:35:36.045Z"
+  },
+  "createdAt": "2025-08-14T17:38:04.809Z",
+  "updatedAt": "2025-08-14T17:49:31.609Z",
+  "result": {
+    "recommendations": [],
+    "reasoning": "Based on the user's profile, they have a moderate risk tolerance (5/10), a medium time horizon, and a goal of balanced growth with openness to all sectors and moderate ESG priority (5/10). However, the available investment amount is $0, and there are no current holdings. Per the capital allocation rules, total BUY and HOLD amounts must equal available capital, which is $0, preventing any new investments or holds. No existing holdings require SELL or HOLD processing. If capital becomes available, a recommended balanced growth portfolio would include diversified ETFs (e.g., VTI for broad market exposure at 7-10% expected return), large-cap stocks (e.g., in technology or consumer sectors at 6-12% return), and possibly bonds for stability (2-6% return), avoiding crypto due to negative momentum in BTC. All recommendations would ensure positive expected returns and diversification, with no single asset exceeding 20% allocation.",
+    "riskAssessment": "The user's moderate risk tolerance (5/10) aligns with a balanced growth strategy, emphasizing diversification to mitigate volatility. Current market trends show slight downward pressure in most indicators (e.g., SPY -0.05%, VTI -0.23%), suggesting moderate risk in equities. With $0 available, there is no immediate portfolio risk, but future investments should limit exposure to high-volatility assets like growth stocks to maintain balance.",
+    "marketOutlook": "The market exhibits mixed signals with slight downward trends in SPY ($644.56, -0.05%), VTI ($316.92, -0.23%), GLD ($307.11, -0.68%), and TLT ($86.995, -0.77%), indicating caution in broad equities, gold, and bonds. QQQ ($580.49, +0.03%) shows slight upward momentum, favoring tech/growth sectors. BTC at $118,000 has negative momentum, so cryptocurrency is excluded. Overall sentiment is cautious with potential for balanced growth in diversified assets projecting 6-12% annual returns for stocks and 7-10% for ETFs, adjusted for current volatility.",
+    "portfolioProjections": {
+      "totalInvestment": 0,
+      "monthlyProjections": [],
+      "projectedValues": {
+        "oneYear": 0,
+        "threeYear": 0,
+        "fiveYear": 0
+      },
+      "expectedAnnualReturn": 0,
+      "riskLevel": "medium",
+      "diversificationScore": 0,
+      "sectorBreakdown": {}
+    }
+  }
+}

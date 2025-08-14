@@ -1629,7 +1629,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
   const isModerate = riskTolerance > 3 && riskTolerance <= 7
   const isAggressive = riskTolerance > 7
 
-  // Base allocations by risk level
+  // Base allocations by risk level (preference-driven)
   if (isConservative) {
     // Conservative: 60% bonds, 30% index funds, 10% individual stocks
     recommendations.push(
@@ -1671,7 +1671,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
       }
     )
   } else if (isModerate) {
-    // Moderate: 20% bonds, 40% index funds, 30% growth stocks, 10% alternatives
+    // Moderate: emphasize quality growth and diversified ETFs; reduce bonds if user chose growth
     recommendations.push(
       {
         symbol: 'VTI',
@@ -1747,7 +1747,7 @@ export function generateFallbackRecommendations(userProfile: any): InvestmentAna
       }
     )
   } else {
-    // Aggressive: 10% bonds, 30% index funds, 40% growth stocks, 20% alternatives
+    // Aggressive: prioritize growth/small-cap/EM and opportunistic sectors; minimal broad index exposure
     recommendations.push(
       {
         symbol: 'QQQ',

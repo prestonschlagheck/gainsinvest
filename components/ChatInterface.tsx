@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useSession } from 'next-auth/react'
 import { UserProfile } from '@/types'
 import { loadUserProfile, saveUserProfile, StoredUserProfile } from '@/lib/userStorage'
@@ -37,6 +37,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     existingPortfolio: []
   })
   const [showRecommendations, setShowRecommendations] = useState(false)
+  const [hasShownInitialStep, setHasShownInitialStep] = useState(false)
 
   const steps = [
     { id: 'risk', component: RiskToleranceStep },
@@ -47,6 +48,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
     { id: 'capital', component: CapitalStep },
     { id: 'portfolio', component: PortfolioStep }
   ]
+
+  // Simple horizontal slide variants (enter from right, exit to left)
+  const stepVariants = {
+    enter: { x: 100, opacity: 0 },
+    center: { x: 0, opacity: 1 },
+    exit: { x: -100, opacity: 0 }
+  }
 
   // Load stored profile when user type changes or session changes
   useEffect(() => {
@@ -189,25 +197,49 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userType, onAccountChoice
   const shouldShowWelcome = !session?.user && (!userType || currentStep === 0)
 
   return (
-    <div className="w-full">
+    <div className="relative w-full h-screen" style={{ overflow: 'hidden' }}>
       {/* Current Step Component */}
       {(hasStarted || userType) && (
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className={`step-container ${currentStep === 6 ? 'portfolio-container' : ''}`}
-        >
-          {(() => {
-            const StepComponent = steps[currentStep].component
-            return <StepComponent 
-              onComplete={handleStepComplete} 
-              userProfile={userProfile} 
-              onBack={currentStep > 0 ? handleStepBack : undefined}
-            />
-          })()}
-        </motion.div>
+        hasShownInitialStep ? (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={currentStep}
+              variants={stepVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className={`fixed inset-0 ${currentStep === 6 ? 'portfolio-container' : ''}`}
+            >
+              {(() => {
+                const StepComponent = steps[currentStep].component
+                return <StepComponent 
+                  onComplete={handleStepComplete} 
+                  userProfile={userProfile} 
+                  onBack={currentStep > 0 ? handleStepBack : undefined}
+                />
+              })()}
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <motion.div
+            key={`initial-${currentStep}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className={`fixed inset-0 ${currentStep === 6 ? 'portfolio-container' : ''}`}
+            onAnimationComplete={() => setHasShownInitialStep(true)}
+          >
+            {(() => {
+              const StepComponent = steps[currentStep].component
+              return <StepComponent 
+                onComplete={handleStepComplete} 
+                userProfile={userProfile} 
+                onBack={currentStep > 0 ? handleStepBack : undefined}
+              />
+            })()}
+          </motion.div>
+        )
       )}
     </div>
   )

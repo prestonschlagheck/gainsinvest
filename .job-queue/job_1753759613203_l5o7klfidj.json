@@ -1,6 +1,6 @@
 {
   "id": "job_1753759613203_l5o7klfidj",
-  "status": "pending",
+  "status": "completed",
   "userProfile": {
     "isGuest": true,
     "riskTolerance": 5,
@@ -18,5 +18,404 @@
     "portfolio": []
   },
   "createdAt": "2025-07-29T03:26:53.203Z",
-  "updatedAt": "2025-07-29T03:26:53.203Z"
+  "updatedAt": "2025-08-14T17:48:01.331Z",
+  "result": {
+    "recommendations": [
+      {
+        "symbol": "VTI",
+        "name": "Vanguard Total Stock Market",
+        "type": "buy",
+        "amount": 2000,
+        "confidence": 88,
+        "reasoning": "VTI provides broad exposure to the US stock market, aligning with the user's balanced growth strategy and preference for diversification across all sectors. Current slight up trend in VTI supports positive prospects, with medium time horizon fitting well for moderate risk tolerance. ESG priority is moderate, and VTI includes a mix of companies. Expected returns based on historical ETF performance adjusted for current positive sentiment.",
+        "sector": "Broad Market",
+        "targetPrice": 350,
+        "stopLoss": 300,
+        "expectedAnnualReturn": 0.09
+      },
+      {
+        "symbol": "QQQ",
+        "name": "Invesco NASDAQ 100",
+        "type": "buy",
+        "amount": 2000,
+        "confidence": 85,
+        "reasoning": "QQQ focuses on technology and growth stocks, offering potential for balanced growth in a diversified portfolio. The slight up trend in QQQ indicates positive momentum, suitable for medium-term horizon and 5/10 risk tolerance. Open sector preferences allow tech inclusion for diversification. Moderate ESG as QQQ includes some ESG-conscious firms.",
+        "sector": "Technology",
+        "targetPrice": 650,
+        "stopLoss": 550,
+        "expectedAnnualReturn": 0.1
+      },
+      {
+        "symbol": "TLT",
+        "name": "iShares 20+ Year Treasury",
+        "type": "buy",
+        "amount": 2000,
+        "confidence": 82,
+        "reasoning": "TLT provides stability through long-term bonds, balancing the growth-oriented equities in the portfolio. Current slight up trend supports inclusion for risk mitigation in a 5/10 tolerance profile. Medium horizon benefits from bond income and capital preservation. Diversifies away from equities, aligning with balanced goals.",
+        "sector": "Bonds",
+        "targetPrice": 95,
+        "stopLoss": 80,
+        "expectedAnnualReturn": 0.04
+      },
+      {
+        "symbol": "GLD",
+        "name": "SPDR Gold Shares",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 80,
+        "reasoning": "GLD offers exposure to gold as an alternative asset for diversification and inflation hedge, fitting the balanced growth strategy. Slight up trend indicates positive prospects without negative returns. Suitable for medium horizon and moderate risk, adding non-correlated asset to the mix.",
+        "sector": "Commodities",
+        "targetPrice": 340,
+        "stopLoss": 290,
+        "expectedAnnualReturn": 0.06
+      },
+      {
+        "symbol": "AAPL",
+        "name": "Apple",
+        "type": "buy",
+        "amount": 1500,
+        "confidence": 87,
+        "reasoning": "AAPL is a large-cap growth stock with strong fundamentals, contributing to balanced growth. Aligns with open sector preferences and current positive market sentiment in equities. Medium risk tolerance supported by AAPL's stability; ESG score is moderate. Positive outlook based on broader market up trends.",
+        "sector": "Technology",
+        "targetPrice": 260,
+        "stopLoss": 210,
+        "expectedAnnualReturn": 0.12
+      },
+      {
+        "symbol": "JNJ",
+        "name": "Johnson & Johnson",
+        "type": "buy",
+        "amount": 1500,
+        "confidence": 86,
+        "reasoning": "JNJ provides defensive growth in healthcare, enhancing diversification across sectors. Fits balanced strategy with stable returns, suitable for medium horizon and 5/10 risk. Positive equity trends support inclusion; moderate ESG priority as JN has strong sustainability practices.",
+        "sector": "Healthcare",
+        "targetPrice": 180,
+        "stopLoss": 150,
+        "expectedAnnualReturn": 0.08
+      }
+    ],
+    "reasoning": "This portfolio recommendation is designed for a balanced growth strategy with a medium time horizon and 5/10 risk tolerance, utilizing the full $10,000 investment amount. Since the user has no current holdings, all recommendations are buys, focusing on diversification across broad market, technology, bonds, commodities, and healthcare sectors. Allocations adhere to max 20% per asset and min 5%, excluding crypto due to negative momentum and ensuring only positive expected returns. The mix includes 40% equities ETFs, 20% bonds for stability, 10% commodities for hedge, and 30% individual stocks for growth potential, aligned with moderate ESG priority.",
+    "riskAssessment": "The portfolio carries moderate risk (aligned with 5/10 tolerance), with equities providing growth potential offset by bonds and gold for downside protection. Overall volatility is tempered by diversification, but market fluctuations could impact returns; stop-loss levels are suggested to manage risks.",
+    "marketOutlook": "Current market shows slight up trends in major indices (SPY, QQQ, VTI), bonds (TLT), and gold (GLD), indicating positive sentiment for equities and alternatives. Crypto exhibits negative momentum, so it's excluded. Expectations are for continued mild growth in a stable environment, supporting 7-12% average annual returns across the portfolio.",
+    "portfolioProjections": {
+      "totalInvestment": 10000,
+      "monthlyProjections": [
+        {
+          "month": 1,
+          "value": 10073,
+          "date": "2025-09"
+        },
+        {
+          "month": 2,
+          "value": 10150,
+          "date": "2025-10"
+        },
+        {
+          "month": 3,
+          "value": 10230,
+          "date": "2025-11"
+        },
+        {
+          "month": 4,
+          "value": 10312,
+          "date": "2025-12"
+        },
+        {
+          "month": 5,
+          "value": 10393,
+          "date": "2026-01"
+        },
+        {
+          "month": 6,
+          "value": 10475,
+          "date": "2026-02"
+        },
+        {
+          "month": 7,
+          "value": 10554,
+          "date": "2026-03"
+        },
+        {
+          "month": 8,
+          "value": 10633,
+          "date": "2026-04"
+        },
+        {
+          "month": 9,
+          "value": 10710,
+          "date": "2026-05"
+        },
+        {
+          "month": 10,
+          "value": 10789,
+          "date": "2026-06"
+        },
+        {
+          "month": 11,
+          "value": 10869,
+          "date": "2026-07"
+        },
+        {
+          "month": 12,
+          "value": 10951,
+          "date": "2026-08"
+        },
+        {
+          "month": 13,
+          "value": 11036,
+          "date": "2026-09"
+        },
+        {
+          "month": 14,
+          "value": 11122,
+          "date": "2026-10"
+        },
+        {
+          "month": 15,
+          "value": 11210,
+          "date": "2026-11"
+        },
+        {
+          "month": 16,
+          "value": 11296,
+          "date": "2026-12"
+        },
+        {
+          "month": 17,
+          "value": 11381,
+          "date": "2027-01"
+        },
+        {
+          "month": 18,
+          "value": 11449,
+          "date": "2027-02"
+        },
+        {
+          "month": 19,
+          "value": 11525,
+          "date": "2027-03"
+        },
+        {
+          "month": 20,
+          "value": 11597,
+          "date": "2027-04"
+        },
+        {
+          "month": 21,
+          "value": 11666,
+          "date": "2027-05"
+        },
+        {
+          "month": 22,
+          "value": 11733,
+          "date": "2027-06"
+        },
+        {
+          "month": 23,
+          "value": 11801,
+          "date": "2027-07"
+        },
+        {
+          "month": 24,
+          "value": 11870,
+          "date": "2027-08"
+        },
+        {
+          "month": 25,
+          "value": 11939,
+          "date": "2027-09"
+        },
+        {
+          "month": 26,
+          "value": 12011,
+          "date": "2027-10"
+        },
+        {
+          "month": 27,
+          "value": 12086,
+          "date": "2027-11"
+        },
+        {
+          "month": 28,
+          "value": 12163,
+          "date": "2027-12"
+        },
+        {
+          "month": 29,
+          "value": 12241,
+          "date": "2028-01"
+        },
+        {
+          "month": 30,
+          "value": 12318,
+          "date": "2028-02"
+        },
+        {
+          "month": 31,
+          "value": 12394,
+          "date": "2028-03"
+        },
+        {
+          "month": 32,
+          "value": 12468,
+          "date": "2028-04"
+        },
+        {
+          "month": 33,
+          "value": 12542,
+          "date": "2028-05"
+        },
+        {
+          "month": 34,
+          "value": 12617,
+          "date": "2028-06"
+        },
+        {
+          "month": 35,
+          "value": 12694,
+          "date": "2028-07"
+        },
+        {
+          "month": 36,
+          "value": 12776,
+          "date": "2028-08"
+        },
+        {
+          "month": 37,
+          "value": 12863,
+          "date": "2028-09"
+        },
+        {
+          "month": 38,
+          "value": 12956,
+          "date": "2028-10"
+        },
+        {
+          "month": 39,
+          "value": 13056,
+          "date": "2028-11"
+        },
+        {
+          "month": 40,
+          "value": 13160,
+          "date": "2028-12"
+        },
+        {
+          "month": 41,
+          "value": 13268,
+          "date": "2029-01"
+        },
+        {
+          "month": 42,
+          "value": 13360,
+          "date": "2029-02"
+        },
+        {
+          "month": 43,
+          "value": 13468,
+          "date": "2029-03"
+        },
+        {
+          "month": 44,
+          "value": 13574,
+          "date": "2029-04"
+        },
+        {
+          "month": 45,
+          "value": 13678,
+          "date": "2029-05"
+        },
+        {
+          "month": 46,
+          "value": 13781,
+          "date": "2029-06"
+        },
+        {
+          "month": 47,
+          "value": 13883,
+          "date": "2029-07"
+        },
+        {
+          "month": 48,
+          "value": 13986,
+          "date": "2029-08"
+        },
+        {
+          "month": 49,
+          "value": 14088,
+          "date": "2029-09"
+        },
+        {
+          "month": 50,
+          "value": 14192,
+          "date": "2029-10"
+        },
+        {
+          "month": 51,
+          "value": 14299,
+          "date": "2029-11"
+        },
+        {
+          "month": 52,
+          "value": 14408,
+          "date": "2029-12"
+        },
+        {
+          "month": 53,
+          "value": 14517,
+          "date": "2030-01"
+        },
+        {
+          "month": 54,
+          "value": 14623,
+          "date": "2030-02"
+        },
+        {
+          "month": 55,
+          "value": 14726,
+          "date": "2030-03"
+        },
+        {
+          "month": 56,
+          "value": 14824,
+          "date": "2030-04"
+        },
+        {
+          "month": 57,
+          "value": 14916,
+          "date": "2030-05"
+        },
+        {
+          "month": 58,
+          "value": 15002,
+          "date": "2030-06"
+        },
+        {
+          "month": 59,
+          "value": 15086,
+          "date": "2030-07"
+        },
+        {
+          "month": 60,
+          "value": 15167,
+          "date": "2030-08"
+        }
+      ],
+      "projectedValues": {
+        "oneYear": 10951,
+        "threeYear": 12776,
+        "fiveYear": 15167
+      },
+      "expectedAnnualReturn": 8.2,
+      "riskLevel": "medium",
+      "diversificationScore": 100,
+      "sectorBreakdown": {
+        "Broad Market": 20,
+        "Technology": 35,
+        "Bonds": 20,
+        "Commodities": 10,
+        "Healthcare": 15
+      }
+    }
+  }
 }

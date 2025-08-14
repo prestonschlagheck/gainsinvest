@@ -322,4 +322,24 @@ export class JobProcessor {
       })
     }
   }
+}
+
+// Global-safe processor starter so API routes can ensure processing without separate worker
+declare global {
+  // eslint-disable-next-line no-var
+  var __jobProcessorStarted: boolean | undefined
+  // eslint-disable-next-line no-var
+  var __jobProcessorInstance: JobProcessor | undefined
+}
+
+export function ensureJobProcessorStarted() {
+  if (global.__jobProcessorStarted) {
+    return
+  }
+  const queue = getJobQueue()
+  const processor = new JobProcessor(queue)
+  processor.start(2000) // poll every 2s for responsiveness
+  global.__jobProcessorStarted = true
+  global.__jobProcessorInstance = processor
+  console.log('✅ ensureJobProcessorStarted: processor is running')
 } 

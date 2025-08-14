@@ -1,0 +1,407 @@
+{
+  "id": "job_1755192774262_og2fsn1x4oh",
+  "status": "completed",
+  "userProfile": {
+    "isGuest": true,
+    "riskTolerance": 5,
+    "timeHorizon": "medium",
+    "growthType": "balanced",
+    "sectors": [
+      "industrials"
+    ],
+    "ethicalInvesting": 5,
+    "capitalAvailable": 5000,
+    "existingPortfolio": [],
+    "hasCompletedQuestionnaire": false,
+    "lastUpdated": "2025-08-14T17:31:20.212Z",
+    "portfolio": []
+  },
+  "createdAt": "2025-08-14T17:32:54.262Z",
+  "updatedAt": "2025-08-14T17:49:03.002Z",
+  "result": {
+    "recommendations": [
+      {
+        "symbol": "XLI",
+        "name": "Industrial Select Sector",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 85,
+        "reasoning": "This ETF provides exposure to the industrials sector, aligning with the user's preference. Given the medium time horizon and balanced growth goal, it offers diversification within industrials with moderate risk. Current market shows slight down trends overall, but industrials have stable long-term prospects with expected returns in the 7-10% range for ETFs. ESG priority is moderate, and this fund includes some ESG-compliant companies.",
+        "sector": "Industrials",
+        "targetPrice": 150,
+        "stopLoss": 120,
+        "expectedAnnualReturn": 0.09
+      },
+      {
+        "symbol": "VTI",
+        "name": "Vanguard Total Stock Market",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 82,
+        "reasoning": "For balanced growth, this broad market ETF provides diversification across all sectors, including industrials, complementing the user's preferences. Despite the slight down trend in VTI, historical ETF performance supports 7-10% annual returns. It fits the 5/10 risk tolerance with low volatility compared to individual stocks, and medium ESG integration.",
+        "sector": "Broad Market",
+        "targetPrice": 350,
+        "stopLoss": 290,
+        "expectedAnnualReturn": 0.08
+      },
+      {
+        "symbol": "QQQ",
+        "name": "Invesco NASDAQ 100",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 88,
+        "reasoning": "This growth-oriented ETF aligns with the balanced growth strategy by adding tech exposure, which shows a slight up trend. It diversifies beyond industrials while maintaining moderate risk. Expected returns are in the 8-15% range for growth assets, adjusted for current positive momentum in QQQ. Moderate ESG priority is met through inclusion of sustainable tech firms.",
+        "sector": "Technology",
+        "targetPrice": 650,
+        "stopLoss": 520,
+        "expectedAnnualReturn": 0.1
+      },
+      {
+        "symbol": "CAT",
+        "name": "Caterpillar",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 84,
+        "reasoning": "As an individual stock in the industrials sector, CAT offers targeted exposure to user's preference with strong fundamentals in machinery and construction. Medium time horizon supports holding for growth, with expected 6-12% returns based on large-cap stability. Current market sentiment is neutral, but positive long-term outlook avoids negative prospects. ESG score is moderate.",
+        "sector": "Industrials",
+        "targetPrice": 400,
+        "stopLoss": 320,
+        "expectedAnnualReturn": 0.11
+      },
+      {
+        "symbol": "BND",
+        "name": "Vanguard Total Bond Market",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 80,
+        "reasoning": "To balance the growth strategy and moderate risk tolerance, this bond ETF adds stability with lower volatility. Despite slight down trends in bonds like TLT, expected annual returns of 2-6% provide downside protection. It diversifies the portfolio and fits the medium horizon without negative prospects. ESG integration is present at a moderate level.",
+        "sector": "Bonds",
+        "targetPrice": 80,
+        "stopLoss": 70,
+        "expectedAnnualReturn": 0.04
+      }
+    ],
+    "reasoning": "The portfolio is designed for balanced growth with a focus on industrials, allocating 40% to industrials (XLI and CAT) while diversifying into broad market, growth, and bonds for stability. Total allocation sums to $5,000, adhering to max 20% per asset and min 5%. No existing holdings mean all recommendations are buys. Avoided crypto due to negative momentum and ensured all assets have positive expected returns based on current trends and historical ranges.",
+    "riskAssessment": "Moderate risk (5/10) is matched with a mix of equities (80%) and bonds (20%), providing growth potential with some protection against downturns. Volatility is managed through ETFs, with stop-losses to limit losses.",
+    "marketOutlook": "Current market shows mixed trends with slight downs in most indicators except QQQ's uptick, suggesting cautious optimism. Focus on sectors with positive prospects like industrials and tech growth for medium-term recovery.",
+    "portfolioProjections": {
+      "totalInvestment": 5000,
+      "monthlyProjections": [
+        {
+          "month": 1,
+          "value": 5037,
+          "date": "2025-09"
+        },
+        {
+          "month": 2,
+          "value": 5077,
+          "date": "2025-10"
+        },
+        {
+          "month": 3,
+          "value": 5118,
+          "date": "2025-11"
+        },
+        {
+          "month": 4,
+          "value": 5160,
+          "date": "2025-12"
+        },
+        {
+          "month": 5,
+          "value": 5202,
+          "date": "2026-01"
+        },
+        {
+          "month": 6,
+          "value": 5243,
+          "date": "2026-02"
+        },
+        {
+          "month": 7,
+          "value": 5284,
+          "date": "2026-03"
+        },
+        {
+          "month": 8,
+          "value": 5324,
+          "date": "2026-04"
+        },
+        {
+          "month": 9,
+          "value": 5364,
+          "date": "2026-05"
+        },
+        {
+          "month": 10,
+          "value": 5404,
+          "date": "2026-06"
+        },
+        {
+          "month": 11,
+          "value": 5445,
+          "date": "2026-07"
+        },
+        {
+          "month": 12,
+          "value": 5488,
+          "date": "2026-08"
+        },
+        {
+          "month": 13,
+          "value": 5531,
+          "date": "2026-09"
+        },
+        {
+          "month": 14,
+          "value": 5576,
+          "date": "2026-10"
+        },
+        {
+          "month": 15,
+          "value": 5620,
+          "date": "2026-11"
+        },
+        {
+          "month": 16,
+          "value": 5665,
+          "date": "2026-12"
+        },
+        {
+          "month": 17,
+          "value": 5708,
+          "date": "2027-01"
+        },
+        {
+          "month": 18,
+          "value": 5743,
+          "date": "2027-02"
+        },
+        {
+          "month": 19,
+          "value": 5782,
+          "date": "2027-03"
+        },
+        {
+          "month": 20,
+          "value": 5819,
+          "date": "2027-04"
+        },
+        {
+          "month": 21,
+          "value": 5855,
+          "date": "2027-05"
+        },
+        {
+          "month": 22,
+          "value": 5889,
+          "date": "2027-06"
+        },
+        {
+          "month": 23,
+          "value": 5924,
+          "date": "2027-07"
+        },
+        {
+          "month": 24,
+          "value": 5960,
+          "date": "2027-08"
+        },
+        {
+          "month": 25,
+          "value": 5995,
+          "date": "2027-09"
+        },
+        {
+          "month": 26,
+          "value": 6032,
+          "date": "2027-10"
+        },
+        {
+          "month": 27,
+          "value": 6071,
+          "date": "2027-11"
+        },
+        {
+          "month": 28,
+          "value": 6111,
+          "date": "2027-12"
+        },
+        {
+          "month": 29,
+          "value": 6151,
+          "date": "2028-01"
+        },
+        {
+          "month": 30,
+          "value": 6190,
+          "date": "2028-02"
+        },
+        {
+          "month": 31,
+          "value": 6229,
+          "date": "2028-03"
+        },
+        {
+          "month": 32,
+          "value": 6268,
+          "date": "2028-04"
+        },
+        {
+          "month": 33,
+          "value": 6306,
+          "date": "2028-05"
+        },
+        {
+          "month": 34,
+          "value": 6344,
+          "date": "2028-06"
+        },
+        {
+          "month": 35,
+          "value": 6384,
+          "date": "2028-07"
+        },
+        {
+          "month": 36,
+          "value": 6426,
+          "date": "2028-08"
+        },
+        {
+          "month": 37,
+          "value": 6471,
+          "date": "2028-09"
+        },
+        {
+          "month": 38,
+          "value": 6519,
+          "date": "2028-10"
+        },
+        {
+          "month": 39,
+          "value": 6570,
+          "date": "2028-11"
+        },
+        {
+          "month": 40,
+          "value": 6624,
+          "date": "2028-12"
+        },
+        {
+          "month": 41,
+          "value": 6680,
+          "date": "2029-01"
+        },
+        {
+          "month": 42,
+          "value": 6727,
+          "date": "2029-02"
+        },
+        {
+          "month": 43,
+          "value": 6783,
+          "date": "2029-03"
+        },
+        {
+          "month": 44,
+          "value": 6838,
+          "date": "2029-04"
+        },
+        {
+          "month": 45,
+          "value": 6891,
+          "date": "2029-05"
+        },
+        {
+          "month": 46,
+          "value": 6944,
+          "date": "2029-06"
+        },
+        {
+          "month": 47,
+          "value": 6997,
+          "date": "2029-07"
+        },
+        {
+          "month": 48,
+          "value": 7050,
+          "date": "2029-08"
+        },
+        {
+          "month": 49,
+          "value": 7103,
+          "date": "2029-09"
+        },
+        {
+          "month": 50,
+          "value": 7157,
+          "date": "2029-10"
+        },
+        {
+          "month": 51,
+          "value": 7212,
+          "date": "2029-11"
+        },
+        {
+          "month": 52,
+          "value": 7268,
+          "date": "2029-12"
+        },
+        {
+          "month": 53,
+          "value": 7324,
+          "date": "2030-01"
+        },
+        {
+          "month": 54,
+          "value": 7380,
+          "date": "2030-02"
+        },
+        {
+          "month": 55,
+          "value": 7433,
+          "date": "2030-03"
+        },
+        {
+          "month": 56,
+          "value": 7483,
+          "date": "2030-04"
+        },
+        {
+          "month": 57,
+          "value": 7531,
+          "date": "2030-05"
+        },
+        {
+          "month": 58,
+          "value": 7576,
+          "date": "2030-06"
+        },
+        {
+          "month": 59,
+          "value": 7618,
+          "date": "2030-07"
+        },
+        {
+          "month": 60,
+          "value": 7661,
+          "date": "2030-08"
+        }
+      ],
+      "projectedValues": {
+        "oneYear": 5488,
+        "threeYear": 6426,
+        "fiveYear": 7661
+      },
+      "expectedAnnualReturn": 8.4,
+      "riskLevel": "medium",
+      "diversificationScore": 80,
+      "sectorBreakdown": {
+        "Industrials": 40,
+        "Broad Market": 20,
+        "Technology": 20,
+        "Bonds": 20
+      }
+    }
+  }
+}

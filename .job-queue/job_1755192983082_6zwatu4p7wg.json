@@ -1,0 +1,406 @@
+{
+  "id": "job_1755192983082_6zwatu4p7wg",
+  "status": "completed",
+  "userProfile": {
+    "isGuest": true,
+    "riskTolerance": 5,
+    "timeHorizon": "medium",
+    "growthType": "balanced",
+    "sectors": [
+      "all"
+    ],
+    "ethicalInvesting": 2,
+    "capitalAvailable": 5000,
+    "existingPortfolio": [],
+    "hasCompletedQuestionnaire": false,
+    "lastUpdated": "2025-08-14T17:35:36.045Z",
+    "portfolio": []
+  },
+  "createdAt": "2025-08-14T17:36:23.082Z",
+  "updatedAt": "2025-08-14T17:48:53.808Z",
+  "result": {
+    "recommendations": [
+      {
+        "symbol": "SPY",
+        "name": "SPDR S&P 500",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 85,
+        "reasoning": "SPY provides broad exposure to large-cap U.S. stocks across multiple sectors, aligning with the user's balanced growth strategy and preference for diversification. Despite the slight down trend at $644.69, historical performance supports 7-10% annual returns in a medium-term horizon. With moderate risk tolerance (5/10), this ETF offers stability and growth potential without high volatility. Low ESG priority (2/10) is not a factor here. Allocation at 20% of portfolio ensures diversification without overexposure.",
+        "sector": "Broad Market",
+        "targetPrice": 709,
+        "stopLoss": 580,
+        "expectedAnnualReturn": 0.08
+      },
+      {
+        "symbol": "QQQ",
+        "name": "Invesco NASDAQ 100",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 88,
+        "reasoning": "QQQ focuses on technology and growth stocks, showing a slight up trend at $580.625, which indicates positive momentum compared to broader market declines. This fits the balanced growth goal by adding growth-oriented exposure. Medium time horizon and 5/10 risk tolerance are supported by QQQ's historical 8-15% returns for growth components. Diversifies into tech sector, open per user preferences. 20% allocation maintains balance.",
+        "sector": "Technology",
+        "targetPrice": 639,
+        "stopLoss": 523,
+        "expectedAnnualReturn": 0.1
+      },
+      {
+        "symbol": "VTI",
+        "name": "Vanguard Total Stock Market",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 82,
+        "reasoning": "VTI offers total U.S. market exposure, including small and mid-caps for broader diversification across all sectors, matching user's openness to any sector. Current slight down at $317.0385, but expected 7-10% annual returns based on historical data make it suitable for medium-term balanced growth. Moderate risk tolerance is addressed with its low volatility relative to individual stocks. No ESG focus needed.",
+        "sector": "Broad Market",
+        "targetPrice": 349,
+        "stopLoss": 285,
+        "expectedAnnualReturn": 0.09
+      },
+      {
+        "symbol": "AAPL",
+        "name": "Apple",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 87,
+        "reasoning": "AAPL is a large-cap tech stock with strong fundamentals, benefiting from QQQ's positive trend. It supports balanced growth through innovation and dividends. Medium horizon aligns with expected 6-12% returns. Risk tolerance of 5/10 is met with AAPL's relative stability. Adds tech sector diversification; allocation capped at 20% to avoid concentration.",
+        "sector": "Technology",
+        "targetPrice": 250,
+        "stopLoss": 200,
+        "expectedAnnualReturn": 0.11
+      },
+      {
+        "symbol": "JNJ",
+        "name": "Johnson & Johnson",
+        "type": "buy",
+        "amount": 1000,
+        "confidence": 84,
+        "reasoning": "JNJ provides defensive growth in healthcare, diversifying away from tech-heavy allocations. Despite broader market slight downs, healthcare stocks have stable prospects with 6-12% expected returns. Fits balanced strategy and medium horizon, with lower volatility suiting 5/10 risk tolerance. Open sector preferences allow this inclusion for maximum diversification.",
+        "sector": "Healthcare",
+        "targetPrice": 180,
+        "stopLoss": 140,
+        "expectedAnnualReturn": 0.09
+      }
+    ],
+    "reasoning": "This portfolio recommendation is tailored to a balanced growth strategy with a $5,000 investment, medium time horizon, and moderate risk tolerance (5/10). Since the user has no current holdings, all recommendations are new buys totaling exactly $5,000, diversified across broad market ETFs and individual stocks in technology and healthcare sectors for maximum diversification as preferred. Allocations are capped at 20% per asset to manage risk, with a focus on assets showing positive historical return prospects (6-12% for stocks, 7-10% for ETFs). Excluded assets like GLD, TLT, and BTC due to current down trends and negative momentum, ensuring no recommendations with negative expected returns. Low ESG priority (2/10) was not a driving factor.",
+    "riskAssessment": "Moderate risk (aligned with 5/10 tolerance): The portfolio balances growth-oriented assets (e.g., QQQ, AAPL) with stable broad-market exposure (SPY, VTI), reducing volatility through diversification. Potential downside from slight market downtrends is mitigated by stop-loss levels and historical resilience. Overall portfolio beta estimated at 1.0, suitable for medium-term holding.",
+    "marketOutlook": "Current market shows mixed signals with slight downs in SPY, VTI, GLD, and TLT, but a slight up in QQQ indicating tech resilience. Broader sentiment is cautious, but historical trends support positive annual returns for recommended assets. Medium-term outlook is optimistic for balanced growth, assuming no major recessions, with focus on diversified U.S. equities amid negative crypto momentum.",
+    "portfolioProjections": {
+      "totalInvestment": 5000,
+      "monthlyProjections": [
+        {
+          "month": 1,
+          "value": 5042,
+          "date": "2025-09"
+        },
+        {
+          "month": 2,
+          "value": 5086,
+          "date": "2025-10"
+        },
+        {
+          "month": 3,
+          "value": 5132,
+          "date": "2025-11"
+        },
+        {
+          "month": 4,
+          "value": 5179,
+          "date": "2025-12"
+        },
+        {
+          "month": 5,
+          "value": 5226,
+          "date": "2026-01"
+        },
+        {
+          "month": 6,
+          "value": 5273,
+          "date": "2026-02"
+        },
+        {
+          "month": 7,
+          "value": 5319,
+          "date": "2026-03"
+        },
+        {
+          "month": 8,
+          "value": 5364,
+          "date": "2026-04"
+        },
+        {
+          "month": 9,
+          "value": 5409,
+          "date": "2026-05"
+        },
+        {
+          "month": 10,
+          "value": 5454,
+          "date": "2026-06"
+        },
+        {
+          "month": 11,
+          "value": 5501,
+          "date": "2026-07"
+        },
+        {
+          "month": 12,
+          "value": 5548,
+          "date": "2026-08"
+        },
+        {
+          "month": 13,
+          "value": 5598,
+          "date": "2026-09"
+        },
+        {
+          "month": 14,
+          "value": 5648,
+          "date": "2026-10"
+        },
+        {
+          "month": 15,
+          "value": 5699,
+          "date": "2026-11"
+        },
+        {
+          "month": 16,
+          "value": 5749,
+          "date": "2026-12"
+        },
+        {
+          "month": 17,
+          "value": 5799,
+          "date": "2027-01"
+        },
+        {
+          "month": 18,
+          "value": 5838,
+          "date": "2027-02"
+        },
+        {
+          "month": 19,
+          "value": 5883,
+          "date": "2027-03"
+        },
+        {
+          "month": 20,
+          "value": 5925,
+          "date": "2027-04"
+        },
+        {
+          "month": 21,
+          "value": 5965,
+          "date": "2027-05"
+        },
+        {
+          "month": 22,
+          "value": 6005,
+          "date": "2027-06"
+        },
+        {
+          "month": 23,
+          "value": 6044,
+          "date": "2027-07"
+        },
+        {
+          "month": 24,
+          "value": 6085,
+          "date": "2027-08"
+        },
+        {
+          "month": 25,
+          "value": 6126,
+          "date": "2027-09"
+        },
+        {
+          "month": 26,
+          "value": 6168,
+          "date": "2027-10"
+        },
+        {
+          "month": 27,
+          "value": 6212,
+          "date": "2027-11"
+        },
+        {
+          "month": 28,
+          "value": 6258,
+          "date": "2027-12"
+        },
+        {
+          "month": 29,
+          "value": 6303,
+          "date": "2028-01"
+        },
+        {
+          "month": 30,
+          "value": 6349,
+          "date": "2028-02"
+        },
+        {
+          "month": 31,
+          "value": 6394,
+          "date": "2028-03"
+        },
+        {
+          "month": 32,
+          "value": 6438,
+          "date": "2028-04"
+        },
+        {
+          "month": 33,
+          "value": 6482,
+          "date": "2028-05"
+        },
+        {
+          "month": 34,
+          "value": 6526,
+          "date": "2028-06"
+        },
+        {
+          "month": 35,
+          "value": 6572,
+          "date": "2028-07"
+        },
+        {
+          "month": 36,
+          "value": 6620,
+          "date": "2028-08"
+        },
+        {
+          "month": 37,
+          "value": 6672,
+          "date": "2028-09"
+        },
+        {
+          "month": 38,
+          "value": 6727,
+          "date": "2028-10"
+        },
+        {
+          "month": 39,
+          "value": 6787,
+          "date": "2028-11"
+        },
+        {
+          "month": 40,
+          "value": 6849,
+          "date": "2028-12"
+        },
+        {
+          "month": 41,
+          "value": 6913,
+          "date": "2029-01"
+        },
+        {
+          "month": 42,
+          "value": 6968,
+          "date": "2029-02"
+        },
+        {
+          "month": 43,
+          "value": 7033,
+          "date": "2029-03"
+        },
+        {
+          "month": 44,
+          "value": 7096,
+          "date": "2029-04"
+        },
+        {
+          "month": 45,
+          "value": 7159,
+          "date": "2029-05"
+        },
+        {
+          "month": 46,
+          "value": 7220,
+          "date": "2029-06"
+        },
+        {
+          "month": 47,
+          "value": 7281,
+          "date": "2029-07"
+        },
+        {
+          "month": 48,
+          "value": 7343,
+          "date": "2029-08"
+        },
+        {
+          "month": 49,
+          "value": 7405,
+          "date": "2029-09"
+        },
+        {
+          "month": 50,
+          "value": 7468,
+          "date": "2029-10"
+        },
+        {
+          "month": 51,
+          "value": 7532,
+          "date": "2029-11"
+        },
+        {
+          "month": 52,
+          "value": 7598,
+          "date": "2029-12"
+        },
+        {
+          "month": 53,
+          "value": 7663,
+          "date": "2030-01"
+        },
+        {
+          "month": 54,
+          "value": 7728,
+          "date": "2030-02"
+        },
+        {
+          "month": 55,
+          "value": 7790,
+          "date": "2030-03"
+        },
+        {
+          "month": 56,
+          "value": 7850,
+          "date": "2030-04"
+        },
+        {
+          "month": 57,
+          "value": 7905,
+          "date": "2030-05"
+        },
+        {
+          "month": 58,
+          "value": 7958,
+          "date": "2030-06"
+        },
+        {
+          "month": 59,
+          "value": 8009,
+          "date": "2030-07"
+        },
+        {
+          "month": 60,
+          "value": 8058,
+          "date": "2030-08"
+        }
+      ],
+      "projectedValues": {
+        "oneYear": 5548,
+        "threeYear": 6620,
+        "fiveYear": 8058
+      },
+      "expectedAnnualReturn": 9.4,
+      "riskLevel": "medium",
+      "diversificationScore": 60,
+      "sectorBreakdown": {
+        "Broad Market": 40,
+        "Technology": 40,
+        "Healthcare": 20
+      }
+    }
+  }
+}
