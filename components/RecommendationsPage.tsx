@@ -441,7 +441,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         
         // Handle job-based response (legacy approach)
         if (apiResponse.requestId) {
-          console.log('🔄 Job-based response - polling for completion')
+          console.log('🔄 Job-based response - starting polling for:', apiResponse.requestId)
           await pollJobStatus(apiResponse.requestId)
         } else {
           throw new Error('Invalid API response format')
@@ -465,13 +465,13 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     }
     
     const pollJobStatus = async (requestId: string) => {
-      console.log('🔄 Polling job status:', requestId)
+      console.log('🔄 Starting job polling for:', requestId)
       let attempts = 0
       const maxAttempts = 150 // 5 minutes max (2 second intervals)
       
       // Add timeout warning at 3 minutes and show reset options
       const timeoutWarning = setTimeout(() => {
-        console.warn('⚠️ Job taking longer than expected (3+ minutes)')
+        console.warn('⚠️ Job taking longer than expected (3+ minutes):', requestId)
         // Show user reset options for stuck jobs
         setErrorDetails({
           message: 'Job is taking longer than expected. You can try loading the latest results or resetting.',
@@ -489,19 +489,22 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       
       const pollInterval = setInterval(async () => {
         attempts++
+        console.log(`🔄 Polling attempt ${attempts}/${maxAttempts} for job: ${requestId}`)
         
         try {
           const statusResponse = await fetch(`${window.location.origin}/api/results/${requestId}`)
           
           if (!statusResponse.ok) {
             if (statusResponse.status === 404) {
+              console.error(`❌ Job not found: ${requestId}`)
               throw new Error(`Job not found: ${requestId}`)
             }
+            console.error(`❌ Status check failed: ${statusResponse.status}`)
             throw new Error(`Status check failed: ${statusResponse.status}`)
           }
           
           const statusData = await statusResponse.json()
-          console.log('📊 Job status:', statusData.status)
+          console.log(`📊 Job ${requestId} status:`, statusData.status, `(attempt ${attempts})`)
           
           // Update loading percentage based on time elapsed and status
           let progressPercentage: number
@@ -517,7 +520,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           if (statusData.status === 'completed') {
             clearInterval(pollInterval)
             
-            console.log('✅ Job completed successfully')
+            console.log('✅ Job completed successfully:', requestId)
             setApiStatus(prev => ({ ...prev, recommendations: 'success' }))
             setLoadingPercentage(100)
             
@@ -526,20 +529,23 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             
             const analysis = statusData.result
             if (analysis && analysis.recommendations && analysis.recommendations.length > 0) {
+              console.log('📊 Setting recommendations:', analysis.recommendations.length, 'items')
               setRecommendations(analysis.recommendations)
               setPortfolioProjections(analysis.portfolioProjections)
               setIsLoading(false)
               
               // Trigger API stats refresh after successful recommendation generation
               window.dispatchEvent(new CustomEvent('refreshApiStats'))
+              console.log('✅ Frontend updated successfully with results')
             } else {
+              console.error('❌ No recommendations in completed job')
               throw new Error('No recommendations in completed job')
             }
             
           } else if (statusData.status === 'failed') {
             clearInterval(pollInterval)
             
-            console.error('❌ Job failed:', statusData.error)
+            console.error('❌ Job failed:', requestId, statusData.error)
             setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
             
             setErrorDetails({
@@ -554,7 +560,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             clearInterval(pollInterval)
             clearTimeout(timeoutWarning)
             
-            console.error('⏰ Job polling timeout after 5 minutes')
+            console.error('⏰ Job polling timeout after 5 minutes:', requestId)
             setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
             
             setErrorDetails({
@@ -570,7 +576,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           }
           
         } catch (error) {
-          console.error('❌ Polling error:', error)
+          console.error(`❌ Polling error for job ${requestId}:`, error)
           
           // Don't increment attempts for network errors, but do for 404s
           if (error instanceof Error && error.message.includes('Job not found')) {
@@ -579,6 +585,8 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         }
         
       }, 2000) // Poll every 2 seconds
+      
+      console.log('✅ Polling started for job:', requestId)
     }
     
     generateRecommendations()
