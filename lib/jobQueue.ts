@@ -22,6 +22,64 @@ export interface JobQueue {
   deleteJob(jobId: string): Promise<void>
 }
 
+// In-memory job queue implementation (development/fallback for read-only filesystems)
+class MemoryJobQueue implements JobQueue {
+  private jobs: Map<string, JobRequest> = new Map()
+
+  private generateJobId(): string {
+    return `job_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+  }
+
+  async addJob(userProfile: any): Promise<string> {
+    const jobId = this.generateJobId()
+    const job: JobRequest = {
+      id: jobId,
+      status: 'pending',
+      userProfile,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    this.jobs.set(jobId, job)
+    console.log(`💾 Job ${jobId} added to memory queue`)
+    return jobId
+  }
+
+  async getJob(jobId: string): Promise<JobRequest | null> {
+    const job = this.jobs.get(jobId)
+    return job || null
+  }
+
+  async updateJob(jobId: string, updates: Partial<JobRequest>): Promise<void> {
+    const job = this.jobs.get(jobId)
+    if (!job) {
+      throw new Error(`Job ${jobId} not found`)
+    }
+
+    const updatedJob = {
+      ...job,
+      ...updates,
+      updatedAt: new Date()
+    }
+
+    this.jobs.set(jobId, updatedJob)
+    console.log(`💾 Job ${jobId} updated in memory queue`)
+  }
+
+  async getJobsByStatus(status: JobRequest['status']): Promise<JobRequest[]> {
+    const jobs = Array.from(this.jobs.values())
+      .filter(job => job.status === status)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    
+    return jobs
+  }
+
+  async deleteJob(jobId: string): Promise<void> {
+    this.jobs.delete(jobId)
+    console.log(`💾 Job ${jobId} deleted from memory queue`)
+  }
+}
+
 // File-based job queue implementation (development/fallback)
 class FileJobQueue implements JobQueue {
   private queueDir: string
@@ -203,21 +261,32 @@ export function createJobQueue(): JobQueue {
   const queueType = process.env.JOB_QUEUE_TYPE || 'file'
   
   switch (queueType) {
+    case 'memory':
+      console.log('🧠 Using in-memory job queue (development mode)')
+      return new MemoryJobQueue()
+      
     case 'redis':
       if (process.env.REDIS_URL) {
         return new RedisJobQueue()
       }
-      console.warn('Redis queue requested but REDIS_URL not set, falling back to file queue')
-      return new FileJobQueue()
+      console.warn('Redis queue requested but REDIS_URL not set, falling back to memory queue')
+      return new MemoryJobQueue()
       
     case 'supabase':
       if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
         return new SupabaseJobQueue()
       }
-      console.warn('Supabase queue requested but credentials not set, falling back to file queue')
-      return new FileJobQueue()
+      console.warn('Supabase queue requested but credentials not set, falling back to memory queue')
+      return new MemoryJobQueue()
       
     case 'file':
+      try {
+        return new FileJobQueue()
+      } catch (error) {
+        console.warn('File queue failed (likely read-only filesystem), falling back to memory queue:', error)
+        return new MemoryJobQueue()
+      }
+      
     default:
       return new FileJobQueue()
   }

@@ -51,6 +51,15 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
     }
   }
 
+  const getStrengthColor = (strength: 'weak' | 'moderate' | 'strong') => {
+    switch (strength) {
+      case 'weak': return 'text-red-400'
+      case 'moderate': return 'text-yellow-400'
+      case 'strong': return 'text-green-400'
+      default: return 'text-yellow-400'
+    }
+  }
+
   const getReturnColor = (returnRate: number) => {
     // Use green shades instead of yellow/red
     if (returnRate >= 0.15) return 'text-green-600'

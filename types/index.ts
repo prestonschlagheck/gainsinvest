@@ -55,29 +55,6 @@ export interface InvestmentRecommendation {
   allocationPercentage?: number
 }
 
-export interface PortfolioProjection {
-  totalInvestment: number
-  monthlyProjections: { month: number; value: number; date: string }[]
-  projectedValues: {
-    oneYear: number
-    threeYear: number
-    fiveYear: number
-  }
-  expectedAnnualReturn: number
-  riskLevel: 'low' | 'medium' | 'high'
-  diversificationScore: number
-  sectorBreakdown: { [sector: string]: number }
-}
-
-export interface InvestmentAnalysis {
-  recommendations: InvestmentRecommendation[]
-  reasoning: string
-  riskAssessment: string
-  marketOutlook: string
-  portfolioProjections?: PortfolioProjection
-  error?: string
-}
-
 export interface PortfolioAllocation {
   buy: InvestmentRecommendation[]
   sell: InvestmentRecommendation[]
