@@ -993,37 +993,37 @@ export async function generateInvestmentRecommendations(
   userProfile: any,
   marketData?: any[]
 ): Promise<InvestmentAnalysis> {
-  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+Grok integration...')
+  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+OpenAI integration...')
   
-  // Check AI service availability - FORCE FMP+Grok combination
-  const hasGrok = API_KEYS.GROK_API_KEY
+  // Check AI service availability - FORCE FMP+OpenAI combination
   const hasOpenAI = API_KEYS.OPENAI_API_KEY
+  const hasGrok = API_KEYS.GROK_API_KEY
   
-  if (!hasGrok) {
-    throw new Error('❌ CRITICAL: Grok API key is required for FMP+Grok integration. System cannot proceed without it.')
+  if (!hasOpenAI) {
+    throw new Error('❌ CRITICAL: OpenAI API key is required for FMP+OpenAI integration. System cannot proceed without it.')
   }
   
-  // MANDATORY: Always use FMP+Grok combination - NO FALLBACKS
-  console.log('🔧 FORCING FMP+Grok integration - no fallbacks allowed')
+  // MANDATORY: Always use FMP+OpenAI combination - NO FALLBACKS
+  console.log('🔧 FORCING FMP+OpenAI integration - no fallbacks allowed')
   
   let lastError: any = null
   let attemptCount = 0
   const maxAttempts = 3
   
-  // Retry logic for FMP+Grok integration
+  // Retry logic for FMP+OpenAI integration
   while (attemptCount < maxAttempts) {
     attemptCount++
-    console.log(`🔄 FMP+Grok attempt ${attemptCount}/${maxAttempts}`)
+    console.log(`🔄 FMP+OpenAI attempt ${attemptCount}/${maxAttempts}`)
     
     try {
-      // Force FMP+Grok integration
-      const result = await generateRecommendationsWithGrok(userProfile)
-      console.log('✅ FMP+Grok integration successful!')
+      // Force FMP+OpenAI integration
+      const result = await generateRecommendationsWithOpenAI(userProfile)
+      console.log('✅ FMP+OpenAI integration successful!')
       return result
       
     } catch (error) {
       lastError = error
-      console.log(`⚠️ FMP+Grok attempt ${attemptCount} failed:`, error)
+      console.log(`⚠️ FMP+OpenAI attempt ${attemptCount} failed:`, error)
       
       // Handle specific errors
       if (error instanceof Error && error.message.includes('rate limit')) {
@@ -1041,90 +1041,141 @@ export async function generateInvestmentRecommendations(
       
       // For other errors, wait briefly and retry
       if (attemptCount < maxAttempts) {
-        console.log('🔄 Retrying FMP+Grok integration after brief delay...')
+        console.log('🔄 Retrying FMP+OpenAI integration after brief delay...')
         await new Promise(resolve => setTimeout(resolve, 2000))
       }
     }
   }
   
-  // If all FMP+Grok attempts failed, try OpenAI with FMP data as last resort
-  if (hasOpenAI) {
-    console.log('🆘 FMP+Grok failed after all attempts, trying OpenAI with FMP data as emergency backup...')
+  // If all FMP+OpenAI attempts failed, try Grok with FMP data as last resort
+  if (hasGrok) {
+    console.log('🆘 FMP+OpenAI failed after all attempts, trying Grok with FMP data as emergency backup...')
     try {
-      const result = await generateRecommendationsWithOpenAI(userProfile)
-      console.log('⚠️ Using OpenAI with FMP data (emergency backup)')
+      const result = await generateRecommendationsWithGrok(userProfile)
+      console.log('⚠️ Using Grok with FMP data (emergency backup)')
       return result
-    } catch (openAIError) {
-      console.log('❌ OpenAI emergency backup also failed:', openAIError)
+    } catch (grokError) {
+      console.log('❌ Grok emergency backup also failed:', grokError)
     }
   }
   
   // ABSOLUTE LAST RESORT: Throw error instead of using basic fallbacks
   console.error('💥 CRITICAL FAILURE: All sophisticated AI services failed')
-  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+Grok integration failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
+  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+OpenAI integration failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
 }
 
 async function generateRecommendationsWithOpenAI(userProfile: any): Promise<InvestmentAnalysis> {
-  // Step 1: Test OpenAI availability first
+  // MANDATORY FMP+OpenAI Integration - No shortcuts allowed
+  console.log('🔧 STARTING MANDATORY FMP+OPENAI INTEGRATION')
+  console.log('📊 User Profile received:', {
+    riskTolerance: userProfile.riskTolerance,
+    capitalAvailable: userProfile.capitalAvailable,
+    timeHorizon: userProfile.timeHorizon,
+    growthType: userProfile.growthType,
+    existingPortfolio: userProfile.existingPortfolio?.length || 0
+  })
+  
+  // Step 1: FORCE OpenAI API availability check
+  console.log('🔍 MANDATORY OpenAI API availability check...')
+  if (!API_KEYS.OPENAI_API_KEY) {
+    throw new Error('❌ CRITICAL: OpenAI API key is missing. Cannot proceed with FMP+OpenAI integration.')
+  }
+  
   try {
     const testResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo-preview',  // Using more stable model
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 5
       })
     })
     
     if (!testResponse.ok) {
-      throw new Error(`OpenAI API test failed: ${testResponse.status}`)
+      const errorText = await testResponse.text()
+      console.log('❌ OpenAI API error response:', errorText)
+      throw new Error(`OpenAI API unavailable: ${testResponse.status} - ${errorText}`)
     }
+    
+    console.log('✅ OpenAI API confirmed available')
   } catch (error) {
     console.log('⚠️ OpenAI API test failed:', error)
-    if (error instanceof Error) {
-      throw new Error(`OpenAI API error: ${error.message}`)
-    }
-    throw new Error('OpenAI API is not available')
+    throw new Error(`OpenAI API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
   
-  // Step 2: Gather comprehensive market data
-  console.log('📊 Gathering real-time market data...')
-  const marketContext = await gatherComprehensiveMarketData(userProfile)
+  // Step 2: MANDATORY FMP comprehensive market data gathering
+  console.log('📊 MANDATORY: Gathering comprehensive FMP market data...')
+  let marketContext: string
+  try {
+    marketContext = await gatherComprehensiveMarketData(userProfile)
+    console.log('✅ FMP market data successfully gathered')
+    if (!marketContext || marketContext.length < 100) {
+      throw new Error('FMP market data insufficient - received minimal data')
+    }
+  } catch (error) {
+    console.error('❌ FMP market data gathering failed:', error)
+    throw new Error(`FMP data gathering failed: ${error instanceof Error ? error.message : 'Unknown error'}. Cannot proceed without market data.`)
+  }
   
-  // Step 3: Get current financial news
-  console.log('📰 Fetching current financial news...')
-  const newsContext = await getFinancialNews()
+  // Step 3: Get financial news (optional - don't fail if unavailable)
+  console.log('📰 Fetching financial news (supplementary)...')
+  let newsContext: any[] = []
+  try {
+    newsContext = await getFinancialNews()
+    console.log('✅ Financial news fetched successfully')
+  } catch (newsError) {
+    console.log('⚠️ Financial news unavailable, continuing with FMP data only')
+    newsContext = []
+  }
   
-  // Step 4: Analyze existing portfolio if any
+  // Step 4: MANDATORY existing portfolio analysis with FMP data
   let portfolioAnalysis = ''
   if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+    console.log('📊 MANDATORY: Analyzing existing portfolio with FMP data...')
     const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
-    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
+    try {
+      portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
+      console.log('✅ Existing portfolio analysis completed with FMP data')
+    } catch (portfolioError) {
+      console.log('⚠️ Portfolio analysis failed, continuing with basic analysis')
+      portfolioAnalysis = `Basic portfolio analysis: ${userProfile.existingPortfolio.length} existing holdings worth approximately $${userProfile.existingPortfolio.reduce((sum: number, h: any) => sum + (h.amount || 0), 0).toLocaleString()}`
+    }
   }
 
-  // Step 4: Create comprehensive prompt for OpenAI
-  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform. Based on the following user profile, generate an investment portfolio recommendation.
+  // Create comprehensive prompt for OpenAI with MANDATORY FMP data integration
+  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform, powered by comprehensive Financial Modeling Prep (FMP) data and real-time market analysis. Generate investment recommendations that leverage both fundamental and technical analysis.
 
-  USER PROFILE:
-  - Risk Tolerance: ${userProfile.riskTolerance}/10
-  - Investment Amount: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
-  - Current Holdings: ${userProfile.existingPortfolio?.length > 0 ? JSON.stringify(userProfile.existingPortfolio) : 'None'}
-  - Time Horizon: ${userProfile.timeHorizon}
-  - Investment Goals: ${userProfile.growthType} growth strategy
-  - Sector Preferences: ${userProfile.sectors?.includes('all') ? 'All sectors (open to any sector for maximum diversification)' : userProfile.sectors?.join(', ') || 'Open to all sectors'}
-  - ESG Priority: ${userProfile.ethicalInvesting}/10
+USER PROFILE:
+- Risk Tolerance: ${userProfile.riskTolerance}/10
+- Investment Amount: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+- Time Horizon: ${userProfile.timeHorizon || 'medium'}
+- Growth Preference: ${userProfile.growthType || 'balanced'}
+- Sector Preferences: ${(userProfile.sectors || []).join(', ') || 'all sectors'}
+- Ethical Investing Priority: ${userProfile.ethicalInvesting || 5}/10
 
-  REAL-TIME MARKET CONTEXT:
-  ${marketContext}
+COMPREHENSIVE FMP MARKET DATA & ANALYSIS:
+${marketContext}
 
-  CURRENT FINANCIAL NEWS & SENTIMENT:
-  ${newsContext.slice(0, 5).map(news => `• ${news.title} (${news.source}) - ${news.sentiment || 'neutral'} sentiment`).join('\n')}
+${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS WITH FMP DATA:\n${portfolioAnalysis}` : ''}
 
-  ${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS:\n${portfolioAnalysis}` : ''}
+${newsContext && newsContext.length > 0 ? `RECENT FINANCIAL NEWS:\n${newsContext.slice(0, 3).map((news: any) => `• ${news.title}`).join('\n')}` : ''}
+
+CRITICAL INSTRUCTIONS:
+1. **USE FMP DATA**: Base ALL investment decisions on the comprehensive FMP market data provided above
+2. **FUNDAMENTAL ANALYSIS**: Leverage P/E ratios, financial metrics, and sector performance from FMP
+3. **SECTOR ANALYSIS**: Use FMP sector data to identify opportunities and risks
+4. **VALUATION DECISIONS**: Make buy/sell/hold decisions based on FMP fundamental data combined with technical analysis
+5. **MARKET TIMING**: Consider current FMP market conditions and sector rotations
+
+FMP DATA UTILIZATION EXAMPLES:
+- If FMP shows high P/E ratios in tech sector, consider value alternatives
+- Use FMP sector performance data to identify emerging opportunities
+- Leverage FMP financial health metrics to avoid distressed companies
+- Apply FMP market volatility data for position sizing
 
   🚨 CRITICAL CAPITAL ALLOCATION RULES (MUST FOLLOW EXACTLY):
   1. MATHEMATICAL CONSTRAINT: Total BUY amounts + Total HOLD amounts = Available Capital
@@ -1197,8 +1248,13 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
   - Each recommendation should include detailed reasoning based on current data
   - PORTFOLIO MANAGEMENT: If existing holdings exceed available capital, recommend selling specific holdings to make room for new investments`
 
-  const userMessage = `Based on my complete investment profile and current market conditions, please provide comprehensive investment recommendations. Use all available market data, news, and analysis to create the most sophisticated and current investment strategy possible for my specific situation.`
+  const userMessage = `MANDATORY: Use the FMP market data and user profile to generate sophisticated investment recommendations. The FMP data contains real-time market prices, P/E ratios, and sector performance. Base ALL recommendations on this data combined with your analysis.`
 
+  // MANDATORY: Execute OpenAI API call with FMP data
+  console.log('🤖 EXECUTING MANDATORY OpenAI API call with FMP market data...')
+  console.log(`📏 FMP market context length: ${marketContext.length} characters`)
+  console.log(`📏 System prompt length: ${systemPrompt.length} characters`)
+  
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -1206,12 +1262,12 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
       'Authorization': `Bearer ${API_KEYS.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4-turbo-preview',  // Using more stable version
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage }
       ],
-      temperature: 0.3,
+      temperature: 0.2,  // Lower temperature for more consistent results
       max_tokens: 4000,
     }),
   })
