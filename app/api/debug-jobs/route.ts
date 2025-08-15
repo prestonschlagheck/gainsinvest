@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
         restart: '/api/debug-jobs?action=restart',
         forceProcess: '/api/debug-jobs?action=forceProcess&jobId=JOB_ID_HERE'
       },
-      warnings: []
+      warnings: [] as string[]
     }
     
     // Add warnings for stuck jobs
@@ -138,11 +138,11 @@ export async function GET(request: NextRequest) {
       response.warnings.push('Job processor is not running - this may cause delays')
     }
     
-    if (processorStatus.lastActivityAgeSeconds > 300) { // 5 minutes
+    if (processorStatus.lastActivityAgeSeconds && processorStatus.lastActivityAgeSeconds > 300) { // 5 minutes
       response.warnings.push(`Job processor has been inactive for ${processorStatus.lastActivityAgeSeconds} seconds - may be stuck`)
     }
     
-    if (processorStatus.currentlyProcessing > 5) {
+    if (processorStatus.currentlyProcessing && processorStatus.currentlyProcessing > 5) {
       response.warnings.push(`High number of concurrently processing jobs (${processorStatus.currentlyProcessing}) - may cause delays`)
     }
     

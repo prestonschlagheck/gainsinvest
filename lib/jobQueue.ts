@@ -304,10 +304,10 @@ export function getJobQueue(): JobQueue {
 
 // Background job processor
 export class JobProcessor {
-  private isProcessing = false
+  public isProcessing = false
   private processingInterval: NodeJS.Timeout | null = null
   private queue: JobQueue
-  private processingJobs: Set<string> = new Set() // Track currently processing jobs
+  public processingJobs: Set<string> = new Set() // Track currently processing jobs (made public for monitoring)
   public lastActivity: Date = new Date() // Track last activity (made public for monitoring)
   public processedJobsCount: number = 0 // Track total processed jobs (made public for monitoring)
 
