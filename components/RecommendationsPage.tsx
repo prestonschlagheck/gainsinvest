@@ -296,8 +296,42 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
         setLoadingPercentage(100)
         setIsLoading(false)
         console.log('✅ Latest results displayed successfully')
+      } else {
+        throw new Error('No recommendations found in latest results')
       }
       
+    } catch (error) {
+      console.error('❌ Failed to load latest results:', error)
+      setApiError(true)
+      setErrorDetails({
+        message: 'Failed to load latest results. Please try generating new recommendations.',
+        timestamp: new Date().toISOString()
+      })
+      setIsLoading(false)
+    }
+  }
+
+  // Function to reset the page state
+  const resetPageState = () => {
+    console.log('🔄 Resetting page state...')
+    setRecommendations([])
+    setPortfolioProjections(null)
+    setIsLoading(false)
+    setLoadingPercentage(0)
+    setApiStatus({
+      grok: 'pending',
+      marketData: 'pending',
+      news: 'pending',
+      analysis: 'pending',
+      recommendations: 'pending'
+    })
+    setApiError(false)
+    setErrorDetails(null)
+    setEtaSeconds(180)
+    setEtaTotalSeconds(180)
+    setCurrentAI('Claude')
+    setSelectedInfo(null)
+  }
     } catch (error) {
       console.error('❌ Failed to load latest results:', error)
       setErrorDetails({
@@ -435,10 +469,16 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       let attempts = 0
       const maxAttempts = 150 // 5 minutes max (2 second intervals)
       
-      // Add timeout warning at 3 minutes
+      // Add timeout warning at 3 minutes and show reset options
       const timeoutWarning = setTimeout(() => {
         console.warn('⚠️ Job taking longer than expected (3+ minutes)')
-        // Could show user a message here if needed
+        // Show user reset options for stuck jobs
+        setErrorDetails({
+          message: 'Job is taking longer than expected. You can try loading the latest results or resetting.',
+          timestamp: new Date().toISOString(),
+          showLoadLatestButton: true,
+          showResetButton: true
+        })
       }, 180000) // 3 minutes
       
       // Update API status as we progress
@@ -521,7 +561,8 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               message: `Job timed out after 5 minutes. This usually indicates an API issue or very complex processing. The ${currentAI} AI may be experiencing issues.`,
               timestamp: new Date().toISOString(),
               troubleshooting: 'Try refreshing the page or check API status at /api/debug-env',
-              showLoadLatestButton: true
+              showLoadLatestButton: true,
+              showResetButton: true
             })
             
             setIsLoading(false)
@@ -694,6 +735,22 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                 </div>
               )
             })}
+            
+            {/* Reset and Load Latest Results Buttons */}
+            <div className="flex flex-col gap-3 mt-6 pt-4 border-t border-gray-700">
+              <button
+                onClick={loadLatestResults}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+              >
+                🔄 Load Latest Results
+              </button>
+              <button
+                onClick={resetPageState}
+                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+              >
+                🔄 Reset & Start Over
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -783,6 +840,14 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                   className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg transition-colors font-medium"
                 >
                   🔄 Load Latest Results
+                </button>
+              )}
+              {errorDetails?.showResetButton && (
+                <button
+                  onClick={resetPageState}
+                  className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                >
+                  🔄 Reset & Start Over
                 </button>
               )}
               <button
