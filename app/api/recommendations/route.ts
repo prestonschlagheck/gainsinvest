@@ -50,6 +50,12 @@ export async function POST(request: NextRequest) {
     
     // Ensure the background processor is running (dev/prod safe)
     const processor = ensureJobProcessorStarted()
+    console.log('🔧 Processor instance:', {
+      hasProcessor: !!processor,
+      processorType: processor ? typeof processor : 'undefined',
+      hasProcessJobImmediately: processor && typeof processor.processJobImmediately === 'function',
+      processorMethods: processor ? Object.getOwnPropertyNames(Object.getPrototypeOf(processor)) : []
+    })
     
     // Get job queue instance
     const jobQueue = getJobQueue()
@@ -59,13 +65,18 @@ export async function POST(request: NextRequest) {
     console.log('💼 Created job with requestId:', requestId)
     
     // Process job immediately for better responsiveness
-    if (processor) {
+    if (processor && typeof processor.processJobImmediately === 'function') {
       console.log('🚀 Triggering immediate job processing for:', requestId)
       // Don't await this - let it process in background
       processor.processJobImmediately(requestId).catch(error => {
         console.warn('⚠️ Immediate processing failed, job will be picked up by polling:', error)
       })
+    } else {
+      console.warn('⚠️ Processor not available or missing processJobImmediately method, job will be processed by polling')
     }
+    
+    // Ensure job will be processed by polling even if immediate processing fails
+    console.log('📋 Job added to queue, will be processed by background processor')
     
     // Return 202 Accepted immediately with requestId
     return NextResponse.json({

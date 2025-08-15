@@ -453,11 +453,24 @@ declare global {
 }
 
 export function ensureJobProcessorStarted() {
+  console.log('🔍 ensureJobProcessorStarted called')
+  console.log('🔍 Global state:', {
+    __jobProcessorStarted: global.__jobProcessorStarted,
+    __jobProcessorInstance: !!global.__jobProcessorInstance,
+    instanceType: global.__jobProcessorInstance ? typeof global.__jobProcessorInstance : 'undefined'
+  })
+  
   if (global.__jobProcessorStarted) {
-    return global.__jobProcessorInstance
+    console.log('🔍 Returning existing processor instance')
+    const processor = global.__jobProcessorInstance
+    console.log('🔍 Existing processor methods:', processor ? Object.getOwnPropertyNames(Object.getPrototypeOf(processor)) : [])
+    return processor
   }
+  
+  console.log('🔍 Creating new processor instance')
   const queue = getJobQueue()
   const processor = new JobProcessor(queue)
+  console.log('🔍 New processor methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(processor)))
   processor.start(1000) // Reduced from 2000ms to 1000ms for better responsiveness
   global.__jobProcessorStarted = true
   global.__jobProcessorInstance = processor
@@ -491,21 +504,46 @@ export function getJobProcessorStatus() {
     }
   }
 
-  const processor = global.__jobProcessorInstance
-  const now = new Date()
-  const lastActivityAge = now.getTime() - processor.lastActivity.getTime()
-  const lastActivitySeconds = Math.round(lastActivityAge / 1000)
+  try {
+    const processor = global.__jobProcessorInstance
+    const now = new Date()
+    
+    // Safely handle lastActivity
+    let lastActivityAge = 0
+    let lastActivitySeconds = 0
+    
+    if (processor.lastActivity && processor.lastActivity instanceof Date) {
+      lastActivityAge = now.getTime() - processor.lastActivity.getTime()
+      lastActivitySeconds = Math.round(lastActivityAge / 1000)
+    } else {
+      console.warn('⚠️ Processor lastActivity is not a valid Date:', processor.lastActivity)
+      // Set a default lastActivity if it's missing
+      processor.lastActivity = new Date()
+    }
 
-  return {
-    isRunning: processor.isProcessing,
-    status: processor.isProcessing ? 'running' : 'stopped',
-    lastActivity: processor.lastActivity,
-    lastActivityAgeSeconds: lastActivitySeconds,
-    processedJobsCount: processor.processedJobsCount,
-    currentlyProcessing: processor.processingJobs.size,
-    isHealthy: lastActivityAge < 300000, // Consider healthy if activity in last 5 minutes
-    message: processor.isProcessing 
-      ? `Processor running, last activity ${lastActivitySeconds}s ago, processed ${processor.processedJobsCount} jobs`
-      : 'Processor stopped'
+    return {
+      isRunning: processor.isProcessing,
+      status: processor.isProcessing ? 'running' : 'stopped',
+      lastActivity: processor.lastActivity,
+      lastActivityAgeSeconds: lastActivitySeconds,
+      processedJobsCount: processor.processedJobsCount || 0,
+      currentlyProcessing: processor.processingJobs ? processor.processingJobs.size : 0,
+      isHealthy: lastActivityAge < 300000, // Consider healthy if activity in last 5 minutes
+      message: processor.isProcessing 
+        ? `Processor running, last activity ${lastActivitySeconds}s ago, processed ${processor.processedJobsCount || 0} jobs`
+        : 'Processor stopped'
+    }
+  } catch (error) {
+    console.error('❌ Error getting processor status:', error)
+    return {
+      isRunning: false,
+      status: 'error',
+      message: `Error getting status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      lastActivity: new Date(),
+      lastActivityAgeSeconds: 0,
+      processedJobsCount: 0,
+      currentlyProcessing: 0,
+      isHealthy: false
+    }
   }
 } 

@@ -55,21 +55,42 @@ export async function GET(request: NextRequest) {
     // Calculate job ages for monitoring
     const now = new Date()
     const calculateJobAge = (job: any) => {
-      const age = now.getTime() - job.createdAt.getTime()
-      return Math.round(age / 1000)
+      try {
+        if (!job || !job.createdAt) {
+          console.warn('⚠️ Job missing createdAt:', job)
+          return 0
+        }
+        const createdAt = job.createdAt instanceof Date ? job.createdAt : new Date(job.createdAt)
+        const age = now.getTime() - createdAt.getTime()
+        return Math.round(age / 1000)
+      } catch (error) {
+        console.warn('⚠️ Error calculating job age:', error)
+        return 0
+      }
+    }
+    
+    // Safely get processor status with fallbacks
+    const safeProcessorStatus = {
+      status: processorStatus?.status || 'unknown',
+      isRunning: processorStatus?.isRunning || false,
+      lastActivity: processorStatus?.lastActivity || new Date(),
+      lastActivityAgeSeconds: processorStatus?.lastActivityAgeSeconds || 0,
+      processedJobsCount: processorStatus?.processedJobsCount || 0,
+      currentlyProcessing: processorStatus?.currentlyProcessing || 0,
+      message: processorStatus?.message || 'Status unavailable'
     }
     
     const response = {
       timestamp: new Date().toISOString(),
       processorHealth: {
         isHealthy: processorHealthy,
-        status: processorStatus.status,
-        isRunning: processorStatus.isRunning,
-        lastActivity: processorStatus.lastActivity,
-        lastActivityAgeSeconds: processorStatus.lastActivityAgeSeconds,
-        processedJobsCount: processorStatus.processedJobsCount,
-        currentlyProcessing: processorStatus.currentlyProcessing,
-        message: processorStatus.message
+        status: safeProcessorStatus.status,
+        isRunning: safeProcessorStatus.isRunning,
+        lastActivity: safeProcessorStatus.lastActivity,
+        lastActivityAgeSeconds: safeProcessorStatus.lastActivityAgeSeconds,
+        processedJobsCount: safeProcessorStatus.processedJobsCount,
+        currentlyProcessing: safeProcessorStatus.currentlyProcessing,
+        message: safeProcessorStatus.message
       },
       jobQueue: {
         pending: {
@@ -138,12 +159,12 @@ export async function GET(request: NextRequest) {
       response.warnings.push('Job processor is not running - this may cause delays')
     }
     
-    if (processorStatus.lastActivityAgeSeconds && processorStatus.lastActivityAgeSeconds > 300) { // 5 minutes
-      response.warnings.push(`Job processor has been inactive for ${processorStatus.lastActivityAgeSeconds} seconds - may be stuck`)
+    if (safeProcessorStatus.lastActivityAgeSeconds && safeProcessorStatus.lastActivityAgeSeconds > 300) { // 5 minutes
+      response.warnings.push(`Job processor has been inactive for ${safeProcessorStatus.lastActivityAgeSeconds} seconds - may be stuck`)
     }
     
-    if (processorStatus.currentlyProcessing && processorStatus.currentlyProcessing > 5) {
-      response.warnings.push(`High number of concurrently processing jobs (${processorStatus.currentlyProcessing}) - may cause delays`)
+    if (safeProcessorStatus.currentlyProcessing && safeProcessorStatus.currentlyProcessing > 5) {
+      response.warnings.push(`High number of concurrently processing jobs (${safeProcessorStatus.currentlyProcessing}) - may cause delays`)
     }
     
     return NextResponse.json(response)
