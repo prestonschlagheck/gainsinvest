@@ -1008,49 +1008,56 @@ export async function generateInvestmentRecommendations(
   
   // MANDATORY: Always use FMP+Claude combination - Confirmed working with Haiku model
   console.log('🔧 FORCING FMP+Claude integration - confirmed working AI provider')
-  
+
+  // VERCEL OPTIMIZATION: Single attempt with faster timeout for production
+  const isProduction = process.env.NODE_ENV === 'production'
+  const maxAttempts = isProduction ? 1 : 3
+  const timeoutMs = isProduction ? 45000 : 30000 // 45s for production, 30s for dev
+
   let lastError: any = null
   let attemptCount = 0
-  const maxAttempts = 3
-  
-  // Retry logic for FMP+Claude integration
+
+  // Retry logic for FMP+Claude integration (optimized for Vercel)
   while (attemptCount < maxAttempts) {
     attemptCount++
-    console.log(`🔄 FMP+Claude attempt ${attemptCount}/${maxAttempts}`)
-    
+    console.log(`🔄 FMP+Claude attempt ${attemptCount}/${maxAttempts} (timeout: ${timeoutMs}ms)`)
+
     try {
-      // Force FMP+Claude integration
-      const result = await generateRecommendationsWithClaude(userProfile)
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Function timeout after ${timeoutMs}ms`)), timeoutMs)
+      })
+
+      // Race between API call and timeout
+      const result = await Promise.race([
+        generateRecommendationsWithClaude(userProfile),
+        timeoutPromise
+      ]) as any
+
       console.log('✅ FMP+Claude integration successful!')
       return result
-      
+
     } catch (error) {
       lastError = error
       console.log(`⚠️ FMP+Claude attempt ${attemptCount} failed:`, error)
-      
-      // Handle specific errors
-      if (error instanceof Error && error.message.startsWith('CLAUDE_RATE_LIMIT:')) {
-        console.log('❌ Claude rate limit - stopping retries')
-        throw error // Don't retry on rate limits
+
+      // Handle specific errors - no retries in production for speed
+      if (isProduction || error instanceof Error && error.message.startsWith('CLAUDE_RATE_LIMIT:')) {
+        console.log('❌ Production mode or rate limit - stopping retries')
+        break
       }
-      
+
       if (error instanceof Error && error.message.includes('rate limit')) {
-        const waitTime = attemptCount * 2000 // Increase wait time with each attempt
+        const waitTime = attemptCount * 1000 // Reduced wait time
         console.log(`🔄 Rate limit hit, waiting ${waitTime}ms before retry...`)
         await new Promise(resolve => setTimeout(resolve, waitTime))
         continue
       }
-      
-      if (error instanceof Error && error.message.includes('network')) {
-        console.log('🔄 Network error, retrying...')
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        continue
-      }
-      
-      // For other errors, wait briefly and retry
+
+      // For other errors, minimal retry delay
       if (attemptCount < maxAttempts) {
         console.log('🔄 Retrying FMP+Claude integration after brief delay...')
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
   }
@@ -1265,10 +1272,10 @@ OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
       'x-api-key': API_KEYS.CLAUDE_API_KEY,
       'anthropic-version': '2023-06-01'
     },
-          body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',  // Using Haiku 3.5 - confirmed working from your dashboard
-        max_tokens: 4000,
-      temperature: 0.2,  // Lower temperature for more consistent results
+              body: JSON.stringify({
+      model: 'claude-3-5-haiku-20241022',  // Using Haiku 3.5 - confirmed working from your dashboard
+      max_tokens: 2000,  // Reduced for faster response
+      temperature: 0.1,  // Lower for faster, more deterministic responses
       messages: [
         { role: 'user', content: `${systemPrompt}\n\n${userMessage}` }
       ]
