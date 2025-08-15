@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     process.env.JOB_QUEUE_TYPE = 'memory'
     
     // Ensure the background processor is running (dev/prod safe)
-    ensureJobProcessorStarted()
+    const processor = ensureJobProcessorStarted()
     
     // Get job queue instance
     const jobQueue = getJobQueue()
@@ -58,12 +58,21 @@ export async function POST(request: NextRequest) {
     const requestId = await jobQueue.addJob(userProfile)
     console.log('💼 Created job with requestId:', requestId)
     
+    // Process job immediately for better responsiveness
+    if (processor) {
+      console.log('🚀 Triggering immediate job processing for:', requestId)
+      // Don't await this - let it process in background
+      processor.processJobImmediately(requestId).catch(error => {
+        console.warn('⚠️ Immediate processing failed, job will be picked up by polling:', error)
+      })
+    }
+    
     // Return 202 Accepted immediately with requestId
     return NextResponse.json({
       requestId,
       status: 'pending',
       message: 'Recommendation generation started. Use /api/results/{requestId} to check progress.',
-      estimatedTime: '30-60 seconds'
+      estimatedTime: '15-45 seconds' // Reduced from 30-60 seconds
     }, { status: 202 })
     
   } catch (error) {

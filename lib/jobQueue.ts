@@ -307,12 +307,15 @@ export class JobProcessor {
   private isProcessing = false
   private processingInterval: NodeJS.Timeout | null = null
   private queue: JobQueue
+  private processingJobs: Set<string> = new Set() // Track currently processing jobs
+  public lastActivity: Date = new Date() // Track last activity (made public for monitoring)
+  public processedJobsCount: number = 0 // Track total processed jobs (made public for monitoring)
 
   constructor(queue: JobQueue) {
     this.queue = queue
   }
 
-  start(intervalMs: number = 5000) {
+  start(intervalMs: number = 1000) { // Reduced from 5000ms to 1000ms for responsiveness
     if (this.isProcessing) {
       console.log('⚠️ Job processor already running')
       return
@@ -335,6 +338,22 @@ export class JobProcessor {
     console.log('⏹️ Background job processor stopped')
   }
 
+  // New method: Process a job immediately when added
+  async processJobImmediately(jobId: string): Promise<void> {
+    const job = await this.queue.getJob(jobId)
+    if (!job || job.status !== 'pending') {
+      return
+    }
+
+    // Don't process if already being processed
+    if (this.processingJobs.has(jobId)) {
+      return
+    }
+
+    console.log(`🚀 Processing job ${jobId} immediately`)
+    await this.processJob(job)
+  }
+
   private async processPendingJobs() {
     try {
       const pendingJobs = await this.queue.getJobsByStatus('pending')
@@ -345,17 +364,31 @@ export class JobProcessor {
 
       console.log(`📋 Found ${pendingJobs.length} pending jobs`)
 
-      // Process jobs one at a time to avoid overwhelming the system
-      for (const job of pendingJobs.slice(0, 3)) { // Max 3 concurrent jobs
-        try {
-          await this.processJob(job)
-        } catch (error) {
+      // Check for stuck jobs (older than 2 minutes)
+      const now = Date.now()
+      const stuckJobs = pendingJobs.filter(job => {
+        const age = now - job.createdAt.getTime()
+        return age > 120000 // 2 minutes
+      })
+      
+      if (stuckJobs.length > 0) {
+        console.warn(`⚠️ Found ${stuckJobs.length} stuck pending jobs, prioritizing them`)
+      }
+
+      // Process more jobs concurrently and prioritize newer jobs
+      // Prioritize stuck jobs first, then newer jobs
+      const jobsToProcess = [
+        ...stuckJobs.slice(0, 2), // Process up to 2 stuck jobs first
+        ...pendingJobs
+          .filter(job => !stuckJobs.includes(job) && !this.processingJobs.has(job.id))
+          .slice(0, 3) // Then process up to 3 regular jobs
+      ].filter(job => !this.processingJobs.has(job.id)) // Don't process already processing jobs
+
+      for (const job of jobsToProcess) {
+        // Process jobs asynchronously to avoid blocking
+        this.processJob(job).catch(error => {
           console.error(`❌ Failed to process job ${job.id}:`, error)
-          await this.queue.updateJob(job.id, {
-            status: 'failed',
-            error: error instanceof Error ? error.message : 'Unknown error'
-          })
-        }
+        })
       }
     } catch (error) {
       console.error('❌ Error in job processor:', error)
@@ -363,17 +396,29 @@ export class JobProcessor {
   }
 
   private async processJob(job: JobRequest) {
+    // Prevent duplicate processing
+    if (this.processingJobs.has(job.id)) {
+      return
+    }
+
+    this.processingJobs.add(job.id)
+    this.lastActivity = new Date()
     console.log(`🔄 Processing job ${job.id}`)
     
-    // Mark job as processing
-    await this.queue.updateJob(job.id, { status: 'processing' })
-
     try {
+      // Mark job as processing
+      await this.queue.updateJob(job.id, { status: 'processing' })
+
       // Import the AI analysis function
       const { generateInvestmentRecommendations } = await import('./api')
       
-      // Generate recommendations (this can take as long as needed)
-      const result = await generateInvestmentRecommendations(job.userProfile)
+      // Generate recommendations with reduced timeout for better user experience
+      const result = await Promise.race([
+        generateInvestmentRecommendations(job.userProfile),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Job processing timeout after 2 minutes')), 120000)
+        )
+      ])
       
       // Mark job as completed with results
       await this.queue.updateJob(job.id, {
@@ -381,7 +426,9 @@ export class JobProcessor {
         result
       })
       
-      console.log(`✅ Job ${job.id} completed successfully`)
+      this.processedJobsCount++
+      this.lastActivity = new Date()
+      console.log(`✅ Job ${job.id} completed successfully (total processed: ${this.processedJobsCount})`)
       
     } catch (error) {
       console.error(`❌ Job ${job.id} failed:`, error)
@@ -389,6 +436,10 @@ export class JobProcessor {
         status: 'failed',
         error: error instanceof Error ? error.message : 'Unknown error'
       })
+      this.lastActivity = new Date()
+    } finally {
+      // Always remove from processing set
+      this.processingJobs.delete(job.id)
     }
   }
 }
@@ -403,12 +454,58 @@ declare global {
 
 export function ensureJobProcessorStarted() {
   if (global.__jobProcessorStarted) {
-    return
+    return global.__jobProcessorInstance
   }
   const queue = getJobQueue()
   const processor = new JobProcessor(queue)
-  processor.start(2000) // poll every 2s for responsiveness
+  processor.start(1000) // Reduced from 2000ms to 1000ms for better responsiveness
   global.__jobProcessorStarted = true
   global.__jobProcessorInstance = processor
-  console.log('✅ ensureJobProcessorStarted: processor is running')
+  console.log('✅ ensureJobProcessorStarted: processor is running with 1s polling')
+  return processor
+}
+
+// Add method to restart processor if needed
+export function restartJobProcessor() {
+  if (global.__jobProcessorInstance) {
+    console.log('🔄 Restarting job processor...')
+    global.__jobProcessorInstance.stop()
+    global.__jobProcessorInstance = undefined
+    global.__jobProcessorStarted = false
+  }
+  return ensureJobProcessorStarted()
+}
+
+// Add method to check processor health
+export function isJobProcessorHealthy(): boolean {
+  return global.__jobProcessorStarted === true && global.__jobProcessorInstance !== undefined
+}
+
+// Add method to get detailed processor status
+export function getJobProcessorStatus() {
+  if (!global.__jobProcessorInstance) {
+    return {
+      isRunning: false,
+      status: 'stopped',
+      message: 'Job processor not started'
+    }
+  }
+
+  const processor = global.__jobProcessorInstance
+  const now = new Date()
+  const lastActivityAge = now.getTime() - processor.lastActivity.getTime()
+  const lastActivitySeconds = Math.round(lastActivityAge / 1000)
+
+  return {
+    isRunning: processor.isProcessing,
+    status: processor.isProcessing ? 'running' : 'stopped',
+    lastActivity: processor.lastActivity,
+    lastActivityAgeSeconds: lastActivitySeconds,
+    processedJobsCount: processor.processedJobsCount,
+    currentlyProcessing: processor.processingJobs.size,
+    isHealthy: lastActivityAge < 300000, // Consider healthy if activity in last 5 minutes
+    message: processor.isProcessing 
+      ? `Processor running, last activity ${lastActivitySeconds}s ago, processed ${processor.processedJobsCount} jobs`
+      : 'Processor stopped'
+  }
 } 

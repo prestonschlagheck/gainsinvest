@@ -261,6 +261,53 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [etaTotalSeconds, setEtaTotalSeconds] = useState<number>(180)
   const [currentAI, setCurrentAI] = useState<string>('Claude') // Track which AI is being used
 
+  // Function to load latest completed results (for stuck jobs)
+  const loadLatestResults = async () => {
+    try {
+      console.log('🔄 Loading latest completed results...')
+      setIsLoading(true)
+      setApiError(false)
+      
+      const response = await fetch(`${window.location.origin}/api/get-latest-results`)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load latest results: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('✅ Latest results loaded:', data)
+      
+      // Process the results same as normal polling
+      if (data.result && data.result.recommendations) {
+        setRecommendations(data.result.recommendations)
+        
+        if (data.result.portfolioProjections) {
+          setPortfolioProjections(data.result.portfolioProjections)
+        }
+        
+        setApiStatus({
+          grok: 'success',
+          marketData: 'success', 
+          news: 'success',
+          analysis: 'success',
+          recommendations: 'success'
+        })
+        
+        setLoadingPercentage(100)
+        setIsLoading(false)
+        console.log('✅ Latest results displayed successfully')
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to load latest results:', error)
+      setErrorDetails({
+        message: `Failed to load latest results: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date().toISOString()
+      })
+      setIsLoading(false)
+      setApiError(true)
+    }
+  }
 
   // Generate recommendations using real APIs when available
   useEffect(() => {
@@ -473,7 +520,8 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             setErrorDetails({
               message: `Job timed out after 5 minutes. This usually indicates an API issue or very complex processing. The ${currentAI} AI may be experiencing issues.`,
               timestamp: new Date().toISOString(),
-              troubleshooting: 'Try refreshing the page or check API status at /api/debug-env'
+              troubleshooting: 'Try refreshing the page or check API status at /api/debug-env',
+              showLoadLatestButton: true
             })
             
             setIsLoading(false)
@@ -714,6 +762,11 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
                       Time: {new Date(errorDetails.timestamp).toLocaleString()}
                     </div>
                   )}
+                  {errorDetails.troubleshooting && (
+                    <div className="text-xs text-blue-400 mt-2">
+                      💡 {errorDetails.troubleshooting}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -724,6 +777,14 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
               </div>
             </div>
             <div className="flex gap-3 justify-center">
+              {errorDetails?.showLoadLatestButton && (
+                <button
+                  onClick={loadLatestResults}
+                  className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg transition-colors font-medium"
+                >
+                  🔄 Load Latest Results
+                </button>
+              )}
               <button
                 onClick={onRestart}
                 className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors font-medium"
