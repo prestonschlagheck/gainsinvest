@@ -259,11 +259,9 @@ async function gatherComprehensiveMarketData(userProfile: any): Promise<string> 
           // Get additional fundamental data if available
           let fundamentalData = ''
           try {
-            const ratios = await fmpCache.getRatios(etfSymbol)
-            if (ratios && ratios.length > 0) {
-              const latest = ratios[0]
-              fundamentalData = ` | P/E: ${latest.peRatio?.toFixed(2) || 'N/A'} | P/B: ${latest.pbRatio?.toFixed(2) || 'N/A'} | ROE: ${latest.roe?.toFixed(2) || 'N/A'}%`
-            }
+            // Note: getRatios method doesn't exist, skipping fundamental ratios for now
+            // TODO: Implement proper fundamental data fetching when getRatios is available
+            fundamentalData = '' // Skip ratios until proper implementation
           } catch (ratioError) {
             // Ratios not available, continue with quote data
           }
@@ -324,11 +322,9 @@ async function gatherComprehensiveMarketData(userProfile: any): Promise<string> 
             // Get additional fundamental data
             let fundamentalData = ''
             try {
-              const ratios = await fmpCache.getRatios(etfSymbol)
-              if (ratios && ratios.length > 0) {
-                const latest = ratios[0]
-                fundamentalData = ` | P/E: ${latest.peRatio?.toFixed(2) || 'N/A'} | P/B: ${latest.pbRatio?.toFixed(2) || 'N/A'} | ROE: ${latest.roe?.toFixed(2) || 'N/A'}%`
-              }
+              // Note: getRatios method doesn't exist, skipping fundamental ratios for now
+              // TODO: Implement proper fundamental data fetching when getRatios is available
+              fundamentalData = '' // Skip ratios until proper implementation
             } catch (ratioError) {
               // Ratios not available
             }
@@ -403,11 +399,9 @@ async function analyzeExistingPortfolio(existingPortfolio: any[], availableCapit
           // Get additional fundamental data if available
           let fundamentalData = ''
           try {
-            const ratios = await fmpCache.getRatios(holding.symbol)
-            if (ratios && ratios.length > 0) {
-              const latest = ratios[0]
-              fundamentalData = ` | P/E: ${latest.peRatio?.toFixed(2) || 'N/A'} | P/B: ${latest.pbRatio?.toFixed(2) || 'N/A'} | ROE: ${latest.roe?.toFixed(2) || 'N/A'}%`
-            }
+            // Note: getRatios method doesn't exist, skipping fundamental ratios for now
+            // TODO: Implement proper fundamental data fetching when getRatios is available
+            fundamentalData = '' // Skip ratios until proper implementation
           } catch (ratioError) {
             // Ratios not available, continue with quote data
           }
