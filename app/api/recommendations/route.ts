@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { generateInvestmentRecommendations } from '@/lib/api'
+import { getJobQueue, ensureJobProcessorStarted } from '@/lib/jobQueue'
 
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route Called:', {
@@ -42,23 +42,29 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
     
-    // DIRECT API CALL - No job queue to avoid filesystem issues on Vercel
-    console.log('🎯 Making direct API call - no job queue (Vercel-optimized)')
+    // JOB QUEUE WITH MEMORY MODE - Vercel-optimized (no filesystem writes)
+    console.log('🎯 Using job queue with memory mode - unlimited processing time')
     
-    const result = await generateInvestmentRecommendations(userProfile)
+    // Force memory mode for Vercel (no filesystem writes)
+    process.env.JOB_QUEUE_TYPE = 'memory'
     
-    console.log('✅ Direct recommendation generation successful!')
+    // Ensure the background processor is running (dev/prod safe)
+    ensureJobProcessorStarted()
     
-    // Return recommendations immediately
+    // Get job queue instance
+    const jobQueue = getJobQueue()
+    
+    // Add job to queue and get job ID
+    const requestId = await jobQueue.addJob(userProfile)
+    console.log('💼 Created job with requestId:', requestId)
+    
+    // Return 202 Accepted immediately with requestId
     return NextResponse.json({
-      success: true,
-      recommendations: result.recommendations,
-      reasoning: result.reasoning,
-      riskAssessment: result.riskAssessment,
-      marketOutlook: result.marketOutlook,
-      portfolioProjections: result.portfolioProjections,
-      timestamp: new Date().toISOString()
-    }, { status: 200 })
+      requestId,
+      status: 'pending',
+      message: 'Recommendation generation started. Use /api/results/{requestId} to check progress.',
+      estimatedTime: '30-60 seconds'
+    }, { status: 202 })
     
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -71,9 +77,9 @@ export async function POST(request: NextRequest) {
       name: errorName
     })
 
-    return NextResponse.json(
+          return NextResponse.json(
       { 
-        error: 'Failed to generate recommendations',
+        error: 'Failed to start recommendation generation',
         details: errorMessage,
         apiError: true,
         errorDetails: {
