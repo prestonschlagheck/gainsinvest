@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     // Handle restart action
     if (action === 'restart') {
       console.log('🔄 Restarting job processor via API request')
-      const processor = restartJobProcessor()
+      const processor = await restartJobProcessor()
       return NextResponse.json({
         message: 'Job processor restarted',
         timestamp: new Date().toISOString(),
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Handle force process action
     if (action === 'forceProcess' && jobId) {
       console.log(`🚀 Force processing job ${jobId} via API request`)
-      const processor = ensureJobProcessorStarted()
+      const processor = await ensureJobProcessorStarted()
       if (processor) {
         processor.processJobImmediately(jobId).catch(error => {
           console.warn(`⚠️ Force processing failed for job ${jobId}:`, error)
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Get job queue instance
-    const jobQueue = getJobQueue()
+    const jobQueue = await getJobQueue()
     
     // Get all jobs by status
     const pendingJobs = await jobQueue.getJobsByStatus('pending')

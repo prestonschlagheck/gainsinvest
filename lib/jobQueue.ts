@@ -41,7 +41,7 @@ class MemoryJobQueue implements JobQueue {
     }
 
     this.jobs.set(jobId, job)
-    console.log(`💾 Job ${jobId} added to memory queue`)
+    console.log(`💾 Job ${jobId} added to memory queue (total jobs: ${this.jobs.size})`)
     return jobId
   }
 
@@ -63,7 +63,7 @@ class MemoryJobQueue implements JobQueue {
     }
 
     this.jobs.set(jobId, updatedJob)
-    console.log(`💾 Job ${jobId} updated in memory queue`)
+    console.log(`💾 Job ${jobId} updated in memory queue (status: ${updatedJob.status}, total jobs: ${this.jobs.size})`)
   }
 
   async getJobsByStatus(status: JobRequest['status']): Promise<JobRequest[]> {
@@ -257,12 +257,15 @@ class SupabaseJobQueue implements JobQueue {
 }
 
 // Job queue factory
-export function createJobQueue(): JobQueue {
-  const queueType = process.env.JOB_QUEUE_TYPE || 'file'
+export async function createJobQueue(): Promise<JobQueue> {
+  // Force memory queue for reliability - file system can fail on Vercel
+  const queueType = process.env.JOB_QUEUE_TYPE || 'memory'
+  
+  console.log(`🔧 Creating job queue with type: ${queueType}`)
   
   switch (queueType) {
     case 'memory':
-      console.log('🧠 Using in-memory job queue (development mode)')
+      console.log('🧠 Using in-memory job queue (reliable mode)')
       return new MemoryJobQueue()
       
     case 'redis':
@@ -281,25 +284,42 @@ export function createJobQueue(): JobQueue {
       
     case 'file':
       try {
-        return new FileJobQueue()
+        console.log('📁 Attempting file-based job queue...')
+        const fileQueue = new FileJobQueue()
+        // Test if we can actually write to the filesystem
+        const testJob = { id: 'test', status: 'pending' as const, userProfile: {}, createdAt: new Date(), updatedAt: new Date() }
+        await fileQueue.addJob(testJob)
+        await fileQueue.deleteJob('test')
+        console.log('✅ File queue working, using it')
+        return fileQueue
       } catch (error) {
-        console.warn('File queue failed (likely read-only filesystem), falling back to memory queue:', error)
+        console.warn('❌ File queue failed (likely read-only filesystem), falling back to memory queue:', error)
         return new MemoryJobQueue()
       }
       
     default:
-      return new FileJobQueue()
+      console.log('⚠️ Unknown queue type, defaulting to memory queue')
+      return new MemoryJobQueue()
   }
 }
 
-// Singleton job queue instance
-let jobQueueInstance: JobQueue | null = null
+// Global job queue instance - FORCE SINGLE INSTANCE
+declare global {
+  // eslint-disable-next-line no-var
+  var __globalJobQueue: MemoryJobQueue | undefined
+}
 
-export function getJobQueue(): JobQueue {
-  if (!jobQueueInstance) {
-    jobQueueInstance = createJobQueue()
+export async function getJobQueue(): Promise<JobQueue> {
+  // Use global variable to ensure same instance everywhere
+  if (!global.__globalJobQueue) {
+    console.log('🔧 Creating new GLOBAL MEMORY job queue instance')
+    global.__globalJobQueue = new MemoryJobQueue()
+    console.log('✅ Global memory job queue instance created')
+  } else {
+    console.log('🔧 Returning existing global job queue instance')
   }
-  return jobQueueInstance
+  
+  return global.__globalJobQueue
 }
 
 // Background job processor
@@ -321,12 +341,23 @@ export class JobProcessor {
       return
     }
 
-    console.log('🚀 Starting background job processor')
+    console.log('🚀 Starting background job processor with interval:', intervalMs, 'ms')
     this.isProcessing = true
     
-    this.processingInterval = setInterval(async () => {
-      await this.processPendingJobs()
+    // Use a more reliable approach - process immediately and then set interval
+    this.processPendingJobs().catch(error => {
+      console.error('❌ Error in initial job processing:', error)
+    })
+    
+    this.processingInterval = setInterval(() => {
+      console.log('⏰ Processing interval triggered')
+      // Don't await here - let it run in background
+      this.processPendingJobs().catch(error => {
+        console.error('❌ Error in processing interval:', error)
+      })
     }, intervalMs)
+    
+    console.log('✅ Processing interval set, processor is active')
   }
 
   stop() {
@@ -356,13 +387,15 @@ export class JobProcessor {
 
   private async processPendingJobs() {
     try {
+      console.log('🔍 processPendingJobs called, checking for pending jobs...')
       const pendingJobs = await this.queue.getJobsByStatus('pending')
       
+      console.log(`📋 Found ${pendingJobs.length} pending jobs:`, pendingJobs.map(j => j.id))
+      
       if (pendingJobs.length === 0) {
+        console.log('📭 No pending jobs to process')
         return
       }
-
-      console.log(`📋 Found ${pendingJobs.length} pending jobs`)
 
       // Check for stuck jobs (older than 2 minutes)
       const now = Date.now()
@@ -384,7 +417,10 @@ export class JobProcessor {
           .slice(0, 3) // Then process up to 3 regular jobs
       ].filter(job => !this.processingJobs.has(job.id)) // Don't process already processing jobs
 
+      console.log(`🚀 Processing ${jobsToProcess.length} jobs:`, jobsToProcess.map(j => j.id))
+
       for (const job of jobsToProcess) {
+        console.log(`🔄 Starting to process job ${job.id}`)
         // Process jobs asynchronously to avoid blocking
         this.processJob(job).catch(error => {
           console.error(`❌ Failed to process job ${job.id}:`, error)
@@ -452,7 +488,7 @@ declare global {
   var __jobProcessorInstance: JobProcessor | undefined
 }
 
-export function ensureJobProcessorStarted() {
+export async function ensureJobProcessorStarted() {
   console.log('🔍 ensureJobProcessorStarted called')
   console.log('🔍 Global state:', {
     __jobProcessorStarted: global.__jobProcessorStarted,
@@ -468,7 +504,8 @@ export function ensureJobProcessorStarted() {
   }
   
   console.log('🔍 Creating new processor instance')
-  const queue = getJobQueue()
+  // Use the same queue instance that will be used by API routes
+  const queue = await getJobQueue()
   const processor = new JobProcessor(queue)
   console.log('🔍 New processor methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(processor)))
   processor.start(1000) // Reduced from 2000ms to 1000ms for better responsiveness
@@ -479,14 +516,14 @@ export function ensureJobProcessorStarted() {
 }
 
 // Add method to restart processor if needed
-export function restartJobProcessor() {
+export async function restartJobProcessor() {
   if (global.__jobProcessorInstance) {
     console.log('🔄 Restarting job processor...')
     global.__jobProcessorInstance.stop()
     global.__jobProcessorInstance = undefined
     global.__jobProcessorStarted = false
   }
-  return ensureJobProcessorStarted()
+  return await ensureJobProcessorStarted()
 }
 
 // Add method to check processor health

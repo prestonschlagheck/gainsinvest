@@ -3,7 +3,7 @@ import { getJobQueue } from '@/lib/jobQueue'
 
 export async function GET(request: NextRequest) {
   try {
-    const jobQueue = getJobQueue()
+    const jobQueue = await getJobQueue()
     
     // Get recent completed jobs
     const completedJobs = await jobQueue.getJobsByStatus('completed')

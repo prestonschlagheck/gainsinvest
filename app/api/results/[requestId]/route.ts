@@ -18,10 +18,10 @@ export async function GET(
     console.log('🔍 Fetching job status for requestId:', requestId)
 
     // Ensure job processor is running
-    ensureJobProcessorStarted()
+    await ensureJobProcessorStarted()
 
     // Get job queue instance
-    const jobQueue = getJobQueue()
+    const jobQueue = await getJobQueue()
     
     // Fetch job from queue
     const job = await jobQueue.getJob(requestId)

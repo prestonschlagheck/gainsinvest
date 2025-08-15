@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     process.env.JOB_QUEUE_TYPE = 'memory'
     
     // Ensure the background processor is running (dev/prod safe)
-    const processor = ensureJobProcessorStarted()
+    const processor = await ensureJobProcessorStarted()
     console.log('🔧 Processor instance:', {
       hasProcessor: !!processor,
       processorType: processor ? typeof processor : 'undefined',
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     })
     
     // Get job queue instance
-    const jobQueue = getJobQueue()
+    const jobQueue = await getJobQueue()
     
     // Add job to queue and get job ID
     const requestId = await jobQueue.addJob(userProfile)
