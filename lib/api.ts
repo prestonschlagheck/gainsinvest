@@ -995,42 +995,42 @@ export async function generateInvestmentRecommendations(
   userProfile: any,
   marketData?: any[]
 ): Promise<InvestmentAnalysis> {
-  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+Claude integration...')
+  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+Grok integration...')
   
-  // Check AI service availability - FORCE FMP+Claude combination (most reliable)
+  // Check AI service availability - FORCE FMP+Grok combination (currently working)
+  const hasGrok = API_KEYS.GROK_API_KEY
   const hasClaude = API_KEYS.CLAUDE_API_KEY
   const hasOpenAI = API_KEYS.OPENAI_API_KEY
-  const hasGrok = API_KEYS.GROK_API_KEY
   
-  if (!hasClaude) {
-    throw new Error('❌ CRITICAL: Claude API key is required for FMP+Claude integration. System cannot proceed without it.')
+  if (!hasGrok) {
+    throw new Error('❌ CRITICAL: Grok API key is required for FMP+Grok integration. System cannot proceed without it.')
   }
   
-  // MANDATORY: Always use FMP+Claude combination - Most reliable option
-  console.log('🔧 FORCING FMP+Claude integration - most reliable AI provider')
+  // MANDATORY: Always use FMP+Grok combination - Currently working option
+  console.log('🔧 FORCING FMP+Grok integration - confirmed working AI provider')
   
   let lastError: any = null
   let attemptCount = 0
   const maxAttempts = 3
   
-  // Retry logic for FMP+Claude integration
+  // Retry logic for FMP+Grok integration
   while (attemptCount < maxAttempts) {
     attemptCount++
-    console.log(`🔄 FMP+Claude attempt ${attemptCount}/${maxAttempts}`)
+    console.log(`🔄 FMP+Grok attempt ${attemptCount}/${maxAttempts}`)
     
     try {
-      // Force FMP+Claude integration
-      const result = await generateRecommendationsWithClaude(userProfile)
-      console.log('✅ FMP+Claude integration successful!')
+      // Force FMP+Grok integration
+      const result = await generateRecommendationsWithGrok(userProfile)
+      console.log('✅ FMP+Grok integration successful!')
       return result
       
     } catch (error) {
       lastError = error
-      console.log(`⚠️ FMP+Claude attempt ${attemptCount} failed:`, error)
+      console.log(`⚠️ FMP+Grok attempt ${attemptCount} failed:`, error)
       
       // Handle specific errors
-      if (error instanceof Error && error.message.startsWith('CLAUDE_RATE_LIMIT:')) {
-        console.log('❌ Claude rate limit - stopping retries')
+      if (error instanceof Error && error.message.startsWith('GROK_RATE_LIMIT:')) {
+        console.log('❌ Grok rate limit - stopping retries')
         throw error // Don't retry on rate limits
       }
       
@@ -1049,39 +1049,39 @@ export async function generateInvestmentRecommendations(
       
       // For other errors, wait briefly and retry
       if (attemptCount < maxAttempts) {
-        console.log('🔄 Retrying FMP+Claude integration after brief delay...')
+        console.log('🔄 Retrying FMP+Grok integration after brief delay...')
         await new Promise(resolve => setTimeout(resolve, 2000))
       }
     }
   }
   
-  // If all FMP+Claude attempts failed, try OpenAI with FMP data as backup
-  if (hasOpenAI) {
-    console.log('🆘 FMP+Claude failed after all attempts, trying OpenAI with FMP data as backup...')
+  // If all FMP+Grok attempts failed, try Claude with FMP data as backup
+  if (hasClaude) {
+    console.log('🆘 FMP+Grok failed after all attempts, trying Claude with FMP data as backup...')
     try {
-      const result = await generateRecommendationsWithOpenAI(userProfile)
-      console.log('⚠️ Using OpenAI with FMP data (backup)')
+      const result = await generateRecommendationsWithClaude(userProfile)
+      console.log('⚠️ Using Claude with FMP data (backup)')
       return result
-    } catch (openaiError) {
-      console.log('❌ OpenAI backup also failed:', openaiError)
+    } catch (claudeError) {
+      console.log('❌ Claude backup also failed:', claudeError)
     }
   }
   
-  // If OpenAI failed too, try Grok as last resort
-  if (hasGrok) {
-    console.log('🆘 FMP+Claude and OpenAI failed, trying Grok with FMP data as final backup...')
+  // If Claude failed too, try OpenAI as last resort
+  if (hasOpenAI) {
+    console.log('🆘 FMP+Grok and Claude failed, trying OpenAI with FMP data as final backup...')
     try {
-      const result = await generateRecommendationsWithGrok(userProfile)
-      console.log('⚠️ Using Grok with FMP data (final backup)')
+      const result = await generateRecommendationsWithOpenAI(userProfile)
+      console.log('⚠️ Using OpenAI with FMP data (final backup)')
       return result
-    } catch (grokError) {
-      console.log('❌ Grok final backup also failed:', grokError)
+    } catch (openaiError) {
+      console.log('❌ OpenAI final backup also failed:', openaiError)
     }
   }
   
   // ABSOLUTE LAST RESORT: Throw error instead of using basic fallbacks
   console.error('💥 CRITICAL FAILURE: All sophisticated AI services failed')
-  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+Claude integration failed after ${maxAttempts} attempts, and all backup AI services also failed. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
+  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+Grok integration failed after ${maxAttempts} attempts, and all backup AI services also failed. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
 }
 
 async function generateRecommendationsWithClaude(userProfile: any): Promise<InvestmentAnalysis> {
