@@ -999,88 +999,75 @@ export async function generateInvestmentRecommendations(
   userProfile: any,
   marketData?: any[]
 ): Promise<InvestmentAnalysis> {
-  try {
-    console.log('🤖 Generating comprehensive AI investment recommendations...')
-    
-    // Try enhanced engine first for better returns and portfolio management
-    try {
-      console.log('🚀 Attempting enhanced recommendations with higher-return focus...')
-      return await generateEnhancedRecommendations(userProfile, marketData)
-    } catch (enhancedError) {
-      console.log('⚠️ Enhanced engine failed, falling back to AI services:', enhancedError)
-    }
-    
-    // Check AI service availability
-    const hasOpenAI = API_KEYS.OPENAI_API_KEY
-    const hasGrok = API_KEYS.GROK_API_KEY
-    
-    if (!hasOpenAI && !hasGrok) {
-      throw new Error('No AI service API keys configured (OpenAI or Grok required)')
-    }
-    
-    // Try Grok first, then OpenAI as fallback
-    if (hasGrok) {
-      try {
-        return await generateRecommendationsWithGrok(userProfile)
-      } catch (error) {
-        console.log('⚠️ Grok failed, trying OpenAI fallback:', error)
-        
-        // Check if it's a rate limit error - retry with shorter delay
-        if (error instanceof Error && error.message.includes('rate limit')) {
-          console.log('🔄 Grok rate limit hit, waiting 5 seconds before retry...')
-          await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds
-          
-          try {
-            return await generateRecommendationsWithGrok(userProfile)
-          } catch (retryError) {
-            console.log('⚠️ Grok retry also failed:', retryError)
-          }
-        }
-        
-        // Try OpenAI as fallback
-        if (hasOpenAI) {
-          try {
-            return await generateRecommendationsWithOpenAI(userProfile)
-          } catch (openAIError) {
-            console.log('⚠️ OpenAI also failed:', openAIError)
-            // Don't return error if we have a working API - just use fallback recommendations
-            return generateFallbackRecommendations(userProfile)
-          }
-        } else {
-          // If no OpenAI fallback, use fallback recommendations instead of error
-          console.log('⚠️ No OpenAI fallback, using fallback recommendations')
-          return generateFallbackRecommendations(userProfile)
-        }
-      }
-    } else if (hasOpenAI) {
-      try {
-        return await generateRecommendationsWithOpenAI(userProfile)
-      } catch (error) {
-        console.log('⚠️ OpenAI failed:', error)
-        return {
-          recommendations: [],
-          reasoning: '',
-          riskAssessment: '',
-          marketOutlook: '',
-          error: error instanceof Error ? error.message : 'OpenAI API configuration issue'
-        }
-      }
-    } else {
-      return {
-        recommendations: [],
-        reasoning: '',
-        riskAssessment: '',
-        marketOutlook: '',
-        error: 'No AI service API keys configured (OpenAI or Grok required)'
-      }
-    }
-
-  } catch (error) {
-    console.error('Error generating investment recommendations:', error)
-    // Use fallback recommendations instead of error
-    console.log('🔄 Using fallback recommendations due to error')
-    return generateFallbackRecommendations(userProfile)
+  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+Grok integration...')
+  
+  // Check AI service availability - FORCE FMP+Grok combination
+  const hasGrok = API_KEYS.GROK_API_KEY
+  const hasOpenAI = API_KEYS.OPENAI_API_KEY
+  
+  if (!hasGrok) {
+    throw new Error('❌ CRITICAL: Grok API key is required for FMP+Grok integration. System cannot proceed without it.')
   }
+  
+  // MANDATORY: Always use FMP+Grok combination - NO FALLBACKS
+  console.log('🔧 FORCING FMP+Grok integration - no fallbacks allowed')
+  
+  let lastError: any = null
+  let attemptCount = 0
+  const maxAttempts = 3
+  
+  // Retry logic for FMP+Grok integration
+  while (attemptCount < maxAttempts) {
+    attemptCount++
+    console.log(`🔄 FMP+Grok attempt ${attemptCount}/${maxAttempts}`)
+    
+    try {
+      // Force FMP+Grok integration
+      const result = await generateRecommendationsWithGrok(userProfile)
+      console.log('✅ FMP+Grok integration successful!')
+      return result
+      
+    } catch (error) {
+      lastError = error
+      console.log(`⚠️ FMP+Grok attempt ${attemptCount} failed:`, error)
+      
+      // Handle specific errors
+      if (error instanceof Error && error.message.includes('rate limit')) {
+        const waitTime = attemptCount * 2000 // Increase wait time with each attempt
+        console.log(`🔄 Rate limit hit, waiting ${waitTime}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
+        continue
+      }
+      
+      if (error instanceof Error && error.message.includes('network')) {
+        console.log('🔄 Network error, retrying...')
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        continue
+      }
+      
+      // For other errors, wait briefly and retry
+      if (attemptCount < maxAttempts) {
+        console.log('🔄 Retrying FMP+Grok integration after brief delay...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
+      }
+    }
+  }
+  
+  // If all FMP+Grok attempts failed, try OpenAI with FMP data as last resort
+  if (hasOpenAI) {
+    console.log('🆘 FMP+Grok failed after all attempts, trying OpenAI with FMP data as emergency backup...')
+    try {
+      const result = await generateRecommendationsWithOpenAI(userProfile)
+      console.log('⚠️ Using OpenAI with FMP data (emergency backup)')
+      return result
+    } catch (openAIError) {
+      console.log('❌ OpenAI emergency backup also failed:', openAIError)
+    }
+  }
+  
+  // ABSOLUTE LAST RESORT: Throw error instead of using basic fallbacks
+  console.error('💥 CRITICAL FAILURE: All sophisticated AI services failed')
+  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+Grok integration failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
 }
 
 async function generateRecommendationsWithOpenAI(userProfile: any): Promise<InvestmentAnalysis> {
@@ -1352,9 +1339,23 @@ async function generateRecommendationsWithOpenAI(userProfile: any): Promise<Inve
 }
 
 async function generateRecommendationsWithGrok(userProfile: any): Promise<InvestmentAnalysis> {
-  // Step 1: Test Grok availability first
+  // MANDATORY FMP+Grok Integration - No shortcuts allowed
+  console.log('🔧 STARTING MANDATORY FMP+GROK INTEGRATION')
+  console.log('📊 User Profile received:', {
+    riskTolerance: userProfile.riskTolerance,
+    capitalAvailable: userProfile.capitalAvailable,
+    timeHorizon: userProfile.timeHorizon,
+    growthType: userProfile.growthType,
+    existingPortfolio: userProfile.existingPortfolio?.length || 0
+  })
+  
+  // Step 1: FORCE Grok API availability check
+  console.log('🔍 MANDATORY Grok API availability check...')
+  if (!API_KEYS.GROK_API_KEY) {
+    throw new Error('❌ CRITICAL: Grok API key is missing. Cannot proceed with FMP+Grok integration.')
+  }
+  
   try {
-    console.log('🔍 Testing Grok API availability...')
     const testResponse = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -1362,7 +1363,7 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
         'Authorization': `Bearer ${API_KEYS.GROK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'grok-4-latest',
+        model: 'grok-2-latest',  // Using more stable model
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 5
       })
@@ -1371,35 +1372,55 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
     if (!testResponse.ok) {
       const errorText = await testResponse.text()
       console.log('❌ Grok API error response:', errorText)
-      console.log('❌ Grok API status:', testResponse.status)
-      throw new Error(`Grok API test failed: ${testResponse.status} - ${errorText}`)
+      throw new Error(`Grok API unavailable: ${testResponse.status} - ${errorText}`)
     }
     
-    console.log('✅ Grok API test successful')
+    console.log('✅ Grok API confirmed available')
   } catch (error) {
     console.log('⚠️ Grok API test failed:', error)
-    if (error instanceof Error) {
-      throw new Error(`Grok API error: ${error.message}`)
-    }
-    throw new Error('Grok API is not available')
+    throw new Error(`Grok API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
   
-  // Step 2: Gather comprehensive market data
-  console.log('📊 Gathering real-time market data...')
-  const marketContext = await gatherComprehensiveMarketData(userProfile)
+  // Step 2: MANDATORY FMP comprehensive market data gathering
+  console.log('📊 MANDATORY: Gathering comprehensive FMP market data...')
+  let marketContext: string
+  try {
+    marketContext = await gatherComprehensiveMarketData(userProfile)
+    console.log('✅ FMP market data successfully gathered')
+    if (!marketContext || marketContext.length < 100) {
+      throw new Error('FMP market data insufficient - received minimal data')
+    }
+  } catch (error) {
+    console.error('❌ FMP market data gathering failed:', error)
+    throw new Error(`FMP data gathering failed: ${error instanceof Error ? error.message : 'Unknown error'}. Cannot proceed without market data.`)
+  }
   
-  // Step 3: Get current financial news
-  console.log('📰 Fetching current financial news...')
-  const newsContext = await getFinancialNews()
+  // Step 3: Get financial news (optional - don't fail if unavailable)
+  console.log('📰 Fetching financial news (supplementary)...')
+  let newsContext: any[] = []
+  try {
+    newsContext = await getFinancialNews()
+    console.log('✅ Financial news fetched successfully')
+  } catch (newsError) {
+    console.log('⚠️ Financial news unavailable, continuing with FMP data only')
+    newsContext = []
+  }
   
-  // Step 4: Analyze existing portfolio if any
+  // Step 4: MANDATORY existing portfolio analysis with FMP data
   let portfolioAnalysis = ''
   if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+    console.log('📊 MANDATORY: Analyzing existing portfolio with FMP data...')
     const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
-    portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
+    try {
+      portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
+      console.log('✅ Existing portfolio analysis completed with FMP data')
+    } catch (portfolioError) {
+      console.log('⚠️ Portfolio analysis failed, continuing with basic analysis')
+      portfolioAnalysis = `Basic portfolio analysis: ${userProfile.existingPortfolio.length} existing holdings worth approximately $${userProfile.existingPortfolio.reduce((sum: number, h: any) => sum + (h.amount || 0), 0).toLocaleString()}`
+    }
   }
 
-  // Create comprehensive prompt for Grok with FMP data integration
+  // Create comprehensive prompt for Grok with MANDATORY FMP data integration
   const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform, powered by comprehensive Financial Modeling Prep (FMP) data and real-time market analysis. Generate investment recommendations that leverage both fundamental and technical analysis.
 
   USER PROFILE:
@@ -1491,6 +1512,11 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
     "marketOutlook": "Market outlook based on FMP sector performance and fundamental trends"
   }`
 
+  // MANDATORY: Execute Grok API call with FMP data
+  console.log('🤖 EXECUTING MANDATORY Grok API call with FMP market data...')
+  console.log(`📏 FMP market context length: ${marketContext.length} characters`)
+  console.log(`📏 System prompt length: ${systemPrompt.length} characters`)
+  
   const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -1498,12 +1524,12 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
       'Authorization': `Bearer ${API_KEYS.GROK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'grok-4-latest',
+      model: 'grok-2-latest',  // Using more stable version
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: 'Provide investment recommendations based on the profile above.' }
+        { role: 'user', content: `MANDATORY: Use the FMP market data and user profile to generate sophisticated investment recommendations. The FMP data contains real-time market prices, P/E ratios, and sector performance. Base ALL recommendations on this data combined with your analysis.` }
       ],
-      temperature: 0.3,
+      temperature: 0.2,  // Lower temperature for more consistent results
       max_tokens: 4000,
     }),
   })
@@ -2086,425 +2112,12 @@ export { rateLimiter }
 export { API_KEYS } 
 
 // ========================================
-// ENHANCED RECOMMENDATION ENGINE
+// REMOVED: Enhanced engine causing toLowerCase errors
+// FORCING: Direct FMP+Grok integration only
 // ========================================
 
-export async function generateEnhancedRecommendations(
-  userProfile: any,
-  marketData?: any[]
-): Promise<InvestmentAnalysis> {
-  console.log('🚀 Generating enhanced recommendations with higher-return focus')
-  
-  try {
-    // Step 1: Analyze existing portfolio and calculate total value
-    const existingPortfolioValue = userProfile.existingPortfolio?.reduce((sum: number, item: any) => sum + item.amount, 0) || 0
-    const availableCash = userProfile.capitalAvailable || 0
-    const totalPortfolioValue = existingPortfolioValue + availableCash
-    
-    console.log('💰 Portfolio Analysis:', {
-      existingPortfolioValue,
-      availableCash,
-      totalPortfolioValue
-    })
-
-    // Step 2: Generate recommendations based on risk profile and return optimization
-    const recommendations = await generateOptimizedRecommendations(userProfile, totalPortfolioValue)
-    
-    // Step 3: Process existing holdings and create sell/hold recommendations
-    const processedRecommendations = await processExistingHoldings(
-      recommendations,
-      userProfile.existingPortfolio || [],
-      totalPortfolioValue
-    )
-    
-    // Step 4: Ensure mathematical consistency
-    const finalRecommendations = ensureMathematicalConsistency(
-      processedRecommendations,
-      totalPortfolioValue,
-      availableCash
-    )
-    
-    // Step 5: Calculate portfolio projections
-    const portfolioProjections = calculatePortfolioProjections(finalRecommendations, userProfile)
-    
-    return {
-      recommendations: finalRecommendations,
-      reasoning: generateEnhancedReasoning(userProfile, finalRecommendations),
-      riskAssessment: generateEnhancedRiskAssessment(userProfile, finalRecommendations),
-      marketOutlook: generateEnhancedMarketOutlook(userProfile, finalRecommendations),
-      portfolioProjections
-    }
-    
-  } catch (error) {
-    console.error('Error generating enhanced recommendations:', error)
-    // Fallback to existing recommendations
-    return generateFallbackRecommendations(userProfile)
-  }
-}
-
-async function generateOptimizedRecommendations(userProfile: any, totalPortfolioValue: number): Promise<InvestmentRecommendation[]> {
-  const recommendations: InvestmentRecommendation[] = []
-  const { riskTolerance, timeHorizon, growthType, sectors, ethicalInvesting } = userProfile
-  
-  // Define asset classes with expected returns (prioritizing higher returns)
-  const assetClasses = [
-    // High-return assets (prioritized for aggressive profiles)
-    {
-      category: 'Growth Stocks',
-      assets: [
-        { symbol: 'NVDA', name: 'NVIDIA Corporation', sector: 'Technology', expectedReturn: 0.20, risk: 'high' },
-        { symbol: 'TSLA', name: 'Tesla Inc', sector: 'Technology', expectedReturn: 0.18, risk: 'high' },
-        { symbol: 'AMD', name: 'Advanced Micro Devices', sector: 'Technology', expectedReturn: 0.16, risk: 'high' },
-        { symbol: 'META', name: 'Meta Platforms', sector: 'Technology', expectedReturn: 0.15, risk: 'high' },
-        { symbol: 'AMZN', name: 'Amazon.com', sector: 'Consumer Discretionary', expectedReturn: 0.14, risk: 'high' }
-      ]
-    },
-    {
-      category: 'Small-Cap Growth',
-      assets: [
-        { symbol: 'IWM', name: 'iShares Russell 2000 ETF', sector: 'Small-Cap', expectedReturn: 0.15, risk: 'high' },
-        { symbol: 'VB', name: 'Vanguard Small-Cap ETF', sector: 'Small-Cap', expectedReturn: 0.13, risk: 'high' },
-        { symbol: 'IJR', name: 'iShares Core S&P Small-Cap ETF', sector: 'Small-Cap', expectedReturn: 0.12, risk: 'high' }
-      ]
-    },
-    {
-      category: 'Emerging Markets',
-      assets: [
-        { symbol: 'VWO', name: 'Vanguard Emerging Markets ETF', sector: 'International', expectedReturn: 0.14, risk: 'high' },
-        { symbol: 'EEM', name: 'iShares MSCI Emerging Markets ETF', sector: 'International', expectedReturn: 0.13, risk: 'high' },
-        { symbol: 'SCHE', name: 'Schwab Emerging Markets ETF', sector: 'International', expectedReturn: 0.12, risk: 'high' }
-      ]
-    },
-    {
-      category: 'Technology ETFs',
-      assets: [
-        { symbol: 'QQQ', name: 'Invesco QQQ Trust', sector: 'Technology', expectedReturn: 0.15, risk: 'high' },
-        { symbol: 'XLK', name: 'Technology Select Sector SPDR', sector: 'Technology', expectedReturn: 0.13, risk: 'high' },
-        { symbol: 'VGT', name: 'Vanguard Information Technology ETF', sector: 'Technology', expectedReturn: 0.12, risk: 'high' }
-      ]
-    },
-    // Moderate-return assets
-    {
-      category: 'Quality Large-Cap',
-      assets: [
-        { symbol: 'AAPL', name: 'Apple Inc', sector: 'Technology', expectedReturn: 0.12, risk: 'medium' },
-        { symbol: 'MSFT', name: 'Microsoft Corporation', sector: 'Technology', expectedReturn: 0.11, risk: 'medium' },
-        { symbol: 'GOOGL', name: 'Alphabet Inc', sector: 'Technology', expectedReturn: 0.11, risk: 'medium' },
-        { symbol: 'JPM', name: 'JPMorgan Chase', sector: 'Financials', expectedReturn: 0.10, risk: 'medium' },
-        { symbol: 'JNJ', name: 'Johnson & Johnson', sector: 'Healthcare', expectedReturn: 0.09, risk: 'medium' }
-      ]
-    },
-    {
-      category: 'Sector ETFs',
-      assets: [
-        { symbol: 'XLF', name: 'Financial Select Sector SPDR', sector: 'Financials', expectedReturn: 0.10, risk: 'medium' },
-        { symbol: 'XLV', name: 'Health Care Select Sector SPDR', sector: 'Healthcare', expectedReturn: 0.09, risk: 'medium' },
-        { symbol: 'XLE', name: 'Energy Select Sector SPDR', sector: 'Energy', expectedReturn: 0.11, risk: 'medium' },
-        { symbol: 'XLI', name: 'Industrial Select Sector SPDR', sector: 'Industrials', expectedReturn: 0.09, risk: 'medium' }
-      ]
-    },
-    // Lower-return but stable assets
-    {
-      category: 'Broad Market ETFs',
-      assets: [
-        { symbol: 'VTI', name: 'Vanguard Total Stock Market ETF', sector: 'Broad Market', expectedReturn: 0.08, risk: 'low' },
-        { symbol: 'SPY', name: 'SPDR S&P 500 ETF', sector: 'Broad Market', expectedReturn: 0.08, risk: 'low' },
-        { symbol: 'IVV', name: 'iShares Core S&P 500 ETF', sector: 'Broad Market', expectedReturn: 0.08, risk: 'low' }
-      ]
-    },
-    {
-      category: 'Fixed Income',
-      assets: [
-        { symbol: 'BND', name: 'Vanguard Total Bond Market ETF', sector: 'Fixed Income', expectedReturn: 0.04, risk: 'low' },
-        { symbol: 'AGG', name: 'iShares Core U.S. Aggregate Bond ETF', sector: 'Fixed Income', expectedReturn: 0.04, risk: 'low' },
-        { symbol: 'TLT', name: 'iShares 20+ Year Treasury Bond ETF', sector: 'Fixed Income', expectedReturn: 0.03, risk: 'low' }
-      ]
-    },
-    // Cryptocurrency (only for very aggressive profiles)
-    {
-      category: 'Cryptocurrency',
-      assets: [
-        { symbol: 'BTC', name: 'Bitcoin', sector: 'Cryptocurrency', expectedReturn: 0.25, risk: 'very-high' },
-        { symbol: 'ETH', name: 'Ethereum', sector: 'Cryptocurrency', expectedReturn: 0.20, risk: 'very-high' }
-      ]
-    }
-  ]
-
-  // Calculate allocation based on risk tolerance and growth preferences
-  let allocationStrategy: { [category: string]: number } = {}
-  
-  if (riskTolerance <= 3) {
-    // Conservative: 60% bonds, 30% broad market, 10% quality stocks
-    allocationStrategy = {
-      'Fixed Income': 0.60,
-      'Broad Market ETFs': 0.30,
-      'Quality Large-Cap': 0.10
-    }
-  } else if (riskTolerance <= 6) {
-    // Moderate: 30% bonds, 40% broad market, 20% quality stocks, 10% growth
-    allocationStrategy = {
-      'Fixed Income': 0.30,
-      'Broad Market ETFs': 0.40,
-      'Quality Large-Cap': 0.20,
-      'Technology ETFs': 0.10
-    }
-  } else if (riskTolerance <= 8) {
-    // Aggressive: 15% bonds, 25% broad market, 35% quality stocks, 25% growth
-    allocationStrategy = {
-      'Fixed Income': 0.15,
-      'Broad Market ETFs': 0.25,
-      'Quality Large-Cap': 0.35,
-      'Technology ETFs': 0.15,
-      'Growth Stocks': 0.10
-    }
-  } else {
-    // Very Aggressive: 5% bonds, 15% broad market, 30% quality stocks, 35% growth, 15% crypto
-    allocationStrategy = {
-      'Fixed Income': 0.05,
-      'Broad Market ETFs': 0.15,
-      'Quality Large-Cap': 0.30,
-      'Technology ETFs': 0.20,
-      'Growth Stocks': 0.15,
-      'Cryptocurrency': 0.15
-    }
-  }
-
-  // Apply growth type preferences
-  if (growthType === 'aggressive') {
-    // Increase growth allocations
-    if (allocationStrategy['Growth Stocks']) allocationStrategy['Growth Stocks'] += 0.10
-    if (allocationStrategy['Technology ETFs']) allocationStrategy['Technology ETFs'] += 0.05
-    if (allocationStrategy['Fixed Income']) allocationStrategy['Fixed Income'] = Math.max(0, allocationStrategy['Fixed Income'] - 0.15)
-  } else if (growthType === 'conservative') {
-    // Increase stability allocations
-    if (allocationStrategy['Fixed Income']) allocationStrategy['Fixed Income'] += 0.10
-    if (allocationStrategy['Broad Market ETFs']) allocationStrategy['Broad Market ETFs'] += 0.05
-    if (allocationStrategy['Growth Stocks']) allocationStrategy['Growth Stocks'] = Math.max(0, allocationStrategy['Growth Stocks'] - 0.15)
-  }
-
-  // Generate recommendations based on allocation strategy
-  for (const [category, allocation] of Object.entries(allocationStrategy)) {
-    const categoryAssets = assetClasses.find(ac => ac.category === category)?.assets || []
-    if (categoryAssets.length === 0) continue
-    
-    // Select best assets from category based on expected returns
-    const selectedAssets = categoryAssets
-      .sort((a, b) => b.expectedReturn - a.expectedReturn)
-      .slice(0, Math.ceil(allocation * 3)) // 3 assets per category
-    
-    for (const asset of selectedAssets) {
-      const amount = Math.round(totalPortfolioValue * allocation / selectedAssets.length)
-      if (amount < 100) continue // Minimum $100 allocation
-      
-      recommendations.push({
-        symbol: asset.symbol,
-        name: asset.name,
-        type: 'buy',
-        amount,
-        strength: asset.expectedReturn >= 0.15 ? 'strong' : asset.expectedReturn >= 0.10 ? 'moderate' : 'weak',
-        confidence: Math.round(asset.expectedReturn * 100),
-        reasoning: `High-return ${(asset.category || 'investment').toLowerCase()} asset with ${(asset.expectedReturn * 100).toFixed(1)}% expected annual return. Selected for optimal risk-adjusted returns based on your ${riskTolerance}/10 risk tolerance and ${growthType} growth preferences.`,
-        sector: asset.sector,
-        expectedAnnualReturn: asset.expectedReturn,
-        targetPrice: 0, // Will be set by market data
-        stopLoss: 0, // Will be set by market data
-        allocationPercentage: (amount / totalPortfolioValue) * 100
-      })
-    }
-  }
-
-  // Ensure we don't exceed total portfolio value
-  const totalAllocated = recommendations.reduce((sum, rec) => sum + rec.amount, 0)
-  if (totalAllocated > totalPortfolioValue) {
-    const scaleFactor = totalPortfolioValue / totalAllocated
-    recommendations.forEach(rec => {
-      rec.amount = Math.round(rec.amount * scaleFactor)
-      rec.allocationPercentage = (rec.amount / totalPortfolioValue) * 100
-    })
-  }
-
-  return recommendations
-}
-
-async function processExistingHoldings(
-  buyRecommendations: InvestmentRecommendation[],
-  existingPortfolio: any[],
-  totalPortfolioValue: number
-): Promise<InvestmentRecommendation[]> {
-  const allRecommendations = [...buyRecommendations]
-  
-  if (!existingPortfolio || existingPortfolio.length === 0) {
-    return allRecommendations
-  }
-
-  // Analyze each existing holding
-  for (const holding of existingPortfolio) {
-    const existingSymbol = holding.symbol.toUpperCase()
-    
-    // Check if this holding is already in buy recommendations
-    const existingBuyRec = buyRecommendations.find(rec => rec.symbol.toUpperCase() === existingSymbol)
-    
-    if (existingBuyRec) {
-      // Split the holding: keep some, sell the rest
-      const optimalAmount = existingBuyRec.amount
-      const currentAmount = holding.amount
-      
-      if (currentAmount > optimalAmount) {
-        // Sell excess amount
-        const sellAmount = currentAmount - optimalAmount
-        allRecommendations.push({
-          symbol: holding.symbol,
-          name: holding.symbol, // Will be updated with real name
-          type: 'sell',
-          amount: sellAmount,
-          strength: 'moderate',
-          confidence: 75,
-          reasoning: `Selling excess allocation to optimize portfolio balance. Current: $${currentAmount.toLocaleString()}, Optimal: $${optimalAmount.toLocaleString()}, Selling: $${sellAmount.toLocaleString()}`,
-          sector: 'Existing Holdings',
-          expectedAnnualReturn: 0.05, // Conservative estimate for existing holdings
-          isExistingHolding: true,
-          originalAmount: currentAmount,
-          allocationPercentage: (sellAmount / totalPortfolioValue) * 100
-        })
-        
-        // Update buy recommendation to hold optimal amount
-        existingBuyRec.type = 'hold'
-        existingBuyRec.amount = optimalAmount
-        existingBuyRec.reasoning = `Maintaining optimal allocation of existing holding. This position aligns with your investment strategy.`
-        existingBuyRec.isExistingHolding = true
-        existingBuyRec.originalAmount = currentAmount
-        existingBuyRec.allocationPercentage = (optimalAmount / totalPortfolioValue) * 100
-      } else {
-        // Convert to hold recommendation
-        existingBuyRec.type = 'hold'
-        existingBuyRec.amount = currentAmount
-        existingBuyRec.reasoning = `Maintaining existing holding. This position aligns with your investment strategy.`
-        existingBuyRec.isExistingHolding = true
-        existingBuyRec.originalAmount = currentAmount
-        existingBuyRec.allocationPercentage = (currentAmount / totalPortfolioValue) * 100
-      }
-    } else {
-      // Analyze if we should hold or sell this existing holding
-      const shouldHold = Math.random() > 0.3 // 70% chance to hold for now (will be enhanced with real analysis)
-      
-      if (shouldHold) {
-        allRecommendations.push({
-          symbol: holding.symbol,
-          name: holding.symbol,
-          type: 'hold',
-          amount: holding.amount,
-          strength: 'moderate',
-          confidence: 70,
-          reasoning: `Maintaining existing holding for portfolio stability. This position provides diversification benefits.`,
-          sector: 'Existing Holdings',
-          expectedAnnualReturn: 0.05,
-          isExistingHolding: true,
-          originalAmount: holding.amount,
-          allocationPercentage: (holding.amount / totalPortfolioValue) * 100
-        })
-      } else {
-        allRecommendations.push({
-          symbol: holding.symbol,
-          name: holding.symbol,
-          type: 'sell',
-          amount: holding.amount,
-          strength: 'moderate',
-          confidence: 75,
-          reasoning: `Selling existing holding to rebalance portfolio and fund higher-return opportunities.`,
-          sector: 'Existing Holdings',
-          expectedAnnualReturn: 0.05,
-          isExistingHolding: true,
-          originalAmount: holding.amount,
-          allocationPercentage: (holding.amount / totalPortfolioValue) * 100
-        })
-      }
-    }
-  }
-
-  return allRecommendations
-}
-
-function ensureMathematicalConsistency(
-  recommendations: InvestmentRecommendation[],
-  totalPortfolioValue: number,
-  availableCash: number
-): InvestmentRecommendation[] {
-  const buyRecs = recommendations.filter(r => r.type === 'buy')
-  const sellRecs = recommendations.filter(r => r.type === 'sell')
-  const holdRecs = recommendations.filter(r => r.type === 'hold')
-  
-  const totalBuyAmount = buyRecs.reduce((sum, r) => sum + r.amount, 0)
-  const totalSellAmount = sellRecs.reduce((sum, r) => sum + r.amount, 0)
-  const totalHoldAmount = holdRecs.reduce((sum, r) => sum + r.amount, 0)
-  
-  // Calculate available funds for new investments
-  const availableFunds = availableCash + totalSellAmount
-  
-  // Ensure we don't exceed available funds
-  if (totalBuyAmount > availableFunds) {
-    const scaleFactor = availableFunds / totalBuyAmount
-    buyRecs.forEach(rec => {
-      rec.amount = Math.round(rec.amount * scaleFactor)
-      rec.allocationPercentage = (rec.amount / totalPortfolioValue) * 100
-    })
-  }
-  
-  // Ensure total portfolio value is maintained
-  const finalTotalBuy = buyRecs.reduce((sum, r) => sum + r.amount, 0)
-  const finalTotalHold = holdRecs.reduce((sum, r) => sum + r.amount, 0)
-  const finalTotalSell = sellRecs.reduce((sum, r) => sum + r.amount, 0)
-  
-  console.log('💰 Mathematical Consistency Check:', {
-    totalPortfolioValue,
-    availableCash,
-    finalTotalBuy,
-    finalTotalHold,
-    finalTotalSell,
-    availableFunds,
-    isConsistent: (finalTotalBuy + finalTotalHold) <= totalPortfolioValue
-  })
-  
-  return recommendations
-}
-
-function generateEnhancedReasoning(userProfile: any, recommendations: InvestmentRecommendation[]): string {
-  const buyRecs = recommendations.filter(r => r.type === 'buy')
-  const sellRecs = recommendations.filter(r => r.type === 'sell')
-  const holdRecs = recommendations.filter(r => r.type === 'hold')
-  
-  const totalBuyAmount = buyRecs.reduce((sum, r) => sum + r.amount, 0)
-  const totalSellAmount = sellRecs.reduce((sum, r) => sum + r.amount, 0)
-  const totalHoldAmount = holdRecs.reduce((sum, r) => sum + r.amount, 0)
-  
-  let reasoning = `Enhanced portfolio optimization for ${userProfile.riskTolerance}/10 risk tolerance with ${userProfile.growthType} growth preferences. `
-  
-  if (totalSellAmount > 0) {
-    reasoning += `Portfolio rebalancing includes selling $${totalSellAmount.toLocaleString()} in underperforming positions to fund higher-return opportunities. `
-  }
-  
-  reasoning += `New investments total $${totalBuyAmount.toLocaleString()} focused on maximizing returns through growth stocks, technology ETFs, and emerging markets where appropriate. `
-  
-  if (totalHoldAmount > 0) {
-    reasoning += `Maintaining $${totalHoldAmount.toLocaleString()} in existing positions that align with your strategy. `
-  }
-  
-  reasoning += `This allocation prioritizes higher-return asset classes while maintaining appropriate diversification and risk management.`
-  
-  return reasoning
-}
-
-function generateEnhancedRiskAssessment(userProfile: any, recommendations: InvestmentRecommendation[]): string {
-  const avgReturn = recommendations.reduce((sum, r) => sum + r.expectedAnnualReturn, 0) / recommendations.length
-  const riskLevel = userProfile.riskTolerance <= 3 ? 'Low' : userProfile.riskTolerance <= 6 ? 'Moderate' : 'High'
-  
-  return `Enhanced ${riskLevel.toLowerCase()} risk portfolio with ${(avgReturn * 100).toFixed(1)}% expected annual return. Portfolio is optimized for higher returns through strategic allocation to growth assets, technology, and emerging markets while maintaining risk-appropriate diversification. Risk-adjusted returns are maximized through careful selection of high-performing assets that align with your ${userProfile.riskTolerance}/10 risk tolerance.`
-}
-
-function generateEnhancedMarketOutlook(userProfile: any, recommendations: InvestmentRecommendation[]): string {
-  const growthAssets = recommendations.filter(r => r.expectedAnnualReturn >= 0.12)
-  const growthAllocation = growthAssets.reduce((sum, r) => sum + r.amount, 0)
-  const totalInvestment = recommendations.filter(r => r.type === 'buy').reduce((sum, r) => sum + r.amount, 0)
-  const growthPercentage = totalInvestment > 0 ? (growthAllocation / totalInvestment) * 100 : 0
-  
-  return `Current market conditions favor growth-oriented investments with ${growthPercentage.toFixed(1)}% allocation to high-return assets. The portfolio is positioned to capitalize on technology innovation, emerging market opportunities, and quality growth stocks. This strategy aligns with current economic trends favoring growth over value and positions you to benefit from market momentum while maintaining appropriate risk management.`
-}
+// ========================================
+// REMOVED: All enhanced engine helper functions
+// These were causing toLowerCase errors and preventing FMP+Grok integration
+// Now using ONLY FMP+Grok combination for sophisticated analysis
+// ========================================
