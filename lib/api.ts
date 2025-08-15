@@ -1012,7 +1012,7 @@ export async function generateInvestmentRecommendations(
   // VERCEL OPTIMIZATION: Single attempt with faster timeout for production
   const isProduction = process.env.NODE_ENV === 'production'
   const maxAttempts = isProduction ? 1 : 3
-  const timeoutMs = isProduction ? 45000 : 30000 // 45s for production, 30s for dev
+  const timeoutMs = isProduction ? 240000 : 30000 // 4 minutes for production (Pro plan), 30s for dev
 
   let lastError: any = null
   let attemptCount = 0
