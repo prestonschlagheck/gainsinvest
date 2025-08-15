@@ -1026,6 +1026,16 @@ export async function generateInvestmentRecommendations(
       console.log(`⚠️ FMP+OpenAI attempt ${attemptCount} failed:`, error)
       
       // Handle specific errors
+      if (error instanceof Error && error.message.startsWith('QUOTA_EXCEEDED:')) {
+        console.log('❌ OpenAI quota exceeded - stopping retries')
+        throw error // Don't retry on quota exceeded
+      }
+      
+      if (error instanceof Error && error.message.startsWith('RATE_LIMIT:')) {
+        console.log('❌ OpenAI rate limit - stopping retries')
+        throw error // Don't retry on rate limits
+      }
+      
       if (error instanceof Error && error.message.includes('rate limit')) {
         const waitTime = attemptCount * 2000 // Increase wait time with each attempt
         console.log(`🔄 Rate limit hit, waiting ${waitTime}ms before retry...`)
@@ -1276,13 +1286,19 @@ FMP DATA UTILIZATION EXAMPLES:
     const errorText = await response.text()
     if (response.status === 429) {
       throw new Error('OpenAI API rate limit exceeded - please try again later')
-    } else if (response.status === 401) {
-      throw new Error('OpenAI API key is invalid or expired')
-    } else if (response.status === 402) {
-      throw new Error('OpenAI API quota exceeded - please check your billing')
-    } else {
-      throw new Error(`OpenAI API error (${response.status}): ${errorText}`)
-    }
+            } else if (response.status === 401) {
+          throw new Error('OpenAI API key is invalid or expired')
+        } else if (response.status === 402 || response.status === 429) {
+          // For quota exceeded or rate limits, don't retry - fail immediately
+          const errorData = JSON.parse(errorText)
+          if (errorData.error?.type === 'insufficient_quota') {
+            throw new Error('QUOTA_EXCEEDED:OpenAI API quota exceeded - please check your billing')
+          } else {
+            throw new Error('RATE_LIMIT:OpenAI API rate limit exceeded - please try again later')
+          }
+        } else {
+          throw new Error(`OpenAI API error (${response.status}): ${errorText}`)
+        }
   }
   
   const data = await response.json()
@@ -1594,10 +1610,9 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
     } else if (response.status === 402) {
       throw new Error('Grok API quota exceeded - please check your billing')
     } else if (response.status === 429) {
-      // Rate limit - try again after a short delay
-      console.log('Grok rate limit hit, retrying after delay...')
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      throw new Error('Grok API rate limit - retrying...')
+      // Rate limit - don't retry, fail immediately
+      console.log('❌ Grok rate limit hit - stopping retries')
+      throw new Error('GROK_RATE_LIMIT:Grok API rate limit exceeded - please wait before trying again')
     } else if (response.status >= 500) {
       // Server errors - temporary, try fallback
       console.log('Grok server error, using fallback')
@@ -1622,7 +1637,15 @@ async function generateRecommendationsWithGrok(userProfile: any): Promise<Invest
   }
 
   try {
-    const analysis: InvestmentAnalysis = JSON.parse(content)
+    // Handle Grok's tendency to wrap JSON in markdown code blocks
+    let cleanContent = content.trim()
+    if (cleanContent.startsWith('```json')) {
+      cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+    } else if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
+    }
+    
+    const analysis: InvestmentAnalysis = JSON.parse(cleanContent)
     
     // Validate and clean recommendation data
     analysis.recommendations = analysis.recommendations.map((rec: any) => {
