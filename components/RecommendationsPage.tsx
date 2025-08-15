@@ -63,15 +63,6 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
     return `${(returnRate * 100).toFixed(1)}%`
   }
 
-  const getStrengthColor = (strength: 'weak' | 'moderate' | 'strong') => {
-    switch (strength) {
-      case 'weak': return 'text-red-400'
-      case 'moderate': return 'text-yellow-400'
-      case 'strong': return 'text-green-400'
-      default: return 'text-yellow-400'
-    }
-  }
-
   // Simplify long asset names to prevent multi-line display
   const simplifyAssetName = (name: string) => {
     const simplifications: { [key: string]: string } = {
@@ -466,14 +457,6 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     const seconds = totalSeconds % 60
     if (minutes > 0) return `${minutes}m ${seconds}s`
     return `${seconds}s`
-  }
-
-  const getTypeIcon = (type: 'buy' | 'sell' | 'hold') => {
-    switch (type) {
-      case 'buy': return <TrendingUp className="w-5 h-5 text-green-400" />
-      case 'sell': return <TrendingDown className="w-5 h-5 text-red-400" />
-      case 'hold': return <Minus className="w-5 h-5 text-yellow-400" />
-    }
   }
 
   const getTypeColor = (type: 'buy' | 'sell' | 'hold') => {
