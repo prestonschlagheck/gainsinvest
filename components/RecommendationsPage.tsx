@@ -315,14 +315,37 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           throw new Error(`API request failed: ${response.status} - ${errorText}`)
         }
 
-        const jobResponse = await response.json()
-        console.log('💼 Job started:', jobResponse)
+        const apiResponse = await response.json()
+        console.log('💼 API Response:', apiResponse)
         
-        if (jobResponse.requestId) {
-          // Poll for job completion using new endpoint
-          await pollJobStatus(jobResponse.requestId)
+        // Handle direct response (new Vercel-optimized approach)
+        if (apiResponse.success && apiResponse.recommendations) {
+          console.log('✅ Direct response received - processing immediately')
+          setApiStatus({
+            grok: 'success',
+            marketData: 'success', 
+            news: 'success',
+            analysis: 'success',
+            recommendations: 'success'
+          })
+          
+          setRecommendations(apiResponse.recommendations)
+          
+          if (apiResponse.portfolioProjections) {
+            setPortfolioProjections(apiResponse.portfolioProjections)
+          }
+          
+          setLoadingPercentage(100)
+          setIsLoading(false)
+          return
+        }
+        
+        // Handle job-based response (legacy approach)
+        if (apiResponse.requestId) {
+          console.log('🔄 Job-based response - polling for completion')
+          await pollJobStatus(apiResponse.requestId)
         } else {
-          throw new Error('No request ID received')
+          throw new Error('Invalid API response format')
         }
         
       } catch (error) {

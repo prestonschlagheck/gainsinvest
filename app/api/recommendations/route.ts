@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getJobQueue, ensureJobProcessorStarted } from '@/lib/jobQueue'
+import { generateInvestmentRecommendations } from '@/lib/api'
 
 export async function POST(request: NextRequest) {
   console.log('🚀 API Route Called:', {
@@ -14,24 +14,27 @@ export async function POST(request: NextRequest) {
     console.log('📥 Received user profile:', JSON.stringify(userProfile, null, 2))
     
     // Validate environment variables
+    const hasClaude = !!process.env.CLAUDE_API_KEY
     const hasGrok = !!process.env.GROK_API_KEY
     const hasOpenAI = !!process.env.OPENAI_API_KEY
-    const hasFinancialAPI = !!(process.env.ALPHA_VANTAGE_API_KEY || process.env.TWELVE_DATA_API_KEY || process.env.FINNHUB_API_KEY)
+    const hasFinancialAPI = !!(process.env.FMP_API_KEY || process.env.ALPHA_VANTAGE_API_KEY || process.env.TWELVE_DATA_API_KEY || process.env.FINNHUB_API_KEY)
     
     console.log('🔧 Environment Check:', {
+      hasClaude,
       hasGrok,
       hasOpenAI,
       hasFinancialAPI,
-      hasAnyAI: hasGrok || hasOpenAI
+      hasAnyAI: hasClaude || hasGrok || hasOpenAI
     })
     
-    if (!hasGrok && !hasOpenAI) {
+    if (!hasClaude && !hasGrok && !hasOpenAI) {
       console.error('❌ No AI service configured')
       return NextResponse.json({
-        error: 'No AI service configured. Please set GROK_API_KEY or OPENAI_API_KEY.',
+        error: 'No AI service configured. Please set CLAUDE_API_KEY, GROK_API_KEY, or OPENAI_API_KEY.',
         apiError: true,
         errorDetails: {
           message: 'Missing AI service configuration',
+          hasClaude,
           hasGrok,
           hasOpenAI,
           timestamp: new Date().toISOString()
@@ -39,23 +42,23 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
     
-    // Ensure the background processor is running (dev/prod safe)
-    ensureJobProcessorStarted()
+    // DIRECT API CALL - No job queue to avoid filesystem issues on Vercel
+    console.log('🎯 Making direct API call - no job queue (Vercel-optimized)')
     
-    // Get job queue instance
-    const jobQueue = getJobQueue()
+    const result = await generateInvestmentRecommendations(userProfile)
     
-    // Add job to queue and get job ID
-    const requestId = await jobQueue.addJob(userProfile)
-    console.log('💼 Created job with requestId:', requestId)
+    console.log('✅ Direct recommendation generation successful!')
     
-    // Return 202 Accepted immediately with requestId
+    // Return recommendations immediately
     return NextResponse.json({
-      requestId,
-      status: 'pending',
-      message: 'Recommendation generation started. Use /api/results/{requestId} to check progress.',
-      estimatedTime: '30-60 seconds'
-    }, { status: 202 })
+      success: true,
+      recommendations: result.recommendations,
+      reasoning: result.reasoning,
+      riskAssessment: result.riskAssessment,
+      marketOutlook: result.marketOutlook,
+      portfolioProjections: result.portfolioProjections,
+      timestamp: new Date().toISOString()
+    }, { status: 200 })
     
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
@@ -70,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { 
-        error: 'Failed to start recommendation generation',
+        error: 'Failed to generate recommendations',
         details: errorMessage,
         apiError: true,
         errorDetails: {
@@ -81,4 +84,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}
