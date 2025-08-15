@@ -18,6 +18,7 @@ const getEnvVar = (key: string, fallback: string = ''): string => {
 if (typeof window === 'undefined') {
   console.log('🔑 API Key Status:')
   console.log('  Environment:', process.env.NODE_ENV || 'unknown')
+  console.log('  Claude:', getEnvVar('CLAUDE_API_KEY') ? '✅ Configured' : '❌ Missing')
   console.log('  OpenAI:', getEnvVar('OPENAI_API_KEY') ? '✅ Configured' : '❌ Missing')
   console.log('  Grok:', getEnvVar('GROK_API_KEY') ? '✅ Configured' : '❌ Missing')
   console.log('  Alpha Vantage:', getEnvVar('ALPHA_VANTAGE_API_KEY') ? '✅ Configured' : '❌ Missing')
@@ -28,6 +29,7 @@ if (typeof window === 'undefined') {
 
 const API_KEYS = {
   // AI Services
+  CLAUDE_API_KEY: getEnvVar('CLAUDE_API_KEY'),
   OPENAI_API_KEY: getEnvVar('OPENAI_API_KEY'),
   GROK_API_KEY: getEnvVar('GROK_API_KEY'),
   
@@ -993,46 +995,42 @@ export async function generateInvestmentRecommendations(
   userProfile: any,
   marketData?: any[]
 ): Promise<InvestmentAnalysis> {
-  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+OpenAI integration...')
+  console.log('🤖 Generating comprehensive AI investment recommendations with MANDATORY FMP+Claude integration...')
   
-  // Check AI service availability - FORCE FMP+OpenAI combination
+  // Check AI service availability - FORCE FMP+Claude combination (most reliable)
+  const hasClaude = API_KEYS.CLAUDE_API_KEY
   const hasOpenAI = API_KEYS.OPENAI_API_KEY
   const hasGrok = API_KEYS.GROK_API_KEY
   
-  if (!hasOpenAI) {
-    throw new Error('❌ CRITICAL: OpenAI API key is required for FMP+OpenAI integration. System cannot proceed without it.')
+  if (!hasClaude) {
+    throw new Error('❌ CRITICAL: Claude API key is required for FMP+Claude integration. System cannot proceed without it.')
   }
   
-  // MANDATORY: Always use FMP+OpenAI combination - NO FALLBACKS
-  console.log('🔧 FORCING FMP+OpenAI integration - no fallbacks allowed')
+  // MANDATORY: Always use FMP+Claude combination - Most reliable option
+  console.log('🔧 FORCING FMP+Claude integration - most reliable AI provider')
   
   let lastError: any = null
   let attemptCount = 0
   const maxAttempts = 3
   
-  // Retry logic for FMP+OpenAI integration
+  // Retry logic for FMP+Claude integration
   while (attemptCount < maxAttempts) {
     attemptCount++
-    console.log(`🔄 FMP+OpenAI attempt ${attemptCount}/${maxAttempts}`)
+    console.log(`🔄 FMP+Claude attempt ${attemptCount}/${maxAttempts}`)
     
     try {
-      // Force FMP+OpenAI integration
-      const result = await generateRecommendationsWithOpenAI(userProfile)
-      console.log('✅ FMP+OpenAI integration successful!')
+      // Force FMP+Claude integration
+      const result = await generateRecommendationsWithClaude(userProfile)
+      console.log('✅ FMP+Claude integration successful!')
       return result
       
     } catch (error) {
       lastError = error
-      console.log(`⚠️ FMP+OpenAI attempt ${attemptCount} failed:`, error)
+      console.log(`⚠️ FMP+Claude attempt ${attemptCount} failed:`, error)
       
       // Handle specific errors
-      if (error instanceof Error && error.message.startsWith('QUOTA_EXCEEDED:')) {
-        console.log('❌ OpenAI quota exceeded - stopping retries')
-        throw error // Don't retry on quota exceeded
-      }
-      
-      if (error instanceof Error && error.message.startsWith('RATE_LIMIT:')) {
-        console.log('❌ OpenAI rate limit - stopping retries')
+      if (error instanceof Error && error.message.startsWith('CLAUDE_RATE_LIMIT:')) {
+        console.log('❌ Claude rate limit - stopping retries')
         throw error // Don't retry on rate limits
       }
       
@@ -1051,27 +1049,347 @@ export async function generateInvestmentRecommendations(
       
       // For other errors, wait briefly and retry
       if (attemptCount < maxAttempts) {
-        console.log('🔄 Retrying FMP+OpenAI integration after brief delay...')
+        console.log('🔄 Retrying FMP+Claude integration after brief delay...')
         await new Promise(resolve => setTimeout(resolve, 2000))
       }
     }
   }
   
-  // If all FMP+OpenAI attempts failed, try Grok with FMP data as last resort
+  // If all FMP+Claude attempts failed, try OpenAI with FMP data as backup
+  if (hasOpenAI) {
+    console.log('🆘 FMP+Claude failed after all attempts, trying OpenAI with FMP data as backup...')
+    try {
+      const result = await generateRecommendationsWithOpenAI(userProfile)
+      console.log('⚠️ Using OpenAI with FMP data (backup)')
+      return result
+    } catch (openaiError) {
+      console.log('❌ OpenAI backup also failed:', openaiError)
+    }
+  }
+  
+  // If OpenAI failed too, try Grok as last resort
   if (hasGrok) {
-    console.log('🆘 FMP+OpenAI failed after all attempts, trying Grok with FMP data as emergency backup...')
+    console.log('🆘 FMP+Claude and OpenAI failed, trying Grok with FMP data as final backup...')
     try {
       const result = await generateRecommendationsWithGrok(userProfile)
-      console.log('⚠️ Using Grok with FMP data (emergency backup)')
+      console.log('⚠️ Using Grok with FMP data (final backup)')
       return result
     } catch (grokError) {
-      console.log('❌ Grok emergency backup also failed:', grokError)
+      console.log('❌ Grok final backup also failed:', grokError)
     }
   }
   
   // ABSOLUTE LAST RESORT: Throw error instead of using basic fallbacks
   console.error('💥 CRITICAL FAILURE: All sophisticated AI services failed')
-  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+OpenAI integration failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
+  throw new Error(`❌ SYSTEM FAILURE: Cannot generate sophisticated recommendations. FMP+Claude integration failed after ${maxAttempts} attempts, and all backup AI services also failed. Last error: ${lastError?.message || 'Unknown error'}. Please check API configurations and try again.`)
+}
+
+async function generateRecommendationsWithClaude(userProfile: any): Promise<InvestmentAnalysis> {
+  // MANDATORY FMP+Claude Integration - Most reliable option
+  console.log('🔧 STARTING MANDATORY FMP+CLAUDE INTEGRATION')
+  console.log('📊 User Profile received:', {
+    riskTolerance: userProfile.riskTolerance,
+    capitalAvailable: userProfile.capitalAvailable,
+    timeHorizon: userProfile.timeHorizon,
+    growthType: userProfile.growthType,
+    existingPortfolio: userProfile.existingPortfolio?.length || 0
+  })
+  
+  // Step 1: FORCE Claude API availability check
+  console.log('🔍 MANDATORY Claude API availability check...')
+  if (!API_KEYS.CLAUDE_API_KEY) {
+    throw new Error('❌ CRITICAL: Claude API key is missing. Cannot proceed with FMP+Claude integration.')
+  }
+  
+  try {
+    const testResponse = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEYS.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: 'test' }]
+      })
+    })
+    
+    if (!testResponse.ok) {
+      const errorText = await testResponse.text()
+      console.log('❌ Claude API error response:', errorText)
+      throw new Error(`Claude API unavailable: ${testResponse.status} - ${errorText}`)
+    }
+    
+    console.log('✅ Claude API confirmed available')
+  } catch (error) {
+    console.log('⚠️ Claude API test failed:', error)
+    throw new Error(`Claude API connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+  
+  // Step 2: MANDATORY FMP comprehensive market data gathering
+  console.log('📊 MANDATORY: Gathering comprehensive FMP market data...')
+  let marketContext: string
+  try {
+    marketContext = await gatherComprehensiveMarketData(userProfile)
+    console.log('✅ FMP market data successfully gathered')
+    if (!marketContext || marketContext.length < 100) {
+      throw new Error('FMP market data insufficient - received minimal data')
+    }
+  } catch (error) {
+    console.error('❌ FMP market data gathering failed:', error)
+    throw new Error(`FMP data gathering failed: ${error instanceof Error ? error.message : 'Unknown error'}. Cannot proceed without market data.`)
+  }
+
+  // Step 3: Get financial news (optional - don't fail if unavailable)
+  console.log('📰 Fetching financial news (supplementary)...')
+  let newsContext: any[] = []
+  try {
+    newsContext = await getFinancialNews()
+    console.log('✅ Financial news fetched successfully')
+  } catch (newsError) {
+    console.log('⚠️ Financial news unavailable, continuing with FMP data only')
+    newsContext = []
+  }
+
+  // Step 4: MANDATORY existing portfolio analysis with FMP data
+  let portfolioAnalysis = ''
+  if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+    console.log('📊 MANDATORY: Analyzing existing portfolio with FMP data...')
+    const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
+    try {
+      portfolioAnalysis = await analyzeExistingPortfolio(userProfile.existingPortfolio, availableCapital)
+      console.log('✅ Existing portfolio analysis completed with FMP data')
+    } catch (portfolioError) {
+      console.log('⚠️ Portfolio analysis failed, continuing with basic analysis')
+      portfolioAnalysis = `Basic portfolio analysis: ${userProfile.existingPortfolio.length} existing holdings worth approximately $${userProfile.existingPortfolio.reduce((sum: number, h: any) => sum + (h.amount || 0), 0).toLocaleString()}`
+    }
+  }
+
+  // Create comprehensive prompt for Claude with MANDATORY FMP data integration
+  const systemPrompt = `You are an elite investment advisor AI for G.AI.NS platform, powered by comprehensive Financial Modeling Prep (FMP) data and real-time market analysis. Generate investment recommendations that leverage both fundamental and technical analysis.
+
+USER PROFILE:
+- Risk Tolerance: ${userProfile.riskTolerance}/10
+- Investment Amount: $${(userProfile.capitalAvailable || userProfile.capital || 0).toLocaleString()}
+- Time Horizon: ${userProfile.timeHorizon || 'medium'}
+- Growth Preference: ${userProfile.growthType || 'balanced'}
+- Sector Preferences: ${(userProfile.sectors || []).join(', ') || 'all sectors'}
+- Ethical Investing Priority: ${userProfile.ethicalInvesting || 5}/10
+
+COMPREHENSIVE FMP MARKET DATA & ANALYSIS:
+${marketContext}
+
+${portfolioAnalysis ? `EXISTING PORTFOLIO ANALYSIS WITH FMP DATA:\n${portfolioAnalysis}` : ''}
+
+${newsContext && newsContext.length > 0 ? `RECENT FINANCIAL NEWS:\n${newsContext.slice(0, 3).map((news: any) => `• ${news.title}`).join('\n')}` : ''}
+
+CRITICAL INSTRUCTIONS:
+1. **USE FMP DATA**: Base ALL investment decisions on the comprehensive FMP market data provided above
+2. **FUNDAMENTAL ANALYSIS**: Leverage P/E ratios, financial metrics, and sector performance from FMP
+3. **SECTOR ANALYSIS**: Use FMP sector data to identify opportunities and risks
+4. **VALUATION DECISIONS**: Make buy/sell/hold decisions based on FMP fundamental data combined with technical analysis
+5. **MARKET TIMING**: Consider current FMP market conditions and sector rotations
+
+🚨 CRITICAL CAPITAL ALLOCATION RULES (MUST FOLLOW EXACTLY):
+1. MATHEMATICAL CONSTRAINT: Total BUY amounts + Total HOLD amounts = Available Capital
+2. THREE TYPES of recommendations required:
+   - BUY: New investments using available cash + proceeds from sales
+   - HOLD: Existing positions to keep at specified reduced amounts
+   - SELL: Existing positions to liquidate (creates cash for new investments)
+3. NEVER EXCEED TOTAL PORTFOLIO VALUE: Your recommendations cannot exceed available capital
+4. EXISTING HOLDINGS LOGIC:
+   - Analyze each existing holding for future prospects
+   - If positive outlook: HOLD at optimal allocation (may be less than current amount)
+   - If negative outlook or overweight: SELL completely
+   - Use proceeds from SELL recommendations for BUY recommendations
+5. MANDATORY EXISTING HOLDINGS PROCESSING:
+   - EVERY existing holding MUST be included in your recommendations
+   - If user has existing holdings, you MUST create "sell" or "hold" recommendations for ALL of them
+   - NO existing holdings should be ignored or omitted
+   - Each existing holding must be analyzed and categorized as either "sell" or "hold"
+
+QUALITY & PERFORMANCE RULES:
+6. ZERO TOLERANCE for negative expected returns - NEVER recommend any asset with negative 1-year prospects
+7. If any analysis shows negative returns, immediately exclude that asset and find alternatives
+8. Provide realistic expected annual returns based on current market data:
+    - Large-cap stocks: 6-12% annually
+    - Growth stocks: 8-15% annually
+    - ETFs/Index funds: 7-10% annually
+    - Bonds: 2-6% annually
+    - Cryptocurrency: 10-25% annually (ONLY if positive prospects)
+9. CRITICAL: Use current real-time market prices for all calculations
+10. Quality check: Review each recommendation to ensure positive expected returns
+
+PORTFOLIO STRUCTURE RULES:
+11. Maximum 20% allocation to any single asset
+12. Minimum 5% allocation for any recommended position
+13. Diversification across sectors based on user preferences
+14. Include reasoning for each BUY/HOLD/SELL decision
+15. Provide confidence scores based on analysis quality
+16. VALIDATION: Ensure every existing holding appears in recommendations as either "sell" or "hold"
+
+OUTPUT FORMAT - Provide your analysis in this exact JSON structure:
+{
+  "recommendations": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc",
+      "type": "buy",
+      "amount": 5000,
+      "confidence": 85,
+      "reasoning": "Detailed analysis including current market position, financials, growth prospects, and why this fits the user's profile",
+      "sector": "Technology",
+      "targetPrice": 200,
+      "stopLoss": 180,
+      "expectedAnnualReturn": 0.12
+    }
+  ],
+  "reasoning": "Comprehensive explanation of the overall investment strategy, how it aligns with user goals, current market conditions, and expected outcomes",
+  "riskAssessment": "Detailed risk analysis including portfolio volatility, potential downside scenarios, risk mitigation strategies, and how this aligns with user's risk tolerance",
+  "marketOutlook": "Current market analysis, economic trends, sector outlook, potential catalysts and risks, and how they impact these recommendations"
+}`
+
+  const userMessage = `MANDATORY: Use the FMP market data and user profile to generate sophisticated investment recommendations. The FMP data contains real-time market prices, P/E ratios, and sector performance. Base ALL recommendations on this data combined with your analysis.`
+
+  // MANDATORY: Execute Claude API call with FMP data
+  console.log('🤖 EXECUTING MANDATORY Claude API call with FMP market data...')
+  console.log(`📏 FMP market context length: ${marketContext.length} characters`)
+  console.log(`📏 System prompt length: ${systemPrompt.length} characters`)
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEYS.CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-3-sonnet-20240229',  // Using Sonnet for balance of speed and quality
+      max_tokens: 4000,
+      temperature: 0.2,  // Lower temperature for more consistent results
+      messages: [
+        { role: 'user', content: `${systemPrompt}\n\n${userMessage}` }
+      ]
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    if (response.status === 429) {
+      throw new Error('CLAUDE_RATE_LIMIT:Claude API rate limit exceeded - please try again later')
+    } else if (response.status === 401) {
+      throw new Error('Claude API key is invalid or expired')
+    } else if (response.status === 402) {
+      throw new Error('Claude API quota exceeded - please check your billing')
+    } else {
+      throw new Error(`Claude API error (${response.status}): ${errorText}`)
+    }
+  }
+
+  const data = await response.json()
+
+  if (data.error) {
+    throw new Error(`Claude API error: ${data.error.message}`)
+  }
+
+  const content = data.content[0]?.text
+
+  if (!content) {
+    throw new Error('No content received from Claude API')
+  }
+
+  try {
+    // Claude typically returns clean JSON without markdown wrapping
+    const analysis: InvestmentAnalysis = JSON.parse(content)
+
+    // Validate and clean recommendation data
+    analysis.recommendations = analysis.recommendations.map((rec: any) => {
+      const cleanAmount = typeof rec.amount === 'string'
+        ? parseFloat(rec.amount.replace(/[^0-9.-]/g, '')) || 0
+        : (typeof rec.amount === 'number' ? rec.amount : 0)
+
+      // Cap expected returns to realistic levels and eliminate negatives
+      const cappedReturn = Math.max(0.02, Math.min(rec.expectedAnnualReturn || 0.07, 0.25)) // 2% to 25% max
+
+      return {
+        ...rec,
+        name: cleanAssetName(rec.symbol, rec.name), // Clean up long ETF names
+        amount: Math.round(cleanAmount),
+        confidence: typeof rec.confidence === 'number' ? rec.confidence : 75,
+        targetPrice: typeof rec.targetPrice === 'number' ? rec.targetPrice : undefined,
+        stopLoss: typeof rec.stopLoss === 'number' ? rec.stopLoss : undefined,
+        expectedAnnualReturn: cappedReturn
+      }
+    }).filter((rec: any) => rec.amount > 0 && rec.expectedAnnualReturn > 0) // Remove negative returns
+
+    // CRITICAL VALIDATION: Ensure total doesn't exceed available capital
+    const availableCapital = userProfile.capitalAvailable || userProfile.capital || 0
+    const existingHoldings = userProfile.existingPortfolio ?
+      userProfile.existingPortfolio.reduce((sum: number, holding: any) => sum + (holding.amount || 0), 0) : 0
+    const totalPortfolioValue = availableCapital + existingHoldings
+
+    const totalRecommendedAmount = analysis.recommendations.reduce((sum, rec) => sum + rec.amount, 0)
+
+    if (totalRecommendedAmount > totalPortfolioValue) {
+      console.warn(`🚨 CAPITAL VALIDATION FAILED: Recommended ${totalRecommendedAmount} exceeds total portfolio ${totalPortfolioValue}`)
+
+      // Scale down all recommendations proportionally
+      const scaleFactor = totalPortfolioValue / totalRecommendedAmount
+      analysis.recommendations = analysis.recommendations.map(rec => ({
+        ...rec,
+        amount: Math.round(rec.amount * scaleFactor)
+      })).filter(rec => rec.amount > 0)
+
+      console.log(`✅ SCALED DOWN: Total now ${analysis.recommendations.reduce((sum, rec) => sum + rec.amount, 0)}`)
+    }
+
+    // CRITICAL VALIDATION: Ensure all existing holdings are categorized
+    if (userProfile.existingPortfolio && userProfile.existingPortfolio.length > 0) {
+      const existingSymbols = userProfile.existingPortfolio.map((holding: any) => holding.symbol.toUpperCase())
+      const recommendedSymbols = analysis.recommendations.map((rec: any) => rec.symbol.toUpperCase())
+
+      // Find missing existing holdings
+      const missingHoldings = existingSymbols.filter((symbol: string) =>
+        !recommendedSymbols.includes(symbol)
+      )
+
+      if (missingHoldings.length > 0) {
+        console.warn(`🚨 MISSING EXISTING HOLDINGS: ${missingHoldings.join(', ')} not categorized`)
+
+        // Add missing holdings as "hold" recommendations (conservative approach)
+        for (const missingSymbol of missingHoldings) {
+          const existingHolding = userProfile.existingPortfolio.find((h: any) =>
+            h.symbol.toUpperCase() === missingSymbol
+          )
+
+          if (existingHolding) {
+            analysis.recommendations.push({
+              symbol: existingHolding.symbol,
+              name: existingHolding.symbol,
+              type: 'hold',
+              amount: existingHolding.amount,
+              confidence: 70,
+              reasoning: `Existing holding - maintaining position for portfolio stability`,
+              sector: 'Existing Holdings',
+              expectedAnnualReturn: 0.05 // Conservative estimate
+            })
+            console.log(`✅ Added missing holding: ${missingSymbol} as HOLD`)
+          }
+        }
+      }
+    }
+
+    // Add portfolio projections
+    analysis.portfolioProjections = calculatePortfolioProjections(analysis.recommendations, userProfile)
+
+    console.log('✅ Claude recommendations generated successfully')
+    return analysis
+  } catch (parseError) {
+    console.error('Failed to parse Claude response:', parseError)
+    throw new Error('Claude returned invalid response format')
+  }
 }
 
 async function generateRecommendationsWithOpenAI(userProfile: any): Promise<InvestmentAnalysis> {
@@ -2151,6 +2469,7 @@ export async function getFinancialNews(symbols?: string[]): Promise<NewsItem[]> 
 
 export function validateApiKeys(): { [key: string]: boolean } {
   return {
+    claude: !!API_KEYS.CLAUDE_API_KEY,
     openai: !!API_KEYS.OPENAI_API_KEY,
     grok: !!API_KEYS.GROK_API_KEY,
     alphaVantage: !!API_KEYS.ALPHA_VANTAGE_API_KEY,
