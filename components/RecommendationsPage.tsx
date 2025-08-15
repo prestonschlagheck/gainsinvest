@@ -259,6 +259,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
   const [selectedInfo, setSelectedInfo] = useState<string | null>(null)
   const [etaSeconds, setEtaSeconds] = useState<number>(180)
   const [etaTotalSeconds, setEtaTotalSeconds] = useState<number>(180)
+  const [currentAI, setCurrentAI] = useState<string>('Claude') // Track which AI is being used
 
 
   // Generate recommendations using real APIs when available
@@ -270,6 +271,23 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
       const initialEta = 180
       setEtaTotalSeconds(initialEta)
       setEtaSeconds(initialEta)
+      
+      // Detect which AI is being used (from environment debug)
+      try {
+        const envResponse = await fetch(`${window.location.origin}/api/debug-env`)
+        if (envResponse.ok) {
+          const envData = await envResponse.json()
+          if (envData.summary.details.hasClaudeKey) {
+            setCurrentAI('Claude')
+          } else if (envData.summary.details.hasGrokKey) {
+            setCurrentAI('Grok')
+          } else if (envData.summary.details.hasOpenAIKey) {
+            setCurrentAI('OpenAI')
+          }
+        }
+      } catch (error) {
+        console.warn('Could not detect AI service, defaulting to Claude')
+      }
       
       // Reset API status
       setApiStatus({
@@ -368,7 +386,13 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
     const pollJobStatus = async (requestId: string) => {
       console.log('🔄 Polling job status:', requestId)
       let attempts = 0
-      const maxAttempts = 120 // 4 minutes max (2 second intervals)
+      const maxAttempts = 150 // 5 minutes max (2 second intervals)
+      
+      // Add timeout warning at 3 minutes
+      const timeoutWarning = setTimeout(() => {
+        console.warn('⚠️ Job taking longer than expected (3+ minutes)')
+        // Could show user a message here if needed
+      }, 180000) // 3 minutes
       
       // Update API status as we progress
       setTimeout(() => setApiStatus(prev => ({ ...prev, grok: 'success' })), 2000)
@@ -441,13 +465,15 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
             
           } else if (attempts >= maxAttempts) {
             clearInterval(pollInterval)
+            clearTimeout(timeoutWarning)
             
-            console.error('⏰ Job polling timeout')
+            console.error('⏰ Job polling timeout after 5 minutes')
             setApiStatus(prev => ({ ...prev, recommendations: 'failed' }))
             
             setErrorDetails({
-              message: 'Request timeout - please try again',
-              timestamp: new Date().toISOString()
+              message: `Job timed out after 5 minutes. This usually indicates an API issue or very complex processing. The ${currentAI} AI may be experiencing issues.`,
+              timestamp: new Date().toISOString(),
+              troubleshooting: 'Try refreshing the page or check API status at /api/debug-env'
             })
             
             setIsLoading(false)
@@ -576,7 +602,7 @@ const RecommendationsPage: React.FC<RecommendationsPageProps> = ({ userProfile, 
           >
             {/* AI Process Steps with visual status */}
             {[
-              { name: "Testing Grok AI", key: 'grok' as const },
+              { name: `Testing ${currentAI} AI`, key: 'grok' as const },
               { name: "Gathering Market Data", key: 'marketData' as const },
               { name: "Fetching Financial News", key: 'news' as const },
               { name: "Analyzing Portfolio", key: 'analysis' as const },
